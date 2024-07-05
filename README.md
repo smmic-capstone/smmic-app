@@ -1,16 +1,10 @@
-# smmic
+# smmic mobile app
 
-smmic flutter app
+## workflow
 
-## Getting Started
+- create a fork of smmic-app
+- create changes on fork
+- commit changes
+- create a pull request on smmic-app/main from your forked repository to merge
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+** all changes must be done on the forked repository and then merged to this repository when ready to avoid merge conflicts
