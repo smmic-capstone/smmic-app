@@ -24,7 +24,7 @@ class _Devices extends State<Devices> {
       'id' : 'SEqokAO1BQBHyJVK',
       'deviceName' : 'DEVICE 101',
       'batteryLevel' : 69,
-      'soilMoisture' : 65,
+      'soilMoisture' : 76,
       'temperature' : 23,
       'humidity' : 62,
       'timeStamp' : DateTime.now()
@@ -33,7 +33,7 @@ class _Devices extends State<Devices> {
       'id' : 'SEx0e9bmweebii5y',
       'deviceName' : 'DEVICE 102',
       'batteryLevel' : 64,
-      'soilMoisture' : 17,
+      'soilMoisture' : 13,
       'temperature' : 24,
       'humidity' : 45,
       'timeStamp' : DateTime.now()
@@ -54,7 +54,12 @@ class _Devices extends State<Devices> {
         padding: const EdgeInsets.only(top: 15),
         itemCount: devices.length,
         itemBuilder: (BuildContext context, int index) {
-          return DeviceCard(deviceData: devices[index]);
+          return GestureDetector(
+            onTap: () => {
+              // TODO: implement tap function
+            },
+            child: DeviceCard(deviceData: devices[index]),
+          );
         },
       )
     );
