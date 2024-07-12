@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 class RadialGauge extends StatefulWidget {
-  const RadialGauge({super.key, required this.title, required this.value, required this.scale});
+  const RadialGauge({super.key, required this.data, required this.value, required this.limit, this.scaleMultiplier = 1, this.radiusMultiplier = 1});
 
-  final String title;
+  final String data;
   final double value;
-  final double scale;
+  final double limit;
+  final double scaleMultiplier;
+  final double radiusMultiplier;
 
   @override
   State<StatefulWidget> createState() => _RadialGaugeState();
@@ -18,24 +20,24 @@ class _RadialGaugeState extends State<RadialGauge>{
     return SfRadialGauge(
       axes: <RadialAxis>[
         RadialAxis(
-          axisLineStyle: const AxisLineStyle(
+          axisLineStyle: AxisLineStyle(
             color: Color.fromRGBO(216, 216, 216, 1),
             cornerStyle: CornerStyle.bothCurve,
             thickness: 8,
           ),
-          radiusFactor: 0.95,
+          radiusFactor: 0.95 * widget.radiusMultiplier,
           showTicks: false,
           showLabels: false,
           startAngle: 135,
           endAngle: 45,
           minimum: 0,
-          maximum: 100,
+          maximum: widget.limit,
           pointers: [
             RangePointer(
               value: widget.value,
               cornerStyle: CornerStyle.bothCurve,
               width: 8,
-              color: generateColor(widget.value, widget.scale),
+              color: setColor(widget.value, widget.limit),
             )
           ],
           annotations: [
@@ -43,16 +45,17 @@ class _RadialGaugeState extends State<RadialGauge>{
               positionFactor: 0,
               widget: RichText(
                 text: TextSpan(
-                  text: widget.value.toString(),
-                  style: const TextStyle(
+                  text: widget.value.toInt().toString(),
+                  style: TextStyle(
                     fontFamily: 'Inter',
-                    fontSize: 30
+                    fontSize: 30 * widget.scaleMultiplier,
+                    color: Colors.black
                   ),
-                  children: const [
+                  children: [
                     TextSpan(
-                      text: '%',
+                      text: setSymbol(widget.data),
                       style: TextStyle(
-                        fontSize: 17
+                        fontSize: 17 * widget.scaleMultiplier
                       )
                     )
                   ],
@@ -62,14 +65,17 @@ class _RadialGaugeState extends State<RadialGauge>{
             GaugeAnnotation(
               angle: 90,
               positionFactor: 0.8,
-              widget: Text(
-                widget.title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontFamily: 'Inter',
+              widget: SizedBox(
+                child: Text(
+                  setTitle(widget.data),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 10 * (!(widget.scaleMultiplier == 1) ? widget.scaleMultiplier * 0.9 : 1),
+                      fontFamily: 'Inter',
+                      color: Colors.black
+                  ),
                 ),
-              ),
+              )
             )
           ],
         )
@@ -78,9 +84,33 @@ class _RadialGaugeState extends State<RadialGauge>{
   }
 }
 
-MaterialColor generateColor(double value, double scale) {
+String setSymbol(String type) {
+  switch(type) {
+    case == 'sm' || 'hm':
+      return '%';
+    case == 'tm':
+      return '°C';
+    default:
+      return '$type: unknown type (sm, tm, hm)';
+  }
+}
 
-  double percent = (value / scale) * 100;
+String setTitle(String type) {
+  switch(type) {
+    case == 'sm':
+      return 'Soil\nMoisture';
+    case == 'tm':
+      return 'Temp.';
+    case == 'hm':
+      return 'Humidity';
+    default:
+      return '$type: unknown type (sm, tm, hm)';
+  }
+}
+
+MaterialColor setColor(double value, double limit) {
+
+  double percent = (value / limit) * 100;
   MaterialColor? color;
 
   switch (percent) {

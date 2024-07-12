@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:smmic/screens/device.dart';
-import 'package:smmic/screens/devices.dart';
+import 'package:smmic/pages/device.dart';
+import 'package:smmic/pages/devices.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const Devices(),
+      home: const Devices(/*deviceName: '###'*/),
     );
   }
 }

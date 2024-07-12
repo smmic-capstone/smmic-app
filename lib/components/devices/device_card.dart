@@ -16,20 +16,24 @@ class DeviceCard extends StatefulWidget {
 }
 
 class _DeviceCardState extends State<DeviceCard> {
-
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return Stack(
       children: [
         Container(
           margin: const EdgeInsets.only(left: 25, right: 25, bottom: 15),
           padding: const EdgeInsets.symmetric(horizontal: 19, vertical: 18),
           decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.all(Radius.circular(15)),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.06), spreadRadius: 0, blurRadius: 4, offset: Offset(0, 4))
-              ]
+            color: Colors.white,
+            borderRadius: const BorderRadius.all(Radius.circular(15)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                spreadRadius: 0,
+                blurRadius: 4,
+                offset: Offset(0, 4)
+              )
+            ]
           ),
           height: 160,
           child: isSinkNode(widget.deviceData['id']) ? sinkNode(widget.deviceData) : sensorNode(widget.deviceData),
@@ -39,17 +43,20 @@ class _DeviceCardState extends State<DeviceCard> {
           alignment: Alignment.topRight,
           child: RotatedBox(
             quarterTurns: 2,
-            child: Icon(CupertinoIcons.arrow_down_left_circle, size: 20, color: Colors.black.withOpacity(0.25),),
+            child: Icon(
+              CupertinoIcons.arrow_down_left_circle,
+              size: 20,
+              color: Colors.black.withOpacity(0.25),
+            ),
           ),
         )
       ],
     );
   }
-
 }
 
 bool isSinkNode(String id) {
-  return id.substring(0,2) == 'SI';
+  return id.substring(0, 2) == 'SI';
 }
 
 Widget sensorNode(Map<String, dynamic> data) {
@@ -60,8 +67,8 @@ Widget sensorNode(Map<String, dynamic> data) {
         child: Column(
           children: [
             Expanded(
-                flex:3,
-                child: DeviceName(deviceName: data['deviceName'])
+              flex: 3,
+              child: DeviceName(deviceName: data['deviceName'])
             ),
             Expanded(
               flex: 1,
@@ -75,7 +82,7 @@ Widget sensorNode(Map<String, dynamic> data) {
         child: Row(
           children: [
             Expanded(
-              flex:3,
+              flex: 3,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -91,13 +98,13 @@ Widget sensorNode(Map<String, dynamic> data) {
               ),
             ),
             Expanded(
-              flex:4,
+              flex: 4,
               child: Container(
                 alignment: Alignment.center,
                 child: RadialGauge(
-                  title: 'Soil\nMoisture',
-                  value: data['soilMoisture'],
-                  scale: 100
+                  data: 'sm',
+                  value: data['soilMoisture'] * 1.0,
+                  limit: 100
                 )
               ),
             )
@@ -116,12 +123,12 @@ Widget sinkNode(Map<String, dynamic> data) {
         child: Column(
           children: [
             Expanded(
-              flex:3,
+              flex: 3,
               child: DeviceName(deviceName: data['deviceName'])
             ),
             Expanded(
               flex: 1,
-              child: BatteryLevel(batteryLevel: data['batteryLevel']),
+              child: BatteryLevel(batteryLevel: data['batteryLevel'])
             )
           ],
         ),
