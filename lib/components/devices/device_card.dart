@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:smmic/subcomponents/devices/battery_level.dart';
@@ -16,9 +15,8 @@ class DeviceCard extends StatefulWidget {
 }
 
 class _DeviceCardState extends State<DeviceCard> {
-
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return Stack(
       children: [
         Container(
@@ -28,28 +26,36 @@ class _DeviceCardState extends State<DeviceCard> {
               color: Colors.white,
               borderRadius: const BorderRadius.all(Radius.circular(15)),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.06), spreadRadius: 0, blurRadius: 4, offset: Offset(0, 4))
-              ]
-          ),
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    spreadRadius: 0,
+                    blurRadius: 4,
+                    offset: Offset(0, 4))
+              ]),
           height: 160,
-          child: isSinkNode(widget.deviceData['id']) ? sinkNode(widget.deviceData) : sensorNode(widget.deviceData),
+          child: isSinkNode(widget.deviceData['id'])
+              ? sinkNode(widget.deviceData)
+              : sensorNode(widget.deviceData),
         ),
         Container(
           padding: const EdgeInsets.only(right: 37, top: 12),
           alignment: Alignment.topRight,
           child: RotatedBox(
             quarterTurns: 2,
-            child: Icon(CupertinoIcons.arrow_down_left_circle, size: 20, color: Colors.black.withOpacity(0.25),),
+            child: Icon(
+              CupertinoIcons.arrow_down_left_circle,
+              size: 20,
+              color: Colors.black.withOpacity(0.25),
+            ),
           ),
         )
       ],
     );
   }
-
 }
 
 bool isSinkNode(String id) {
-  return id.substring(0,2) == 'SI';
+  return id.substring(0, 2) == 'SI';
 }
 
 Widget sensorNode(Map<String, dynamic> data) {
@@ -60,9 +66,7 @@ Widget sensorNode(Map<String, dynamic> data) {
         child: Column(
           children: [
             Expanded(
-                flex:3,
-                child: DeviceName(deviceName: data['deviceName'])
-            ),
+                flex: 3, child: DeviceName(deviceName: data['deviceName'])),
             Expanded(
               flex: 1,
               child: BatteryLevel(batteryLevel: data['batteryLevel']),
@@ -71,94 +75,87 @@ Widget sensorNode(Map<String, dynamic> data) {
         ),
       ),
       Expanded(
-        flex: 10,
-        child: Row(
-          children: [
-            Expanded(
-              flex:3,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  DigitalDisplay(
-                    data: data['temperature'],
-                    type: 'temperature',
-                  ),
-                  DigitalDisplay(
-                    data: data['humidity'],
-                    type: 'humidity',
-                  )
-                ],
-              ),
-            ),
-            Expanded(
-              flex:4,
-              child: Container(
-                alignment: Alignment.center,
-                child: SfRadialGauge(
-                  axes: <RadialAxis>[
-                    RadialAxis(
-                      axisLineStyle: AxisLineStyle(
-                        thickness: 8,
-                        color: Color.fromRGBO(216, 216, 216, 1),
-                        cornerStyle: CornerStyle.bothCurve
-                      ),
-                      radiusFactor: 0.95,
-                      showTicks: false,
-                      showLabels: false,
-                      startAngle: 135,
-                      endAngle: 45,
-                      minimum: 0,
-                      maximum: 100,
-                      pointers: <GaugePointer>[
-                        RangePointer(
-                          value: data['soilMoisture'],
-                          cornerStyle: CornerStyle.bothCurve,
-                          width: 8,
-                          color: Colors.red,
-                        )
-                      ],
-                      annotations: <GaugeAnnotation>[
-                        GaugeAnnotation(
-                          positionFactor: 0,
-                          widget: RichText(
-                            text: TextSpan(
-                              text: data['soilMoisture'].toString(),
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 30,
-                              ),
-                              children: [
-                                TextSpan(
-                                  text: '%',
-                                  style: TextStyle(
-                                    fontSize: 17
-                                  )
-                                )
-                              ]
-                            ),
-                          )
-                        ),
-                        GaugeAnnotation(
-                          angle: 90,
-                          positionFactor: 0.8,
-                          widget: Text(
-                            'Soil\nMoisture',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                fontSize: 10,
-                                fontFamily: 'Inter',
-                            ),
-                          ),
-                        )
-                      ],
+          flex: 10,
+          child: Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    DigitalDisplay(
+                      data: data['temperature'],
+                      type: 'temperature',
+                    ),
+                    DigitalDisplay(
+                      data: data['humidity'],
+                      type: 'humidity',
                     )
                   ],
                 ),
               ),
-            )
-          ],
-        )
-      ),
+              Expanded(
+                flex: 4,
+                child: Container(
+                  alignment: Alignment.center,
+                  child: SfRadialGauge(
+                    axes: <RadialAxis>[
+                      RadialAxis(
+                        axisLineStyle: AxisLineStyle(
+                            thickness: 8,
+                            color: Color.fromRGBO(216, 216, 216, 1),
+                            cornerStyle: CornerStyle.bothCurve),
+                        radiusFactor: 0.95,
+                        showTicks: false,
+                        showLabels: false,
+                        startAngle: 135,
+                        endAngle: 45,
+                        minimum: 0,
+                        maximum: 100,
+                        pointers: <GaugePointer>[
+                          RangePointer(
+                            value: data['soilMoisture'],
+                            cornerStyle: CornerStyle.bothCurve,
+                            width: 8,
+                            color: Colors.red,
+                          )
+                        ],
+                        annotations: <GaugeAnnotation>[
+                          GaugeAnnotation(
+                              positionFactor: 0,
+                              widget: RichText(
+                                text: TextSpan(
+                                    text: data['soilMoisture'].toString(),
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 30,
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                          text: '%',
+                                          style: TextStyle(fontSize: 17))
+                                    ]),
+                              )),
+                          GaugeAnnotation(
+                            angle: 90,
+                            positionFactor: 0.8,
+                            widget: Text(
+                              'Soil\nMoisture',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontFamily: 'Inter',
+                              ),
+                            ),
+                          )
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+              )
+            ],
+          )),
     ],
   );
 }
@@ -171,9 +168,7 @@ Widget sinkNode(Map<String, dynamic> data) {
         child: Column(
           children: [
             Expanded(
-                flex:3,
-                child: DeviceName(deviceName: data['deviceName'])
-            ),
+                flex: 3, child: DeviceName(deviceName: data['deviceName'])),
             Expanded(
               flex: 1,
               child: BatteryLevel(batteryLevel: data['batteryLevel']),
