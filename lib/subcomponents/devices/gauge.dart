@@ -20,7 +20,7 @@ class _RadialGaugeState extends State<RadialGauge>{
     return SfRadialGauge(
       axes: <RadialAxis>[
         RadialAxis(
-          axisLineStyle: AxisLineStyle(
+          axisLineStyle: const AxisLineStyle(
             color: Color.fromRGBO(216, 216, 216, 1),
             cornerStyle: CornerStyle.bothCurve,
             thickness: 8,
@@ -70,9 +70,9 @@ class _RadialGaugeState extends State<RadialGauge>{
                   setTitle(widget.data),
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      fontSize: 10 * (!(widget.scaleMultiplier == 1) ? widget.scaleMultiplier * 0.9 : 1),
-                      fontFamily: 'Inter',
-                      color: Colors.black
+                    fontSize: 10 * (!(widget.scaleMultiplier == 1) ? widget.scaleMultiplier * 0.9 : 1),
+                    fontFamily: 'Inter',
+                    color: Colors.black
                   ),
                 ),
               )
