@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:smmic/components/devices/device_card.dart';
+import 'package:smmic/pages/device.dart';
 
 class Devices extends StatefulWidget {
   const Devices({super.key});
@@ -10,33 +11,30 @@ class Devices extends StatefulWidget {
 }
 
 class _Devices extends State<Devices> {
-
-  //TODO: assign theme
-  Color? bgColor = Color.fromRGBO(239, 239, 239, 100);
-
-  final List<Map<String, dynamic>> devices = [
+  Color? bgColor = const Color.fromRGBO(239, 239, 239, 1.0);
+  final List<Map<String, dynamic>> _mockDevicesData = [
     {
-      'id' : 'SIqokAO1BQBHyJVK',
-      'deviceName' : 'SINK NODE',
-      'batteryLevel' : 71,
+      'id': 'SIqokAO1BQBHyJVK',
+      'deviceName': 'SINK NODE',
+      'batteryLevel': 71,
     },
     {
-      'id' : 'SEqokAO1BQBHyJVK',
-      'deviceName' : 'DEVICE 101',
-      'batteryLevel' : 69,
-      'soilMoisture' : 65,
-      'temperature' : 23,
-      'humidity' : 62,
-      'timeStamp' : DateTime.now()
+      'id': 'SEqokAO1BQBHyJVK',
+      'deviceName': 'DEVICE 101',
+      'batteryLevel': 69,
+      'soilMoisture': 65,
+      'temperature': 23,
+      'humidity': 62,
+      'timeStamp': DateTime.now()
     },
     {
-      'id' : 'SEx0e9bmweebii5y',
-      'deviceName' : 'DEVICE 102',
-      'batteryLevel' : 64,
-      'soilMoisture' : 17,
-      'temperature' : 24,
-      'humidity' : 45,
-      'timeStamp' : DateTime.now()
+      'id': 'SEx0e9bmweebii5y',
+      'deviceName': 'DEVICE 102',
+      'batteryLevel': 64,
+      'soilMoisture': 17,
+      'temperature': 24,
+      'humidity': 45,
+      'timeStamp': DateTime.now()
     }
   ];
 
@@ -52,12 +50,14 @@ class _Devices extends State<Devices> {
       ),
       body: ListView.builder(
         padding: const EdgeInsets.only(top: 15),
-        itemCount: devices.length,
+        itemCount: _mockDevicesData.length,
         itemBuilder: (BuildContext context, int index) {
-          return DeviceCard(deviceData: devices[index]);
+          return GestureDetector(
+            child: DeviceCard(deviceData: _mockDevicesData[index]),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => Device(deviceName: _mockDevicesData[index]['deviceName']))),
+          );
         },
       )
     );
   }
-
 }
