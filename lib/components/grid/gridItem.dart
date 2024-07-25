@@ -4,8 +4,14 @@ class GridItem extends StatelessWidget {
   final Color color;
   final String text;
   final BoxDecoration? decoration;
+  final String imagePath;
 
-  GridItem({required this.text, required this.color, this.decoration});
+  GridItem({
+    required this.text,
+    required this.color,
+    required this.imagePath,
+    this.decoration,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,11 +28,21 @@ class GridItem extends StatelessWidget {
                     offset: const Offset(0, 6))
               ]),
       margin: const EdgeInsets.all(8),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-            color: Colors.black, fontSize: 15, fontWeight: FontWeight.bold),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(
+            imagePath,
+            height: 50,
+            width: 50,
+          ),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                color: Colors.black, fontSize: 15, fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
     );
   }
