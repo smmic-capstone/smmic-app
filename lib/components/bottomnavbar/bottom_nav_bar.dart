@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/pages/devices.dart';
 import 'package:smmic/pages/notification.dart';
+import 'package:smmic/provide/provide.dart';
 
 class MyBottomNav extends StatefulWidget {
   final int? indexPage;
@@ -24,33 +26,41 @@ class _MyBottomNavState extends State<MyBottomNav> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.5),
-              blurRadius: 25,
-              offset: const Offset(8, 20))
-        ]),
-        child: ClipRRect(
-          child: BottomNavigationBar(
-            backgroundColor: Color.fromARGB(255, 36, 36, 36),
-            selectedItemColor: Color.fromARGB(255, 90, 89, 89),
-            unselectedItemColor: Color.fromARGB(255, 251, 246, 246),
-            currentIndex: myCurrentIndex,
-            onTap: (index) {
-              setState(() {
-                myCurrentIndex = index;
-              });
-            },
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.notifications), label: "Notifications"),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.account_tree), label: "Devices")
-            ],
-          ),
-        ),
+      bottomNavigationBar: Consumer<UiProvider>(
+        builder: (BuildContext context, UiProvider uiProvider, Widget? child) {
+          return Container(
+            decoration: BoxDecoration(boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.5),
+                  blurRadius: 25,
+                  offset: const Offset(8, 20))
+            ]),
+            child: ClipRRect(
+              child: BottomNavigationBar(
+                backgroundColor:
+                    uiProvider.isDark ? Colors.black12 : Colors.white,
+                selectedItemColor:
+                    uiProvider.isDark ? Colors.white : Colors.black,
+                unselectedItemColor:
+                    uiProvider.isDark ? Colors.white : Colors.black,
+                currentIndex: myCurrentIndex,
+                onTap: (index) {
+                  setState(() {
+                    myCurrentIndex = index;
+                  });
+                },
+                items: const [
+                  BottomNavigationBarItem(
+                      icon: Icon(Icons.home), label: "Home"),
+                  BottomNavigationBarItem(
+                      icon: Icon(Icons.notifications), label: "Notifications"),
+                  BottomNavigationBarItem(
+                      icon: Icon(Icons.account_tree), label: "Devices")
+                ],
+              ),
+            ),
+          );
+        },
       ),
       body: pages[myCurrentIndex],
     );

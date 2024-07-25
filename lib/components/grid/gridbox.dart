@@ -12,12 +12,17 @@ class MyGridBox extends StatefulWidget {
 }
 
 class _MyGridBoxState extends State<MyGridBox> {
-  final Color _color = Color.fromARGB(255, 254, 255, 255);
-  final List<String> _text = ['Nofication', 'Device', ' Irrigation'];
+  final Color _color = const Color.fromARGB(255, 254, 255, 255);
+  final List<String> _text = ['NOTIFICATION', 'DEVICE', ' IRRIGATION'];
   final List<Widget> _pages = [
     const NotifPage(),
     const Devices(),
     const Irrigation()
+  ];
+  final List<String> _imagePaths = [
+    'assets/notibell.png',
+    'assets/device.png',
+    'assets/irrigation.png',
   ];
 
   int _seleectedPageInder = 0;
@@ -47,6 +52,7 @@ class _MyGridBoxState extends State<MyGridBox> {
                   _selectPage(index);
                 },
                 child: GridItem(
+                  imagePath: _imagePaths[index],
                   text: _text[index],
                   color: _color,
                 ))),
