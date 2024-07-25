@@ -15,7 +15,7 @@ class _MyGridBoxState extends State<MyGridBox> {
   final Color _color = Color.fromARGB(255, 254, 255, 255);
   final List<String> _text = ['Nofication', 'Device', ' Irrigation'];
   final List<Widget> _pages = [
-    const NotifPage(),
+    const Notifications(),
     const Devices(),
     const Irrigation()
   ];

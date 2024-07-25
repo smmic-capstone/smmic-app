@@ -1,27 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:smmic/models/devices/sensor_node_data_model.dart';
 import 'package:smmic/services/datetime_formatting.dart';
+import 'package:smmic/services/devices/sensor_node_data_services.dart';
 import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/gauge.dart';
 
-class DetailsCard extends StatefulWidget {
-  const DetailsCard({super.key});
+class SensorNodeCardExpanded extends StatefulWidget {
+  const SensorNodeCardExpanded({super.key, required this.deviceID});
+
+  final String deviceID;
 
   @override
-  State<DetailsCard> createState() => _DetailsCardState();
+  State<SensorNodeCardExpanded> createState() => _SensorNodeCardExpandedState();
 }
 
-class _DetailsCardState extends State<DetailsCard> {
+class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
+
+  late SensorNodeData _sensorNodeSnapshot;
+
+  @override
+  void initState() {
+    super.initState();
+    //TODO: assign proper id variable for 'getSnapshot', preferably move this out of the initState() function too
+    _sensorNodeSnapshot = SensorNodeDataServices().getSnapshot(widget.deviceID);
+  }
 
   final DatetimeFormatting _dateTimeFormatting = DatetimeFormatting();
-  final Map<String, dynamic> _mockDataSnapshot = {
-    'id': 'SEx0e9bmweebii5y',
-    'deviceName': 'DEVICE 102',
-    'batteryLevel': 64,
-    'soilMoisture': 15,
-    'temperature': 24,
-    'humidity': 45,
-    'timeStamp': DateTime.now()
-  };
+  // final SensorNodeDataServices _sensorDataServices = SensorNodeDataServices();
 
   @override
   Widget build(BuildContext context) {
@@ -52,12 +57,12 @@ class _DetailsCardState extends State<DetailsCard> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   BatteryLevel(
-                    batteryLevel: _mockDataSnapshot['batteryLevel'],
+                    batteryLevel: _sensorNodeSnapshot.batteryLevel.toInt(),
                     alignmentAdjust: 1,
                     shrinkPercentSign: false
                   ),
                   Text(
-                    _dateTimeFormatting.formatTime(_mockDataSnapshot['timeStamp']),
+                    _dateTimeFormatting.formatTime(_sensorNodeSnapshot.timestamp),
                     style: const TextStyle(fontFamily: 'Inter', fontSize: 20)
                   )
                 ],
@@ -67,8 +72,8 @@ class _DetailsCardState extends State<DetailsCard> {
           Expanded(
             flex: 4,
             child: RadialGauge(
-              data: 'sm',
-              value: _mockDataSnapshot['soilMoisture'] * 1.0,
+              valueType: 'soilMoisture',
+              value: _sensorNodeSnapshot.soilMoisture,
               limit: 100,
               scaleMultiplier: 1.5
             ),
@@ -82,8 +87,8 @@ class _DetailsCardState extends State<DetailsCard> {
                   SizedBox(
                     width: 160,
                     child: RadialGauge(
-                      data: 'tm',
-                      value: _mockDataSnapshot['temperature'].toDouble(),
+                      valueType: 'temperature',
+                      value: _sensorNodeSnapshot.temperature,
                       limit: 100,
                       radiusMultiplier: 0.9,
                     ),
@@ -91,8 +96,8 @@ class _DetailsCardState extends State<DetailsCard> {
                   SizedBox(
                     width: 160,
                     child: RadialGauge(
-                      data: 'hm',
-                      value: _mockDataSnapshot['humidity'].toDouble(),
+                      valueType: 'humidity',
+                      value: _sensorNodeSnapshot.humidity,
                       limit: 100,
                       radiusMultiplier: 0.9,
                     ),

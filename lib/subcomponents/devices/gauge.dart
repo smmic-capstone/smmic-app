@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 class RadialGauge extends StatefulWidget {
-  const RadialGauge({super.key, required this.data, required this.value, required this.limit, this.scaleMultiplier = 1, this.radiusMultiplier = 1});
+  const RadialGauge({super.key, required this.valueType, required this.value, required this.limit, this.scaleMultiplier = 1, this.radiusMultiplier = 1});
 
-  final String data;
+  final String valueType;
   final double value;
   final double limit;
   final double scaleMultiplier;
@@ -53,7 +53,7 @@ class _RadialGaugeState extends State<RadialGauge>{
                   ),
                   children: [
                     TextSpan(
-                      text: setSymbol(widget.data),
+                      text: setSymbol(widget.valueType),
                       style: TextStyle(
                         fontSize: 17 * widget.scaleMultiplier
                       )
@@ -67,7 +67,7 @@ class _RadialGaugeState extends State<RadialGauge>{
               positionFactor: 0.8,
               widget: SizedBox(
                 child: Text(
-                  setTitle(widget.data),
+                  setTitle(widget.valueType),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 10 * (!(widget.scaleMultiplier == 1) ? widget.scaleMultiplier * 0.9 : 1),
@@ -84,27 +84,27 @@ class _RadialGaugeState extends State<RadialGauge>{
   }
 }
 
-String setSymbol(String type) {
-  switch(type) {
-    case == 'sm' || 'hm':
+String setSymbol(String valueType) {
+  switch(valueType) {
+    case == 'soilMoisture' || 'humidity':
       return '%';
-    case == 'tm':
+    case == 'temperature':
       return '°C';
     default:
-      return '$type: unknown type (sm, tm, hm)';
+      return '$valueType: unknown type (soilMoisture, temperature, humidity)';
   }
 }
 
-String setTitle(String type) {
-  switch(type) {
-    case == 'sm':
+String setTitle(String valueType) {
+  switch(valueType) {
+    case == 'soilMoisture':
       return 'Soil\nMoisture';
-    case == 'tm':
+    case == 'temperature':
       return 'Temp.';
-    case == 'hm':
+    case == 'humidity':
       return 'Humidity';
     default:
-      return '$type: unknown type (sm, tm, hm)';
+      return '$valueType: unknown type (soilMoisture, temperature, humidity)';
   }
 }
 
