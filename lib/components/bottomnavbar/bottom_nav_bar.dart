@@ -13,7 +13,7 @@ class MyBottomNav extends StatefulWidget {
 
 class _MyBottomNavState extends State<MyBottomNav> {
   int myCurrentIndex = 0;
-  List<Widget> pages = [const DashBoard(), const Notifications(), const Devices()];
+  List<Widget> pages = [const DashBoard(), const NotifPage(), const Devices()];
 
   @override
   void initState() {

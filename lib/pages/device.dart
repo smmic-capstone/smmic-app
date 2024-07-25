@@ -1,19 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:smmic/components/devices/chart.dart';
-import 'package:smmic/components/devices/cards_expanded/sensor_node_card_expanded.dart';
+import 'package:smmic/components/devices/details_card.dart';
 
-class SensorNode extends StatefulWidget {
-  const SensorNode({super.key, required this.deviceID, required this.deviceName});
+class Device extends StatefulWidget {
+  const Device({super.key, required this.deviceName});
 
-  final String deviceID;
   final String deviceName;
 
   @override
-  State<StatefulWidget> createState() => _SensorNodeState();
+  State<StatefulWidget> createState() => _DeviceState();
 }
 
-class _SensorNodeState extends State<SensorNode> {
+class _DeviceState extends State<Device> {
 
   @override
   Widget build(BuildContext context) {
@@ -32,12 +30,11 @@ class _SensorNodeState extends State<SensorNode> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: const SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SensorNodeCardExpanded(deviceID: widget.deviceID),
-            //LineChart(),
+            DetailsCard()
           ],
         ),
       ),

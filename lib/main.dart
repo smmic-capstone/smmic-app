@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:smmic/pages/devices.dart';
 import 'package:smmic/pages/login.dart';
 
 void main() {
@@ -13,7 +12,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Devices()//LoginPage(),
+      home: LoginPage(),
     );
   }
 }
