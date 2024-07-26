@@ -8,7 +8,8 @@ Map<String, Map<String, dynamic>> _mockSensorNodeDataSnapshots = {
     'soilMoisture': 17.0,
     'temperature': 24.0,
     'humidity': 45.0,
-    'timestamp': DateTime.now()
+    'timestamp': DateTime.now(),
+    'coordinates': '8.483811638661779, 124.6609420280041'
   },
   'SEqokAO1BQBHyJVK' : {
     'deviceID': 'SEqokAO1BQBHyJVK',
@@ -17,7 +18,8 @@ Map<String, Map<String, dynamic>> _mockSensorNodeDataSnapshots = {
     'soilMoisture': 65.0,
     'temperature': 23.0,
     'humidity': 62.0,
-    'timestamp': DateTime.now()
+    'timestamp': DateTime.now(),
+    'coordinates': '8.48150220492715, 124.63526631530078'
   }
 };
 

@@ -8,6 +8,7 @@ class SensorNodeData {
   final double temperature;
   final double humidity;
   final double batteryLevel;
+  final String coordinates;
 
   SensorNodeData._internal({
     required this.deviceID,
@@ -16,7 +17,8 @@ class SensorNodeData {
     required this.soilMoisture,
     required this.temperature,
     required this.humidity,
-    required this.batteryLevel
+    required this.batteryLevel,
+    required this.coordinates
   });
 
   factory SensorNodeData.json(Map<String, dynamic> data) {
@@ -27,7 +29,8 @@ class SensorNodeData {
         soilMoisture: data['soilMoisture'],
         temperature: data['temperature'],
         humidity: data['humidity'],
-        batteryLevel: data['batteryLevel']
+        batteryLevel: data['batteryLevel'],
+        coordinates: data['coordinates']
     );
   }
 
