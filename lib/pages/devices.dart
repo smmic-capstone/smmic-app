@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 import 'package:smmic/components/devices/cards/sensor_node_card.dart';
 import 'package:smmic/components/devices/cards/sink_node_card.dart';
+import 'package:smmic/components/devices/drawer.dart';
 import 'package:smmic/models/devices/sensor_node_data_model.dart';
-import 'package:smmic/pages/sensor_node.dart';
+import 'package:smmic/models/devices/sink_node_data_model.dart';
 import 'package:smmic/services/devices/sensor_node_data_services.dart';
 import 'package:smmic/services/devices/sink_node_data_services.dart';
 import 'package:smmic/services/user_data_services.dart';
@@ -16,17 +18,16 @@ class Devices extends StatefulWidget {
 }
 
 class _Devices extends State<Devices> {
-
   late SensorNodeData _sensorNodeSnapshot;
 
   Color? bgColor = const Color.fromRGBO(239, 239, 239, 1.0);
+
   final UserDataServices _userDataServices = UserDataServices();
   final SensorNodeDataServices _sensorNodeDataServices = SensorNodeDataServices();
   final SinkNodeDataServices _sinkNodeDataServices = SinkNodeDataServices();
 
   @override
   Widget build(BuildContext context) {
-    // double height = MediaQuery.sizeOf(context).height;
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
@@ -34,34 +35,56 @@ class _Devices extends State<Devices> {
         title: const Text('Devices'),
         centerTitle: true,
         automaticallyImplyLeading: false,
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: 20),
+            child: BottomDrawerButton(),
+          )
+        ],
       ),
       body: ListView(
-        children: _filterCards(_buildCards(_userDataServices.getSinkNodes())),
+        children: [
+          ..._buildCards(_userDataServices.getSinkNodes()),
+        ],
       ),
     );
   }
 
-  List<Widget> _filterCards(List<Widget> cards) {
-
-    //TODO: IMPLEMENT FILTER FUNCTION
-    // List<Widget> filteredCards = cards.whereType<SensorNodeCard>().toList();
-
-    return cards;
-
+  List<Widget> _buildCards(List<String> sinkNodesList) {
+    return _devices(UserDataServices().getSinkNodes()).map((device) {
+      if (device.type == 'sink') {
+        return SinkNodeCard(deviceData: SinkNodeDataServices().getSnapshot(device.deviceID));
+      } else {
+        return SensorNodeCard(deviceData: SensorNodeDataServices().getSnapshot(device.deviceID));
+      }
+    }).toList();
   }
 
-  List<Widget> _buildCards(List<String> sinkNodesList) {
-    List<Widget> cards = sinkNodesList.expand((sinkNodeID) {
-      List<String> sensorNodesList = UserDataServices().getSensorNodes(sinkNodeID);
-      List<Widget> widgets = [
-        SinkNodeCard(deviceData: _sinkNodeDataServices.getSnapshot(sinkNodeID)),
-        ...sensorNodesList.map((sensorNodeID) {
-          return SensorNodeCard(deviceData: _sensorNodeDataServices.getSnapshot(sensorNodeID));
+  List<Device> _devices(List<String> sinkNodesIDList) {
+    List<Device> devices = sinkNodesIDList.expand((sinkNode) {
+      SinkNodeData sinkNodeData = SinkNodeDataServices().getSnapshot(sinkNode);
+      List<String> sensorNodesIDList = UserDataServices().getSensorNodes(sinkNode);
+      List<Device> sensorNodes = [
+        Device.named(type: 'sink', deviceID: sinkNodeData.deviceID, deviceName: sinkNodeData.deviceName),
+        ...sensorNodesIDList.map((sensorNode) {
+          SensorNodeData sensorNodeData = SensorNodeDataServices().getSnapshot(sensorNode);
+          return Device.named(type: 'sensor', deviceID: sensorNodeData.deviceID, deviceName: sensorNodeData.deviceName, sinkNodeID: sinkNode);
         })
       ];
-      return widgets;
+      return sensorNodes;
     }).toList();
 
-    return cards;
+    return devices;
   }
 }
+
+class Device {
+  final String type;
+  final String deviceID;
+  final String deviceName;
+  final String sinkNodeID;
+  final String coordinates;
+
+  Device.named({required this.type,required this.deviceID, required this.deviceName, this.sinkNodeID = '', this.coordinates = ''});
+}
+

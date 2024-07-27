@@ -5,7 +5,8 @@ Map<String, List<String>> mockSensorNodesList = {
 };
 
 List<String> mockSinkNodesList = [
-  'SIqokAO1BQBHyJVK'
+  'SIqokAO1BQBHyJVK',
+  'SIqokAO1BQbgyJ2K'
 ];
 
 class UserDataServices {
