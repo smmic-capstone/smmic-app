@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:smmic/models/devices/sink_node_data_model.dart';
+import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/pages/sensor_node.dart';
+import 'package:smmic/services/devices/sink_data.dart';
 import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/device_name.dart';
 
 class SinkNodeCard extends StatefulWidget {
-  const SinkNodeCard({super.key, required this.deviceData});
+  const SinkNodeCard({super.key, required this.deviceData, required this.deviceInfo});
 
-  final SinkNodeData deviceData;
+  final SinkNode deviceInfo;
+  final SinkNodeSnapshot deviceData;
 
   @override
   State<SinkNodeCard> createState() => _SinkNodeCardState();
@@ -48,7 +50,7 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
                       children: [
                         Expanded(
                             flex: 3,
-                            child: DeviceName(deviceName: widget.deviceData.deviceName)
+                            child: DeviceName(deviceName: widget.deviceInfo.deviceName)
                         ),
                         Expanded(
                             flex: 1,

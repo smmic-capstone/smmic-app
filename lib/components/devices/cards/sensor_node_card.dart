@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:smmic/models/devices/sensor_node_data_model.dart';
+import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/pages/sensor_node.dart';
 import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/device_name.dart';
@@ -8,9 +8,10 @@ import 'package:smmic/subcomponents/devices/digital_display.dart';
 import 'package:smmic/subcomponents/devices/gauge.dart';
 
 class SensorNodeCard extends StatefulWidget {
-  const SensorNodeCard({super.key, required this.deviceData});
+  const SensorNodeCard({super.key, required this.deviceData, required this.deviceInfo});
 
-  final SensorNodeData deviceData;
+  final SensorNode deviceInfo;
+  final SensorNodeSnapshot deviceData;
 
   @override
   State<SensorNodeCard> createState() => _SensorNodeCardState();
@@ -21,7 +22,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) {
-        return SensorNode(deviceID: widget.deviceData.deviceID, deviceName: widget.deviceData.deviceName);
+        return SensorNodePage(deviceID: widget.deviceData.deviceID, deviceName: widget.deviceInfo.deviceName);
       })),
       child: Stack(
         children: [
@@ -49,7 +50,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                       children: [
                         Expanded(
                             flex: 3,
-                            child: DeviceName(deviceName: widget.deviceData.deviceName)
+                            child: DeviceName(deviceName: widget.deviceInfo.deviceName)
                         ),
                         Expanded(
                           flex: 1,

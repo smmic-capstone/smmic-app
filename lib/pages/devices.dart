@@ -1,13 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
+import 'package:provider/provider.dart';
+
 import 'package:smmic/components/devices/cards/sensor_node_card.dart';
 import 'package:smmic/components/devices/cards/sink_node_card.dart';
-import 'package:smmic/components/devices/drawer.dart';
-import 'package:smmic/models/devices/sensor_node_data_model.dart';
-import 'package:smmic/models/devices/sink_node_data_model.dart';
-import 'package:smmic/services/devices/sensor_node_data_services.dart';
-import 'package:smmic/services/devices/sink_node_data_services.dart';
+import 'package:smmic/components/devices/options_drawer.dart';
+import 'package:smmic/models/device_data_models.dart';
+import 'package:smmic/providers/devices_providers.dart';
+import 'package:smmic/services/devices/sensor_data.dart';
+import 'package:smmic/services/devices/sink_data.dart';
 import 'package:smmic/services/user_data_services.dart';
 
 class Devices extends StatefulWidget {
@@ -18,7 +19,7 @@ class Devices extends StatefulWidget {
 }
 
 class _Devices extends State<Devices> {
-  late SensorNodeData _sensorNodeSnapshot;
+  late SensorNodeSnapshot _sensorNodeSnapshot;
 
   Color? bgColor = const Color.fromRGBO(239, 239, 239, 1.0);
 
@@ -35,7 +36,7 @@ class _Devices extends State<Devices> {
         title: const Text('Devices'),
         centerTitle: true,
         automaticallyImplyLeading: false,
-        actions: [
+        actions: const [
           Padding(
             padding: EdgeInsets.only(right: 20),
             child: BottomDrawerButton(),
@@ -44,47 +45,36 @@ class _Devices extends State<Devices> {
       ),
       body: ListView(
         children: [
-          ..._buildCards(_userDataServices.getSinkNodes()),
+          ..._buildCards(_userDataServices.getSinkNodes(), context.watch<DeviceListOptionsNotifier>().enabledConditions),
         ],
-      ),
+      )
     );
   }
 
-  List<Widget> _buildCards(List<String> sinkNodesList) {
-    return _devices(UserDataServices().getSinkNodes()).map((device) {
-      if (device.type == 'sink') {
-        return SinkNodeCard(deviceData: SinkNodeDataServices().getSnapshot(device.deviceID));
-      } else {
-        return SensorNodeCard(deviceData: SensorNodeDataServices().getSnapshot(device.deviceID));
+  List<Widget> _buildCards(List<String> sinkNodesList, Map<String, bool Function(Device)> options) {
+    return _devices(sinkNodesList, options).map((device) {
+      if (device is SinkNode) {
+        return SinkNodeCard(deviceInfo: device, deviceData: SinkNodeDataServices().getSnapshot(device.deviceID));
       }
+      if (device is SensorNode) {
+        return SensorNodeCard(deviceInfo: device, deviceData: SensorNodeDataServices().getSnapshot(device.deviceID));
+      }
+      throw Exception('Type mismatch: ${device.runtimeType.toString()}');
     }).toList();
   }
 
-  List<Device> _devices(List<String> sinkNodesIDList) {
-    List<Device> devices = sinkNodesIDList.expand((sinkNode) {
-      SinkNodeData sinkNodeData = SinkNodeDataServices().getSnapshot(sinkNode);
-      List<String> sensorNodesIDList = UserDataServices().getSensorNodes(sinkNode);
+  List<Device> _devices(List<String> sinkNodesIDList, Map<String, bool Function(Device)> options) {
+    List<Device> devices = sinkNodesIDList.expand((sinkNodeID) {
+      SinkNode sinkNodeInfo = SinkNodeDataServices().getInfo(sinkNodeID);
+      List<String> sensorNodesList = sinkNodeInfo.registeredSensorNodes;
       List<Device> sensorNodes = [
-        Device.named(type: 'sink', deviceID: sinkNodeData.deviceID, deviceName: sinkNodeData.deviceName),
-        ...sensorNodesIDList.map((sensorNode) {
-          SensorNodeData sensorNodeData = SensorNodeDataServices().getSnapshot(sensorNode);
-          return Device.named(type: 'sensor', deviceID: sensorNodeData.deviceID, deviceName: sensorNodeData.deviceName, sinkNodeID: sinkNode);
+        sinkNodeInfo,
+        ...sensorNodesList.map((sensorNode) {
+          return SensorNodeDataServices().getInfo(sensorNode);
         })
       ];
       return sensorNodes;
-    }).toList();
-
+    }).where((device) => options.keys.map((option) => options[option]!(device)).any((result) => result)).toList();
     return devices;
   }
 }
-
-class Device {
-  final String type;
-  final String deviceID;
-  final String deviceName;
-  final String sinkNodeID;
-  final String coordinates;
-
-  Device.named({required this.type,required this.deviceID, required this.deviceName, this.sinkNodeID = '', this.coordinates = ''});
-}
-

@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:smmic/components/devices/chart.dart';
 import 'package:smmic/components/devices/cards_expanded/sensor_node_card_expanded.dart';
 
-class SensorNode extends StatefulWidget {
-  const SensorNode({super.key, required this.deviceID, required this.deviceName});
+class SensorNodePage extends StatefulWidget {
+  const SensorNodePage({super.key, required this.deviceID, required this.deviceName});
 
   final String deviceID;
   final String deviceName;
 
   @override
-  State<StatefulWidget> createState() => _SensorNodeState();
+  State<StatefulWidget> createState() => _SensorNodePageState();
 }
 
-class _SensorNodeState extends State<SensorNode> {
+class _SensorNodePageState extends State<SensorNodePage> {
 
   @override
   Widget build(BuildContext context) {

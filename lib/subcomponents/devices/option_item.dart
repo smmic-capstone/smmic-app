@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
+import 'package:smmic/models/device_data_models.dart';
+import 'package:smmic/providers/devices_providers.dart';
 
 class OptionItem extends StatefulWidget {
-  const OptionItem({super.key, required this.title, required this.subtitle, required this.defaultValue});
+  const OptionItem({super.key, required this.title, required this.subtitle, required this.condition, required this.logic, required this.enabledConditions});
 
+  final String condition;
+  final bool Function(Device) logic;
+  final List<String> enabledConditions;
   final String title;
   final String subtitle;
-  final bool defaultValue;
 
   @override
   State<OptionItem> createState() => _OptionItemState();
@@ -17,7 +22,7 @@ class _OptionItemState extends State<OptionItem>{
 
   @override
   void initState() {
-    switchValue = widget.defaultValue;
+    switchValue = widget.enabledConditions.contains(widget.condition);
     super.initState();
   }
 
@@ -30,6 +35,11 @@ class _OptionItemState extends State<OptionItem>{
       trailing: CupertinoSwitch(
           value: switchValue,
           onChanged: (bool vewValue) {
+            if(widget.enabledConditions.contains(widget.condition)) {
+              context.read<DeviceListOptionsNotifier>().disable(widget.condition);
+            } else {
+              context.read<DeviceListOptionsNotifier>().enable(widget.condition, widget.logic);
+            }
             setState(() {
               switchValue = !switchValue;
             });
