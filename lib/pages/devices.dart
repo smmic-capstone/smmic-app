@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,10 +18,7 @@ class Devices extends StatefulWidget {
 }
 
 class _Devices extends State<Devices> {
-  late SensorNodeSnapshot _sensorNodeSnapshot;
-
   Color? bgColor = const Color.fromRGBO(239, 239, 239, 1.0);
-
   final UserDataServices _userDataServices = UserDataServices();
   final SensorNodeDataServices _sensorNodeDataServices = SensorNodeDataServices();
   final SinkNodeDataServices _sinkNodeDataServices = SinkNodeDataServices();
@@ -54,10 +50,10 @@ class _Devices extends State<Devices> {
   List<Widget> _buildCards(List<String> sinkNodesList, Map<String, bool Function(Device)> options) {
     return _devices(sinkNodesList, options).map((device) {
       if (device is SinkNode) {
-        return SinkNodeCard(deviceInfo: device, deviceData: SinkNodeDataServices().getSnapshot(device.deviceID));
+        return SinkNodeCard(deviceInfo: device, deviceData: _sinkNodeDataServices.getSnapshot(device.deviceID));
       }
       if (device is SensorNode) {
-        return SensorNodeCard(deviceInfo: device, deviceData: SensorNodeDataServices().getSnapshot(device.deviceID));
+        return SensorNodeCard(deviceInfo: device, deviceData: _sensorNodeDataServices.getSnapshot(device.deviceID));
       }
       throw Exception('Type mismatch: ${device.runtimeType.toString()}');
     }).toList();

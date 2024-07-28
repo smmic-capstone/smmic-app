@@ -10,15 +10,16 @@ class SinkNodeDataServices {
 
   //TODO: refactor when api is up
   SinkNodeSnapshot getSnapshot(String deviceID) {
-    return SinkNodeSnapshot.json(_mockSinkNodeDataSnapshot[deviceID]!);
+    return SinkNodeSnapshot.fromJSON(_mockSinkNodeDataSnapshot[deviceID]!);
   }
 
   /// Returns SinkNode information (id, name, coordinates, registered sensor nodes) as a SinkNode object.
   SinkNode getInfo(String deviceID) {
     if (_mockSinkNodeDataSnapshot.containsKey(deviceID)) {
-      List<String> sensorNodes = UserDataServices().mockSensorNodesList[deviceID]!; //TODO: REPLACE THIS TEMPORARY FIX!!!
+      List<String> sensorNodes = UserDataServices().getSensorNodes(deviceID); //TODO: REPLACE THIS TEMPORARY FIX!!!
       Map<String, dynamic> data = _mockSinkNodeDataSnapshot[deviceID]!;
-      return SinkNode.factory(data['deviceID'], data['deviceName'], data['coordinates'], sensorNodes);
+      data.addAll({'registeredSensorNodes': sensorNodes});
+      return SinkNode.factory(data);
     }
     throw Exception('Device ID not identified!');
   }

@@ -29,12 +29,12 @@ class SinkNode extends Device {
   }) : super();
 
   //TODO: add logic to check if a device already exists (caching or from shared prefs)
-  factory SinkNode.factory(String deviceID, String deviceName, String? coordinates, List<String> registeredSensorNodes) {
+  factory SinkNode.factory(Map<String, dynamic> deviceInfo) {
     return SinkNode._internal(
-        deviceID: deviceID,
-        deviceName: deviceName,
-        coordinates: coordinates,
-        registeredSensorNodes: registeredSensorNodes
+      deviceID: deviceInfo['deviceID'],
+      deviceName: deviceInfo['deviceName'],
+      coordinates: deviceInfo['coordinates'],
+      registeredSensorNodes: deviceInfo['registeredSensorNodes']
     );
   }
 }
@@ -50,12 +50,12 @@ class SensorNode extends Device {
   }) : super();
 
   //TODO: add logic to check if a device already exists (caching or from shared prefs)
-  factory SensorNode.factory(String deviceID, String deviceName, String? coordinates, String registeredSinkNode) {
+  factory SensorNode.fromJSON(Map<String, dynamic> deviceInfo) {
     return SensorNode._internal(
-        deviceID: deviceID,
-        deviceName: deviceName,
-        coordinates: coordinates,
-        registeredSinkNode: registeredSinkNode
+      deviceID: deviceInfo['deviceID'],
+      deviceName: deviceInfo['deviceName'],
+      coordinates: deviceInfo['coordinates'],
+      registeredSinkNode: deviceInfo['sinkNodeID']
     );
   }
 }
@@ -77,7 +77,7 @@ class SensorNodeSnapshot {
     required this.batteryLevel,
   });
 
-  factory SensorNodeSnapshot.json(Map<String, dynamic> data) {
+  factory SensorNodeSnapshot.fromJSON(Map<String, dynamic> data) {
     return SensorNodeSnapshot._internal(
       deviceID: data['deviceID'],
       timestamp: data['timestamp'],
@@ -99,7 +99,7 @@ class SinkNodeSnapshot {
     required this.batteryLevel
   });
 
-  factory SinkNodeSnapshot.json(Map<String, dynamic> data) {
+  factory SinkNodeSnapshot.fromJSON(Map<String, dynamic> data) {
     return SinkNodeSnapshot._internal(
       deviceID: data['deviceID'],
       batteryLevel: data['batteryLevel']

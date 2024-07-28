@@ -28,7 +28,7 @@ class _SensorNodePageState extends State<SensorNodePage> {
           IconButton(
             padding: EdgeInsets.all(19),
             onPressed: () => {},
-            icon: Icon(Icons.edit_outlined, size: 21, color: Colors.black,),
+            icon: Icon(Icons.edit_outlined, size: 21, color: Colors.black),
           ),
         ],
       ),
@@ -37,7 +37,7 @@ class _SensorNodePageState extends State<SensorNodePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SensorNodeCardExpanded(deviceID: widget.deviceID),
-            //LineChart(),
+            LineChart(deviceID: widget.deviceID),
           ],
         ),
       ),
