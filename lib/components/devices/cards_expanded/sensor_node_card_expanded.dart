@@ -32,7 +32,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
   Widget build(BuildContext context) {
     double height = MediaQuery.sizeOf(context).height;
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+      margin: EdgeInsets.symmetric(vertical: 15),
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 15),
       height: 450,
       decoration: BoxDecoration(

@@ -32,15 +32,35 @@ class _SensorNodePageState extends State<SensorNodePage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SensorNodeCardExpanded(deviceID: widget.deviceID),
-            LineChart(deviceID: widget.deviceID),
-          ],
+      body: Container(
+        padding: EdgeInsets.only(left: 25, right: 25),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SensorNodeCardExpanded(deviceID: widget.deviceID),
+              Container(
+                margin: EdgeInsets.only(bottom: 25),
+                padding: EdgeInsets.only(bottom: 15, top: 10),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.all(Radius.circular(15)),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          spreadRadius: 0,
+                          blurRadius: 4,
+                          offset: Offset(0, 4)
+                      )
+                    ]
+                ),
+                height: 300,
+                child: LineChart(deviceID: widget.deviceID),
+              ),
+            ],
+          ),
         ),
-      ),
+      )
     );
   }
 }
