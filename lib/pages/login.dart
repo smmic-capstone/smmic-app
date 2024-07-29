@@ -37,20 +37,20 @@ class _LoginPageState extends State<LoginPage> {
         if(!mounted) return;
         showDialog(context: context,
             builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Login Error'),
-            content: const Text('Please Enter Username and Password'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
+              return AlertDialog(
+                title: const Text('Login Error'),
+                content: const Text('Please Enter Username and Password'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
+              );
 
-        });
+            });
       }else if(response.statusCode == 401 && context.mounted) {
         if(!mounted) return;
         showDialog(context: context,

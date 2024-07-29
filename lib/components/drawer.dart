@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:smmic/pages/accountinfo.dart';
 
 class ComponentDrawer extends StatefulWidget {
   const ComponentDrawer({super.key});
@@ -22,8 +23,13 @@ class ComponentDrawerState extends State<ComponentDrawer> {
           ),
           GestureDetector(
             onTap: () {},
-            child: const ListTile(
-                leading: Icon(Icons.person), title: Text('Manage Account')),
+            child: ListTile(
+                leading: const Icon(Icons.person), title: Text('Manage Account'),
+            onTap: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const ManageAccount()
+                  ));
+              },
+            ),
           )
         ],
       ),
