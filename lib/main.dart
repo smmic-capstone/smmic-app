@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:smmic/pages/accountinfo.dart';
+import 'package:provider/provider.dart';
 import 'package:smmic/pages/login.dart';
+import 'package:smmic/provide/provide.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -11,9 +13,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: ManageAccount(),
+    return ChangeNotifierProvider(
+      create: (BuildContext context) => UiProvider()..init(),
+      child:
+          Consumer<UiProvider>(builder: (context, UiProvider notifier, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          themeMode: notifier.isDark ? ThemeMode.dark : ThemeMode.light,
+          darkTheme: notifier.isDark ? notifier.darktheme : notifier.lightTheme,
+          theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
+          home: const LoginPage(),
+        );
+      }),
     );
   }
 }
