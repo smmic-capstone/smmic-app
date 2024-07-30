@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
           darkTheme: notifier.isDark ? notifier.darktheme : notifier.lightTheme,
           theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
-          home: const LoginPage(),
+          home: const Devices(),
         );
       }),
     );
