@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class DigitalDisplay extends StatefulWidget {
-  const DigitalDisplay({super.key, required this.value, required this.valueType});
+  const DigitalDisplay({super.key, required this.data, required this.type});
 
-  final String valueType;
-  final dynamic value;
+  final String type;
+  final dynamic data;
 
   @override
   State<DigitalDisplay> createState() => _DigitalDisplayState();
@@ -28,15 +28,15 @@ class _DigitalDisplayState extends State<DigitalDisplay> {
           children: [
             RichText(
               text: TextSpan(
-                text: widget.value.toInt().toString(),
+                text: widget.data.toInt().toString(),
                 style: TextStyle(fontSize: 24, fontFamily: 'Inter', color: Colors.black),
                 children: [
                   TextSpan(
-                    text: widget.valueType == 'temperature' ? '°C\n' : widget.valueType == 'soil moisture' || widget.valueType == 'humidity' ? '%\n' : '?\n',
+                    text: widget.type == 'temperature' ? '°C\n' : widget.type == 'soil moisture' || widget.type == 'humidity' ? '%\n' : '?\n',
                     style: const TextStyle(fontSize: 14, fontFamily: 'Inter')
                   ),
                   TextSpan(
-                  text: widget.valueType == 'soil moisture' ? 'Soil Moisture' : widget.valueType == 'temperature' ? 'Temperature' : widget.valueType == 'humidity' ? 'Humidity' : 'Unkown',
+                  text: widget.type == 'soil moisture' ? 'Soil Moisture' : widget.type == 'temperature' ? 'Temperature' : widget.type == 'humidity' ? 'Humidity' : 'Unkown',
                     style: const TextStyle(fontSize:9, fontFamily: 'Inter')
                   )
                 ]

@@ -1,19 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:smmic/providers/devices_providers.dart';
-import 'package:smmic/pages/devices.dart';
 import 'package:smmic/pages/login.dart';
+import 'package:smmic/provide/provide.dart';
 
 void main() {
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
-        ChangeNotifierProvider<DeviceOptionsNotifier>(create: (_) => DeviceOptionsNotifier())
-      ],
-      child: MyApp(),
-    )
-  );
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -21,9 +13,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Devices()//LoginPage(),
+    return ChangeNotifierProvider(
+      create: (BuildContext context) => UiProvider()..init(),
+      child:
+          Consumer<UiProvider>(builder: (context, UiProvider notifier, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          themeMode: notifier.isDark ? ThemeMode.dark : ThemeMode.light,
+          darkTheme: notifier.isDark ? notifier.darktheme : notifier.lightTheme,
+          theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
+          home: const LoginPage(),
+        );
+      }),
     );
   }
 }

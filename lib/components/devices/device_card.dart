@@ -86,12 +86,12 @@ Widget sensorNode(Map<String, dynamic> data) {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     DigitalDisplay(
-                      value: data['temperature'],
-                      valueType: 'temperature',
+                      data: data['temperature'],
+                      type: 'temperature',
                     ),
                     DigitalDisplay(
-                      value: data['humidity'],
-                      valueType: 'humidity',
+                      data: data['humidity'],
+                      type: 'humidity',
                     )
                   ],
                 ),
@@ -101,7 +101,7 @@ Widget sensorNode(Map<String, dynamic> data) {
                 child: Container(
                     alignment: Alignment.center,
                     child: RadialGauge(
-                        valueType: 'sm',
+                        data: 'sm',
                         value: data['soilMoisture'] * 1.0,
                         limit: 100
                     )

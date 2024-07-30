@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
 import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/pages/register.dart';
@@ -32,25 +33,28 @@ class _LoginPageState extends State<LoginPage> {
         if (!mounted) return;
         final jsonData = jsonDecode(response.body);
         String token = jsonData['access'];
+
+        SharedPreferences userToken = await SharedPreferences.getInstance();
+        await userToken.setString('token', token);
         Navigator.push(context, MaterialPageRoute(builder: (context) => const MyBottomNav(indexPage: 0)));
       }else if(response.statusCode == 400 && context.mounted) {
         if(!mounted) return;
         showDialog(context: context,
             builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Login Error'),
-            content: const Text('Please Enter Username and Password'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
+              return AlertDialog(
+                title: const Text('Login Error'),
+                content: const Text('Please Enter Username and Password'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
+              );
 
-        });
+            });
       }else if(response.statusCode == 401 && context.mounted) {
         if(!mounted) return;
         showDialog(context: context,
