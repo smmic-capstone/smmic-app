@@ -15,7 +15,7 @@ class _DeviceState extends State<Device> {
 
   @override
   Widget build(BuildContext context) {
-    Color? bgColor = Color.fromRGBO(239, 239, 239, 1.0);
+    Color? bgColor = const Color.fromRGBO(239, 239, 239, 1.0);
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
