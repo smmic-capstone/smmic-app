@@ -41,7 +41,6 @@ class _SensorNodePageState extends State<SensorNodePage> {
               SensorNodeCardExpanded(deviceID: widget.deviceID),
               Container(
                 margin: EdgeInsets.only(bottom: 25),
-                padding: EdgeInsets.only(bottom: 15, top: 10),
                 decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.all(Radius.circular(15)),
@@ -54,7 +53,7 @@ class _SensorNodePageState extends State<SensorNodePage> {
                       )
                     ]
                 ),
-                height: 300,
+                height: 315,
                 child: LineChart(deviceID: widget.deviceID),
               ),
             ],
