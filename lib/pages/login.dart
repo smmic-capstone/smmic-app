@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
 import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/pages/register.dart';
@@ -32,6 +33,9 @@ class _LoginPageState extends State<LoginPage> {
         if (!mounted) return;
         final jsonData = jsonDecode(response.body);
         String token = jsonData['access'];
+
+        SharedPreferences userToken = await SharedPreferences.getInstance();
+        await userToken.setString('token', token);
         Navigator.push(context, MaterialPageRoute(builder: (context) => const MyBottomNav(indexPage: 0)));
       }else if(response.statusCode == 400 && context.mounted) {
         if(!mounted) return;
