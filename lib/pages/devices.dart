@@ -31,7 +31,6 @@ class _Devices extends State<Devices> {
         backgroundColor: bgColor,
         title: const Text('Devices'),
         centerTitle: true,
-        automaticallyImplyLeading: false,
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 20),

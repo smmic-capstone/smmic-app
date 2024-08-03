@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:jwt_decode/jwt_decode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
 import 'package:smmic/pages/dashboard.dart';
@@ -22,7 +23,7 @@ class _LoginPageState extends State<LoginPage> {
   bool obscurepassword = true;
 
   Future<void> loginUser() async {
-    String baseURL = 'http://127.0.0.1:8000/api';
+    String baseURL = 'http://10.0.2.2:8000/api';
     final String loginURL = '$baseURL/auth/jwt/create/';
     try{
       final response = await http.post(Uri.parse(loginURL), body: {
@@ -33,7 +34,7 @@ class _LoginPageState extends State<LoginPage> {
         if (!mounted) return;
         final jsonData = jsonDecode(response.body);
         String token = jsonData['access'];
-
+        print(Jwt.parseJwt(jsonData['access'].toString()));
         SharedPreferences userToken = await SharedPreferences.getInstance();
         await userToken.setString('token', token);
         Navigator.push(context, MaterialPageRoute(builder: (context) => const MyBottomNav(indexPage: 0)));
@@ -90,6 +91,7 @@ class _LoginPageState extends State<LoginPage> {
             });
       }
     }catch(error){
+      print(error);
       if(!mounted) return;
       showDialog(context: context,
           builder: (BuildContext context) {

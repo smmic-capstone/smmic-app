@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:smmic/providers/devices_providers.dart';
 import 'package:smmic/pages/devices.dart';
 import 'package:smmic/pages/login.dart';
-import 'package:smmic/provide/provide.dart';
+import 'package:smmic/providers/theme_provider.dart';
+import 'package:smmic/providers/user_data_providers.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,9 +12,10 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
-        ChangeNotifierProvider<DeviceOptionsNotifier>(create: (_) => DeviceOptionsNotifier())
+        ChangeNotifierProvider<DeviceOptionsNotifier>(create: (_) => DeviceOptionsNotifier()),
+        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
       ],
-      child: MyApp(),
+      child: const MyApp(),
     )
   );
 }
@@ -33,7 +35,7 @@ class MyApp extends StatelessWidget {
           darkTheme: notifier.isDark ? notifier.darktheme : notifier.lightTheme,
           theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
-          home: const Devices(),
+          home: const LoginPage(),
         );
       }),
     );

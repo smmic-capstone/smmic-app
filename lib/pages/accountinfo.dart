@@ -27,7 +27,7 @@ class _ManageAccount extends State<ManageAccount>{
   final setPasswordController = TextEditingController();
 
   Future<Map<String,dynamic>> getUserDetails() async {
-    String baseURL = 'http://127.0.0.1:8000/api';
+    String baseURL = 'http://10.0.2.2:8000/api';
     String apiURL = '$baseURL/djoser/users/me/';
     SharedPreferences userToken = await SharedPreferences.getInstance();
     String? token = userToken.getString('token');
@@ -72,7 +72,7 @@ class _ManageAccount extends State<ManageAccount>{
           String firstName = userJsonData['first_name'];
           String lastName = userJsonData ['last_name'];
           String profilePicture = userJsonData["profilepic"];
-
+          print (userJsonData['UID']);
           return Scaffold(
             backgroundColor: bgColor,
             appBar: AppBar(
