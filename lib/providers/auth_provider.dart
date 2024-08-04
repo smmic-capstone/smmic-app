@@ -20,7 +20,6 @@ class AuthProvider extends ChangeNotifier {
 
   //Dependencies
   final AuthUtils _authUtils = AuthUtils();
-  final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
 
   ///Returns the access data
   UserAccess? _accessData;

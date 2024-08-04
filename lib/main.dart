@@ -27,6 +27,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.read<AuthProvider>().init();
     return ChangeNotifierProvider(
       create: (BuildContext context) => UiProvider()..init(),
       child:

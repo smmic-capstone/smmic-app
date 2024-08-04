@@ -86,5 +86,4 @@ class AuthUtils {
       throw Exception(e);
     }
   }
-
 }

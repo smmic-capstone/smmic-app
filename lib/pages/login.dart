@@ -125,7 +125,8 @@ class _LoginPageState extends State<LoginPage> {
                             }
                             context.read<AuthProvider>().setAccess(token: token['access']);
                           }
-                        })),
+                        })
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(top: 150),
