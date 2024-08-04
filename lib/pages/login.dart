@@ -207,7 +207,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: MyButton(onTap: () async {
                           String? token = await _authService.login(email: emailController.text, password: passController.text);
                           if (context.mounted) {
-                            context.read<AuthProvider>().createAccess(token: token!);
+                            context.read<AuthProvider>().setAccess(token: token!);
                             context.read<AuthProvider>().setAccessStatus();
                           }
                         })),

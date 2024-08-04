@@ -28,6 +28,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.read<AuthProvider>().init();
     return ChangeNotifierProvider(
       create: (BuildContext context) => UiProvider()..init(),
       child:
@@ -37,7 +38,7 @@ class MyApp extends StatelessWidget {
           themeMode: notifier.isDark ? ThemeMode.dark : ThemeMode.light,
           darkTheme: notifier.isDark ? notifier.darktheme : notifier.lightTheme,
           theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
-          home: context.watch<AuthProvider>().accessStatus == TokenStatus.valid ? const DashBoard() : LoginPage(),
+          home: context.watch<AuthProvider>().accessStatus == TokenStatus.valid ? const DashBoard() : const LoginPage(),
         );
       }),
     );
