@@ -30,7 +30,7 @@ class _ManageAccount extends State<ManageAccount>{
     String baseURL = 'http://10.0.2.2:8000/api';
     String apiURL = '$baseURL/djoser/users/me/';
     SharedPreferences userToken = await SharedPreferences.getInstance();
-    String? token = userToken.getString('token');
+    String? token = userToken.getString('access');
 
     if (token == null) {
       throw Exception("No token found");

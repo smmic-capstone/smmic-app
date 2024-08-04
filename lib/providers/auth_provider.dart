@@ -5,29 +5,46 @@ import 'package:smmic/utils/auth_utils.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
 import 'package:smmic/utils/shared_prefs.dart';
 
+///Specifies current status of the token
 enum TokenStatus {
   pending, /// Pending verification from API
   valid, /// Validated from API
-  invalid, /// Unvalidated from API
+  invalid, /// Invalid token
   expired, /// Expired token
   unverified, /// Cannot verify
+  forceLogin ///
 }
 
 class AuthProvider extends ChangeNotifier {
   final AuthUtils _authUtils = AuthUtils();
-  final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
 
   UserAccess? _accessData; //= init()['data'];
-  TokenStatus _accessStatus = TokenStatus.unverified;
+  TokenStatus? _accessStatus;
 
   ///Returns current access data
   UserAccess? get accessData => _accessData;
 
   ///Returns current access status
-  TokenStatus get accessStatus => _accessStatus;
-
+  TokenStatus? get accessStatus => _accessStatus;
+  
+  Future<void> init() async {
+    Map<String, dynamic> initData = await _authUtils.initAccess();
+    Map<String, dynamic> parsedToken = Jwt.parseJwt(initData['token']);
+    if (_checkSessionInstance(parsedToken) != null){
+      return;
+    }
+    _accessData = UserAccess.fromJSON({
+      'token' : initData['token'],
+      'user_id' : parsedToken['user_id'],
+      'token_identifier' : parsedToken['jti'],
+      'created' : parsedToken['iat'],
+      'expires' : parsedToken['exp']
+    });
+    _accessStatus = initData['status'];
+  }
+  
   //Create a session object with the session token
-  Future<void> createAccess({required String token}) async {
+  Future<void> setAccess({required String token}) async {
     Map<String, dynamic> parsedToken = Jwt.parseJwt(token);
     if (_checkSessionInstance(parsedToken) != null) {
       return;
@@ -44,7 +61,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> setAccessStatus() async {
     if(_accessData != null) {
-      _accessStatus = await _authUtils.verifyToken(token: _accessData!.token);
+      _accessStatus = await _authUtils.verifyToken(token: _accessData!.token, refresh: false);
     }
     //TODO: handle if invalid, expired or unverified
     notifyListeners();
@@ -54,7 +71,6 @@ class AuthProvider extends ChangeNotifier {
   UserAccess? _checkSessionInstance(Map<String, dynamic> parsedToken) {
     if (_accessData != null) {
       if (_accessData!.tokenIdentifier == parsedToken['jti']) {
-        print('duplicate access');
         return _accessData;
       }
       if (_accessData!.expires.compareTo(DateTimeFormatting().fromJWTSeconds(parsedToken['exp'])) > 0) {
