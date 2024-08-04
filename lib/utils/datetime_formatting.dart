@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class DatetimeFormatting {
+class DateTimeFormatting {
   String _dateFormat = 'yyyy-MM-dd';
   String _timeFormat = 'h:mma';
   String _dateTimeFormat = 'yyyy-MM-dd HH:mm';
@@ -19,5 +19,9 @@ class DatetimeFormatting {
 
   String formatDate(DateTime dateTime) {
     return DateFormat(_dateFormat).format(dateTime);
+  }
+  
+  DateTime fromJWTSeconds(num dateTime) {
+    return DateTime.fromMillisecondsSinceEpoch(dateTime.toInt() * 1000);
   }
 }

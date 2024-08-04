@@ -29,7 +29,7 @@ class SinkNode extends Device {
   }) : super();
 
   //TODO: add logic to check if a device already exists (caching or from shared prefs)
-  factory SinkNode.factory(Map<String, dynamic> deviceInfo) {
+  factory SinkNode.fromJSON(Map<String, dynamic> deviceInfo) {
     return SinkNode._internal(
       deviceID: deviceInfo['deviceID'],
       deviceName: deviceInfo['deviceName'],
