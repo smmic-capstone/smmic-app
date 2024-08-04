@@ -15,8 +15,7 @@ void main() {
       providers: [
         ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
         ChangeNotifierProvider<DeviceOptionsNotifier>(create: (_) => DeviceOptionsNotifier()),
-        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
-
+        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()..init()),
       ],
       child: const MyApp(),
     )
@@ -28,7 +27,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    context.read<AuthProvider>().init();
     return ChangeNotifierProvider(
       create: (BuildContext context) => UiProvider()..init(),
       child:

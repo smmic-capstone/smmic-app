@@ -12,6 +12,7 @@ import 'package:smmic/services/auth_services.dart';
 import 'package:smmic/subcomponents/login/mybutton.dart';
 import 'package:smmic/subcomponents/login/textfield.dart';
 import 'package:http/http.dart' as http;
+import 'package:smmic/utils/auth_utils.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -24,96 +25,8 @@ class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passController = TextEditingController();
   final AuthService _authService = AuthService();
+  final AuthUtils _authUtils = AuthUtils();
   bool obscurepassword = true;
-
-  // Future<void> loginUser() async {
-  //   String baseURL = 'http://10.0.2.2:8000/api';
-  //   final String loginURL = '$baseURL/auth/jwt/create/';
-  //   try{
-  //     final response = await http.post(Uri.parse(loginURL), body: {
-  //       'email' : emailController.text,
-  //       'password' : passController.text
-  //     });
-  //     if (response.statusCode == 200 && context.mounted) {
-  //       if (!mounted) return;
-  //       final jsonData = jsonDecode(response.body);
-  //       String token = jsonData['access'];
-  //       SharedPreferences userToken = await SharedPreferences.getInstance();
-  //       await userToken.setString('token', token);
-  //       Navigator.push(context, MaterialPageRoute(builder: (context) => const MyBottomNav(indexPage: 0)));
-  //     }else if(response.statusCode == 400 && context.mounted) {
-  //       if(!mounted) return;
-  //       showDialog(context: context,
-  //           builder: (BuildContext context) {
-  //             return AlertDialog(
-  //               title: const Text('Login Error'),
-  //               content: const Text('Please Enter Username and Password'),
-  //               actions: [
-  //                 TextButton(
-  //                   onPressed: () {
-  //                     Navigator.of(context).pop();
-  //                   },
-  //                   child: const Text('OK'),
-  //                 ),
-  //               ],
-  //             );
-  //
-  //           });
-  //     }else if(response.statusCode == 401 && context.mounted) {
-  //       if(!mounted) return;
-  //       showDialog(context: context,
-  //           builder: (BuildContext context) {
-  //             return AlertDialog(
-  //               title: const Text('Login Error'),
-  //               content: const Text('Wrong Username or Password'),
-  //               actions: [
-  //                 TextButton(
-  //                   onPressed: () {
-  //                     Navigator.of(context).pop();
-  //                   },
-  //                   child: const Text('OK'),
-  //                 ),
-  //               ],
-  //             );
-  //           });
-  //     }else if(response.statusCode == 500 && context.mounted) {
-  //       if(!mounted) return;
-  //       showDialog(context: context,
-  //           builder: (BuildContext context) {
-  //             return AlertDialog(
-  //               title: const Text('Server Error'),
-  //               actions: [
-  //                 TextButton(
-  //                   onPressed: () {
-  //                     Navigator.of(context).pop();
-  //                   },
-  //                   child: const Text('OK'),
-  //                 ),
-  //               ],
-  //             );
-  //           });
-  //     }
-  //   }catch(error){
-  //     print(error);
-  //     if(!mounted) return;
-  //     showDialog(context: context,
-  //         builder: (BuildContext context) {
-  //           return AlertDialog(
-  //             title: const Text('Server Error'),
-  //             actions: [
-  //               TextButton(
-  //                 onPressed: () {
-  //                   Navigator.of(context).pop();
-  //                 },
-  //                 child: const Text('OK'),
-  //               ),
-  //             ],
-  //           );
-  //         });
-  //   }
-  // }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -205,10 +118,12 @@ class _LoginPageState extends State<LoginPage> {
                     child: Align(
                         alignment: Alignment.centerRight,
                         child: MyButton(onTap: () async {
-                          String? token = await _authService.login(email: emailController.text, password: passController.text);
-                          if (context.mounted) {
-                            context.read<AuthProvider>().setAccess(token: token!);
-                            context.read<AuthProvider>().setAccessStatus();
+                          Map<String, dynamic>? token = await _authService.login(email: emailController.text, password: passController.text);
+                          if (context.mounted && token != null) {
+                            if (token['status'] == TokenStatus.forceLogin) {
+                              _authUtils.forceLogin(context);
+                            }
+                            context.read<AuthProvider>().setAccess(token: token['access']);
                           }
                         })),
                   ),

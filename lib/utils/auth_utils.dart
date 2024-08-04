@@ -1,20 +1,38 @@
 import 'dart:convert';
-
+import 'package:flutter/material.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:smmic/constants/api.dart';
+import 'package:smmic/pages/login.dart';
 import 'package:smmic/providers/auth_provider.dart'; //Token status
 import 'package:http/http.dart' as http;
 import 'package:smmic/utils/datetime_formatting.dart';
 import 'package:smmic/utils/shared_prefs.dart';
 
-///Authentication utilities, contains all reusable functions for authentication purposes, mainly token handling (`verify token`, `initialize access token object`, `refresh access token`)
+///Authentication utilities, contains all reusable functions for authentication purposes, mainly token handling tokens (`verify token`, `initialize access token object`, `refresh access token`)
 class AuthUtils {
   final ApiRoutes _apiRoutes = ApiRoutes();
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
   final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
 
+  ///Parses a JWT token and returns a map with keys: `token`, `user_id`, `token_id`, `created`, `expires`. Will return a null value of the token is null.
+  Map<String, dynamic>? parseToken({String? token}){
+    Map<String, dynamic> mapped = {};
+    if (token == null || token == ''){
+      return null;
+    }
+    Map<String, dynamic> parsed = Jwt.parseJwt(token);
+    mapped.addAll({
+      'token': token,
+      'user_id': parsed['user_id'],
+      'token_id': parsed['jti'],
+      'created': parsed['iat'],
+      'expires': parsed['exp']
+    });
+    return mapped;
+  }
+
   ///Verifies token validity from api. Returns `TokenStatus` enums, useful for validating access from and to database
-  Future<TokenStatus> verifyToken({required String? token, required bool refresh}) async {
+  Future<TokenStatus> verifyToken({required String? token, bool refresh = false}) async {
     if (token == null){
       return refresh ? TokenStatus.invalid : TokenStatus.forceLogin;
     }
@@ -43,38 +61,30 @@ class AuthUtils {
     return refreshStatus == TokenStatus.forceLogin;
   }
 
-  ///Refreshes access token. If `refresh` itself is invalid, expired, or does not exist `refresh` will force a re-login
+  Future<dynamic> forceLogin(BuildContext context) {
+    return Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => const LoginPage(),
+      ),
+    );
+  }
+
+  ///Refreshes access token. Returns null if `refresh` is invalid, expired, or does not exist
   Future<String?> refresh({required String refresh}) async {
     try{
-      final response = await http.post(Uri.parse(_apiRoutes.refreshToken), body: {'refresh':refresh});
+      final response = await http.post(Uri.parse(_apiRoutes.refreshToken), body: {'refresh': refresh});
       if(response.statusCode == 400 || response.statusCode == 401) {
         throw Exception('error on AuthUtils.refresh: check `refresh` header or refreshToken validity');
       }
       if(response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        _sharedPrefsUtils.setAccess(jsonData['access']);
+        await _sharedPrefsUtils.setToken(tokens: {Tokens.access: jsonData['access']});
+        return jsonData['access'];
       }
       return null;
     } catch(e) {
       throw Exception(e);
     }
-  }
-
-  ///Initializes the access object from the access data stored in SharedPrefs. Calls 'refresh' for the access if access is expired, returns a 'status' = `TokenStatus.forceLogin` if refresh is null
-  Future<Map<String, dynamic>> initAccess() async {
-      String? accessToken = await _sharedPrefsUtils.getAccess();
-      String? refreshToken = await _sharedPrefsUtils.getRefresh();
-      bool forceLogin = await forceLoginCheck(refresh: refreshToken);
-      if (forceLogin){
-        return {'token':null, 'status':TokenStatus.forceLogin};
-      }
-      TokenStatus accessStatus = await verifyToken(token: accessToken, refresh: false);
-      if (accessStatus != TokenStatus.valid){
-        String? newAccess = await refresh(refresh: refreshToken!);
-        TokenStatus newAccessStatus = await verifyToken(token: newAccess, refresh: false);
-        return {'token':newAccess, 'status': newAccessStatus};
-      }
-      return {'token':accessToken, 'status':accessStatus};
   }
 
 }

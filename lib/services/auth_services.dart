@@ -16,7 +16,7 @@ class AuthService {
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
   final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
 
-  Future<String>? login({required String email, required String password}) async {
+  Future<Map<String, dynamic>>? login({required String email, required String password}) async {
     try{
       final response = await http.post(Uri.parse(_apiRoutes.login), body: {
         'email' : email,
@@ -24,20 +24,31 @@ class AuthService {
       });
       // 500 error code
       if (response.statusCode == 500){
-        return response.statusCode.toString();
+        return {'error_code': response.statusCode.toString()};
       }
-
       // if wrong credentials
       if(response.statusCode == 401){
-        return response.statusCode.toString();
+        return {'error_code': response.statusCode.toString()};
       }
-
       // successful
       if (response.statusCode == 200){
         final jsonData = jsonDecode(response.body);
-        await _sharedPrefsUtils.setAccess(jsonData['access']);
-        await _sharedPrefsUtils.setRefresh(jsonData['refresh']);
-        return jsonData['access'];
+        TokenStatus verifyAccess = await _authUtils.verifyToken(token: jsonData['access'], refresh: false);
+        TokenStatus verifyRefresh = await _authUtils.verifyToken(token: jsonData['refresh'], refresh: true);
+        if (verifyRefresh != TokenStatus.valid) {
+          return {'error_code':'refresh_token_invalid'};
+        }
+        if (verifyAccess != TokenStatus.valid) {
+          String? access = await _authUtils.refresh(refresh: jsonData['refresh']);
+          if (access != null){
+            await _sharedPrefsUtils.setToken(tokens: {Tokens.refresh: jsonData['refresh'], Tokens.access: access});
+            return {'access' : access, 'status' : verifyAccess};
+          }
+        }
+        if (verifyAccess == TokenStatus.valid) {
+          await _sharedPrefsUtils.setToken(tokens: {Tokens.refresh: jsonData['refresh'], Tokens.access: jsonData['access']});
+          return {'access' : jsonData['access'], 'status' : verifyAccess};
+        }
       }
     } catch(error) {
       //TODO: define error handling

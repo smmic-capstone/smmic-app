@@ -1,45 +1,41 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/models/auth_models.dart';
 
+enum Tokens{
+  refresh,
+  access
+}
+
 class SharedPrefsUtils {
-  ///Checks if an access token already exists in the SharedPreferences, stores new token or replaces token if not
-  Future<void> setAccess(String access) async {
-    try {
-      SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-      if (sharedPreferences.getString('access') == access) {
-        return;
-      }
-      await sharedPreferences.setString('access', access);
-    } catch(error) {
-      Exception(error);
-    }
-  }
-
-  ///Get the access token from shared prefs, returns null if sharedprefs has no 'token' key or if 'token' is null
-  Future<String?> getAccess() async {
+  ///Gets `refresh` and `access` tokens from SharedPreferences. Returns both tokens by default
+  Future<Map<String, dynamic>> getTokens({bool? refresh, bool? access}) async {
+    Map<String, dynamic> tokens = {};
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    try {
-      if (!sharedPreferences.containsKey('access') || sharedPreferences.getString('access') == null) {
-        return null;
-      }
-      return sharedPreferences.getString('access');
-    } catch(error) {
-      Exception(error);
-      return null;
+    String? refreshToken = sharedPreferences.getString('refresh');
+    String? accessToken = sharedPreferences.getString('access');
+    if(refresh == null && access == null){
+      tokens.addAll({'refresh':refreshToken, 'access':accessToken});
+      return tokens;
     }
+    if(refresh != null && refresh){
+      tokens.addAll({'refresh':refreshToken});
+    }
+    if(access != null && access){
+      tokens.addAll({'access':accessToken});
+    }
+    return tokens;
   }
 
-  ///Checks if a refresh token already exists in the SharedPreferences, stores new token or replaces token if not
-  Future<void> setRefresh(String refresh) async {
-    try {
-      SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-      if (sharedPreferences.getString('refresh') == refresh) {
-        return;
-      }
-      await sharedPreferences.setString('refresh', refresh);
-    } catch(error) {
-      Exception(error);
+  ///Stores tokens to SharedPreferences
+  Future<void> setToken({required Map<Tokens, dynamic> tokens}) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    if (tokens.containsKey(Tokens.refresh) && tokens[Tokens.refresh] != null){
+      await sharedPreferences.setString('refresh', tokens[Tokens.refresh]);
     }
+    if(tokens.containsKey(Tokens.access) && tokens[Tokens.access] != null){
+      await sharedPreferences.setString('access', tokens[Tokens.access]);
+    }
+    return;
   }
 
   ///Get the refresh token from shared prefs, returns null if sharedprefs has no 'token' key or if 'token' is null
