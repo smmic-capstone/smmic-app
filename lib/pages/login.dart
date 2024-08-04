@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
 import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/pages/register.dart';
 import 'package:smmic/subcomponents/login/mybutton.dart';
 import 'package:smmic/subcomponents/login/textfield.dart';
+import 'package:http/http.dart' as http;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,6 +20,95 @@ class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passController = TextEditingController();
   bool obscurepassword = true;
+
+  Future<void> loginUser() async {
+    String baseURL = 'http://127.0.0.1:8000/api';
+    final String loginURL = '$baseURL/auth/jwt/create/';
+    try{
+      final response = await http.post(Uri.parse(loginURL), body: {
+        'email' : emailController.text,
+        'password' : passController.text
+      });
+      if (response.statusCode == 200 && context.mounted) {
+        if (!mounted) return;
+        final jsonData = jsonDecode(response.body);
+        String token = jsonData['access'];
+
+        SharedPreferences userToken = await SharedPreferences.getInstance();
+        await userToken.setString('token', token);
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const MyBottomNav(indexPage: 0)));
+      }else if(response.statusCode == 400 && context.mounted) {
+        if(!mounted) return;
+        showDialog(context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Login Error'),
+                content: const Text('Please Enter Username and Password'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
+              );
+
+            });
+      }else if(response.statusCode == 401 && context.mounted) {
+        if(!mounted) return;
+        showDialog(context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Login Error'),
+                content: const Text('Wrong Username or Password'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
+              );
+            });
+      }else if(response.statusCode == 500 && context.mounted) {
+        if(!mounted) return;
+        showDialog(context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Server Error'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
+              );
+            });
+      }
+    }catch(error){
+      if(!mounted) return;
+      showDialog(context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Server Error'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          });
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -107,12 +200,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: Align(
                         alignment: Alignment.centerRight,
                         child: Mybutton(onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const MyBottomNav(
-                                        indexPage: 0,
-                                      )));
+                          loginUser();
                         })),
                   ),
                   Padding(

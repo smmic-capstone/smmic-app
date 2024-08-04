@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/device_name.dart';
 import 'package:smmic/subcomponents/devices/digital_display.dart';
-import 'package:syncfusion_flutter_gauges/gauges.dart';
+import 'package:smmic/subcomponents/devices/gauge.dart';
 
 class DeviceCard extends StatefulWidget {
   const DeviceCard({super.key, required this.deviceData});
@@ -30,12 +30,12 @@ class _DeviceCardState extends State<DeviceCard> {
                     color: Colors.black.withOpacity(0.06),
                     spreadRadius: 0,
                     blurRadius: 4,
-                    offset: Offset(0, 4))
-              ]),
+                    offset: Offset(0, 4)
+                )
+              ]
+          ),
           height: 160,
-          child: isSinkNode(widget.deviceData['id'])
-              ? sinkNode(widget.deviceData)
-              : sensorNode(widget.deviceData),
+          child: isSinkNode(widget.deviceData['id']) ? sinkNode(widget.deviceData) : sensorNode(widget.deviceData),
         ),
         Container(
           padding: const EdgeInsets.only(right: 37, top: 12),
@@ -66,7 +66,9 @@ Widget sensorNode(Map<String, dynamic> data) {
         child: Column(
           children: [
             Expanded(
-                flex: 3, child: DeviceName(deviceName: data['deviceName'])),
+              flex: 3,
+              child: DeviceName(deviceName: data['deviceName'])
+            ),
             Expanded(
               flex: 1,
               child: BatteryLevel(batteryLevel: data['batteryLevel']),
@@ -84,12 +86,12 @@ Widget sensorNode(Map<String, dynamic> data) {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     DigitalDisplay(
-                      data: data['temperature'],
-                      type: 'temperature',
+                      value: data['temperature'],
+                      valueType: 'temperature',
                     ),
                     DigitalDisplay(
-                      data: data['humidity'],
-                      type: 'humidity',
+                      value: data['humidity'],
+                      valueType: 'humidity',
                     )
                   ],
                 ),
@@ -97,65 +99,17 @@ Widget sensorNode(Map<String, dynamic> data) {
               Expanded(
                 flex: 4,
                 child: Container(
-                  alignment: Alignment.center,
-                  child: SfRadialGauge(
-                    axes: <RadialAxis>[
-                      RadialAxis(
-                        axisLineStyle: AxisLineStyle(
-                            thickness: 8,
-                            color: Color.fromRGBO(216, 216, 216, 1),
-                            cornerStyle: CornerStyle.bothCurve),
-                        radiusFactor: 0.95,
-                        showTicks: false,
-                        showLabels: false,
-                        startAngle: 135,
-                        endAngle: 45,
-                        minimum: 0,
-                        maximum: 100,
-                        pointers: <GaugePointer>[
-                          RangePointer(
-                            value: data['soilMoisture'],
-                            cornerStyle: CornerStyle.bothCurve,
-                            width: 8,
-                            color: Colors.red,
-                          )
-                        ],
-                        annotations: <GaugeAnnotation>[
-                          GaugeAnnotation(
-                              positionFactor: 0,
-                              widget: RichText(
-                                text: TextSpan(
-                                    text: data['soilMoisture'].toString(),
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 30,
-                                    ),
-                                    children: [
-                                      TextSpan(
-                                          text: '%',
-                                          style: TextStyle(fontSize: 17))
-                                    ]),
-                              )),
-                          GaugeAnnotation(
-                            angle: 90,
-                            positionFactor: 0.8,
-                            widget: Text(
-                              'Soil\nMoisture',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontFamily: 'Inter',
-                              ),
-                            ),
-                          )
-                        ],
-                      )
-                    ],
-                  ),
+                    alignment: Alignment.center,
+                    child: RadialGauge(
+                        valueType: 'sm',
+                        value: data['soilMoisture'] * 1.0,
+                        limit: 100
+                    )
                 ),
               )
             ],
-          )),
+          )
+      ),
     ],
   );
 }
@@ -168,10 +122,12 @@ Widget sinkNode(Map<String, dynamic> data) {
         child: Column(
           children: [
             Expanded(
-                flex: 3, child: DeviceName(deviceName: data['deviceName'])),
+              flex: 3,
+              child: DeviceName(deviceName: data['deviceName'])
+            ),
             Expanded(
               flex: 1,
-              child: BatteryLevel(batteryLevel: data['batteryLevel']),
+              child: BatteryLevel(batteryLevel: data['batteryLevel'])
             )
           ],
         ),

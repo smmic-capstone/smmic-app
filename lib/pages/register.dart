@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smmic/pages/login.dart';
 import 'package:smmic/subcomponents/register/mybuttonRegister.dart';
 import 'package:smmic/subcomponents/register/textfieldRegister.dart';
+import 'package:http/http.dart' as http;
 
 class Register extends StatefulWidget {
   const Register({super.key});
@@ -14,13 +15,41 @@ class _RegisterState extends State<Register> {
   final firstname = TextEditingController();
   final lastname = TextEditingController();
   final province = TextEditingController();
-  final barangay = TextEditingController();
   final city = TextEditingController();
+  final barangay = TextEditingController();
   final zone = TextEditingController();
   final zipcode = TextEditingController();
   final emailController = TextEditingController();
   final passController = TextEditingController();
+  final confirmPassController = TextEditingController();
   bool obscurepassword = true;
+
+  Future<void> registerUser () async {
+    String baseURL = 'http://127.0.0.1:8000/api';
+    final String registerURL = '$baseURL/djoser/users/';
+
+    try{
+      final response = await http.post(Uri.parse(registerURL), body: {
+        'first_name' : firstname.text,
+        'last_name' : lastname.text,
+        'province' : province.text,
+        'city' : city.text,
+        'barangay' : barangay.text,
+        'zone' : zone.text,
+        'zip_code' : zipcode.text,
+        'email' : emailController.text,
+        'password' : passController.text,
+        're_password' : confirmPassController.text
+    });
+      if (response.statusCode == 201 && context.mounted){
+        if(!mounted) return;
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginPage()
+        ));
+      }
+    }catch(error){
+      print('Error registering: $error');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -155,8 +184,8 @@ class _RegisterState extends State<Register> {
                   Padding(
                     padding: const EdgeInsets.all(10),
                     child: MyTextField(
-                      labelText: 'Confirm ',
-                      controller: passController,
+                      labelText: 'Confirm Password',
+                      controller: confirmPassController,
                       hintText: 'Enter confirm Password',
                       obscuretext: obscurepassword,
                       suffixIcon: Padding(
@@ -194,7 +223,9 @@ class _RegisterState extends State<Register> {
                     padding: const EdgeInsets.only(right: 30, top: 20),
                     child: Align(
                         alignment: Alignment.centerRight,
-                        child: Mybutton(onTap: () {})),
+                        child: Mybutton(onTap: () {
+                          registerUser();
+                        })),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(top: 50, bottom: 50),
