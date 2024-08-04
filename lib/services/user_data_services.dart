@@ -26,7 +26,6 @@ class UserDataServices {
   }
 
   Future<Map<String, dynamic>?> getUserInfo({required String token}) async {
-
     try{
       final response = await http.get(
           Uri.parse(_apiRoutes.getUserData),
@@ -42,7 +41,6 @@ class UserDataServices {
     } catch(error) {
       return {'error': error};
     }
-
     return null;
   }
 

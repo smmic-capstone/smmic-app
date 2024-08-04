@@ -15,8 +15,7 @@ void main() {
       providers: [
         ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
         ChangeNotifierProvider<DeviceOptionsNotifier>(create: (_) => DeviceOptionsNotifier()),
-        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
-
+        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()..init()),
       ],
       child: const MyApp(),
     )
