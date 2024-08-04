@@ -2,10 +2,13 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:jwt_decode/jwt_decode.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
 import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/pages/register.dart';
+import 'package:smmic/providers/auth_provider.dart';
+import 'package:smmic/services/auth_services.dart';
 import 'package:smmic/subcomponents/login/mybutton.dart';
 import 'package:smmic/subcomponents/login/textfield.dart';
 import 'package:http/http.dart' as http;
@@ -20,95 +23,95 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool obscurepassword = true;
 
-  Future<void> loginUser() async {
-    String baseURL = 'http://10.0.2.2:8000/api';
-    final String loginURL = '$baseURL/auth/jwt/create/';
-    try{
-      final response = await http.post(Uri.parse(loginURL), body: {
-        'email' : emailController.text,
-        'password' : passController.text
-      });
-      if (response.statusCode == 200 && context.mounted) {
-        if (!mounted) return;
-        final jsonData = jsonDecode(response.body);
-        String token = jsonData['access'];
-        print(Jwt.parseJwt(jsonData['access'].toString()));
-        SharedPreferences userToken = await SharedPreferences.getInstance();
-        await userToken.setString('token', token);
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const MyBottomNav(indexPage: 0)));
-      }else if(response.statusCode == 400 && context.mounted) {
-        if(!mounted) return;
-        showDialog(context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text('Login Error'),
-                content: const Text('Please Enter Username and Password'),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
-              );
-
-            });
-      }else if(response.statusCode == 401 && context.mounted) {
-        if(!mounted) return;
-        showDialog(context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text('Login Error'),
-                content: const Text('Wrong Username or Password'),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
-              );
-            });
-      }else if(response.statusCode == 500 && context.mounted) {
-        if(!mounted) return;
-        showDialog(context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text('Server Error'),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
-              );
-            });
-      }
-    }catch(error){
-      print(error);
-      if(!mounted) return;
-      showDialog(context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Server Error'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            );
-          });
-    }
-  }
+  // Future<void> loginUser() async {
+  //   String baseURL = 'http://10.0.2.2:8000/api';
+  //   final String loginURL = '$baseURL/auth/jwt/create/';
+  //   try{
+  //     final response = await http.post(Uri.parse(loginURL), body: {
+  //       'email' : emailController.text,
+  //       'password' : passController.text
+  //     });
+  //     if (response.statusCode == 200 && context.mounted) {
+  //       if (!mounted) return;
+  //       final jsonData = jsonDecode(response.body);
+  //       String token = jsonData['access'];
+  //       SharedPreferences userToken = await SharedPreferences.getInstance();
+  //       await userToken.setString('token', token);
+  //       Navigator.push(context, MaterialPageRoute(builder: (context) => const MyBottomNav(indexPage: 0)));
+  //     }else if(response.statusCode == 400 && context.mounted) {
+  //       if(!mounted) return;
+  //       showDialog(context: context,
+  //           builder: (BuildContext context) {
+  //             return AlertDialog(
+  //               title: const Text('Login Error'),
+  //               content: const Text('Please Enter Username and Password'),
+  //               actions: [
+  //                 TextButton(
+  //                   onPressed: () {
+  //                     Navigator.of(context).pop();
+  //                   },
+  //                   child: const Text('OK'),
+  //                 ),
+  //               ],
+  //             );
+  //
+  //           });
+  //     }else if(response.statusCode == 401 && context.mounted) {
+  //       if(!mounted) return;
+  //       showDialog(context: context,
+  //           builder: (BuildContext context) {
+  //             return AlertDialog(
+  //               title: const Text('Login Error'),
+  //               content: const Text('Wrong Username or Password'),
+  //               actions: [
+  //                 TextButton(
+  //                   onPressed: () {
+  //                     Navigator.of(context).pop();
+  //                   },
+  //                   child: const Text('OK'),
+  //                 ),
+  //               ],
+  //             );
+  //           });
+  //     }else if(response.statusCode == 500 && context.mounted) {
+  //       if(!mounted) return;
+  //       showDialog(context: context,
+  //           builder: (BuildContext context) {
+  //             return AlertDialog(
+  //               title: const Text('Server Error'),
+  //               actions: [
+  //                 TextButton(
+  //                   onPressed: () {
+  //                     Navigator.of(context).pop();
+  //                   },
+  //                   child: const Text('OK'),
+  //                 ),
+  //               ],
+  //             );
+  //           });
+  //     }
+  //   }catch(error){
+  //     print(error);
+  //     if(!mounted) return;
+  //     showDialog(context: context,
+  //         builder: (BuildContext context) {
+  //           return AlertDialog(
+  //             title: const Text('Server Error'),
+  //             actions: [
+  //               TextButton(
+  //                 onPressed: () {
+  //                   Navigator.of(context).pop();
+  //                 },
+  //                 child: const Text('OK'),
+  //               ),
+  //             ],
+  //           );
+  //         });
+  //   }
+  // }
 
 
 
@@ -201,8 +204,12 @@ class _LoginPageState extends State<LoginPage> {
                     padding: const EdgeInsets.only(right: 30, top: 20),
                     child: Align(
                         alignment: Alignment.centerRight,
-                        child: Mybutton(onTap: () {
-                          loginUser();
+                        child: MyButton(onTap: () async {
+                          String? token = await _authService.login(email: emailController.text, password: passController.text);
+                          if (context.mounted) {
+                            context.read<AuthProvider>().createAccess(token: token!);
+                            context.read<AuthProvider>().setAccessStatus();
+                          }
                         })),
                   ),
                   Padding(

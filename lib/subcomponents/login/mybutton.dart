@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 
-class Mybutton extends StatelessWidget {
+class MyButton extends StatefulWidget {
+  const MyButton({super.key, required this.onTap});
   final Function()? onTap;
-  const Mybutton({super.key, required this.onTap});
+
+  @override
+  State<MyButton> createState() => _MyButtonState();
+}
+
+class _MyButtonState extends State<MyButton> {
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: SizedBox(
         width: 150,
         height: 45,

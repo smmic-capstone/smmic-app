@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smmic/models/device_data_models.dart';
-import 'package:smmic/services/datetime_formatting.dart';
+import 'package:smmic/utils/datetime_formatting.dart';
 import 'package:smmic/services/devices/sensor_data.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
@@ -15,7 +15,7 @@ class LineChart extends StatefulWidget {
 
 class _LineChartState extends State<LineChart> {
 
-  final DatetimeFormatting _dateTimeFormatting = DatetimeFormatting();
+  final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
 
   final List<Map<String, dynamic>> data = [
     {'name': 'soil moisture', 'legendTitle' : 'Soil Moisture (%)', 'type' : 'percentage',},

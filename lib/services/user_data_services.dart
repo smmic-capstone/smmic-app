@@ -1,9 +1,6 @@
 import 'dart:convert';
-import 'dart:math';
-
-import 'package:provider/provider.dart';
 import 'package:smmic/constants/api.dart';
-import 'package:smmic/providers/user_data_providers.dart';
+import 'package:smmic/providers/auth_provider.dart';
 import 'package:http/http.dart' as http;
 
 List<String> mockSinkNodesList = [
@@ -18,7 +15,6 @@ Map<String, List<String>> mockSensorNodesList = {
 
 class UserDataServices {
   final ApiRoutes _apiRoutes = ApiRoutes();
-  final AuthProvider _authProvider = AuthProvider();
 
   //TODO: refactor when api is up
   List<String> getSensorNodes(String sinkNodeID) {
@@ -33,7 +29,7 @@ class UserDataServices {
 
     try{
       final response = await http.get(
-          Uri.parse(_apiRoutes.getUserURL),
+          Uri.parse(_apiRoutes.getUserData),
         headers: {"Authorization":"Bearer $token"}
       );
       // if error

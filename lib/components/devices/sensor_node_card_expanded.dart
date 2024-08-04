@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smmic/models/device_data_models.dart';
-import 'package:smmic/services/datetime_formatting.dart';
+import 'package:smmic/utils/datetime_formatting.dart';
 import 'package:smmic/services/devices/sensor_data.dart';
 import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/gauge.dart';
@@ -16,7 +16,7 @@ class SensorNodeCardExpanded extends StatefulWidget {
 class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
 
   late SensorNodeSnapshot _sensorNodeSnapshot;
-  DatetimeFormatting _dateTimeFormatting = DatetimeFormatting();
+  DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
 
   @override
   void initState() {
