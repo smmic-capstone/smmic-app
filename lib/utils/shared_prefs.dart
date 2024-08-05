@@ -10,7 +10,6 @@ enum Tokens{
 
 class SharedPrefsUtils {
   final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
-
   ///Gets `refresh` and `access` tokens from SharedPreferences. Returns both tokens by default
   Future<Map<String, dynamic>> getTokens({bool? refresh, bool? access}) async {
     Map<String, dynamic> tokens = {};
@@ -66,18 +65,4 @@ class SharedPrefsUtils {
     await sharedPreferences.remove('access');
     await sharedPreferences.remove('login');
   }
-
-  ///Get the refresh token from shared prefs, returns null if sharedprefs has no 'token' key or if 'token' is null
-  // Future<String?> getRefresh() async {
-  //   try {
-  //     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-  //     if (!sharedPreferences.containsKey('refresh') || sharedPreferences.getString('refresh') == null) {
-  //       return null;
-  //     }
-  //     return sharedPreferences.getString('refresh');
-  //   } catch(error) {
-  //     Exception(error);
-  //     return null;
-  //   }
-  // }
 }

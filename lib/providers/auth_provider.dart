@@ -64,6 +64,7 @@ class AuthProvider extends ChangeNotifier {
       _accessStatus = accessStatus;
     }
     notifyListeners();
+    return;
   }
 
   Future<void> setAccess({required String token}) async {
