@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/components/drawer.dart';
 import 'package:smmic/components/grid/gridbox.dart';
+import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/subcomponents/weatherComponents/weatherWidgets.dart';
 import 'package:smmic/models/weather_models.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/services/weather_service.dart';
+import 'package:smmic/utils/global_navigator.dart';
 
 class DashBoard extends StatefulWidget {
   const DashBoard({super.key});
@@ -17,6 +19,8 @@ class DashBoard extends StatefulWidget {
 class _DashBoardState extends State<DashBoard> {
   @override
   Widget build(BuildContext context) {
+    //On app startup, if logged in already
+    TokenStatus? accessStatus = context.watch<AuthProvider>().accessStatus;
     return Scaffold(
       appBar: AppBar(
         title: const Text(

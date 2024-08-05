@@ -1,8 +1,11 @@
+import 'dart:math';
+
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:smmic/models/auth_models.dart';
 import 'package:flutter/material.dart';
 import 'package:smmic/utils/auth_utils.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
+import 'package:smmic/utils/global_navigator.dart';
 import 'package:smmic/utils/shared_prefs.dart';
 
 ///Specifies current status of the token
@@ -20,6 +23,8 @@ class AuthProvider extends ChangeNotifier {
 
   //Dependencies
   final AuthUtils _authUtils = AuthUtils();
+  final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
+  final GlobalNavigator _globalNavigator = locator<GlobalNavigator>();
 
   ///Returns the access data
   UserAccess? _accessData;
@@ -30,17 +35,21 @@ class AuthProvider extends ChangeNotifier {
   TokenStatus? get accessStatus => _accessStatus;
 
   Future<void> init() async {
+    String? login = await _sharedPrefsUtils.getLogin();
+    if(login == null) return;
     Map<String, dynamic> tokens = await _sharedPrefsUtils.getTokens();
-    bool forceLogin = await _authUtils.forceLoginCheck(refresh: tokens['refresh']);
-    if(forceLogin){
+    print(tokens['refresh']);
+    TokenStatus refreshStatus = await _authUtils.verifyToken(token: tokens['refresh'], refresh: true);
+    if(refreshStatus == TokenStatus.forceLogin){
       _accessData = null;
       _accessStatus = TokenStatus.forceLogin;
+      _globalNavigator.forceLoginDialog();
       notifyListeners();
       return;
     }
     TokenStatus accessStatus = await _authUtils.verifyToken(token: tokens['access']);
     if (accessStatus != TokenStatus.valid) {
-      String? newAccess = await _authUtils.refresh(refresh: tokens['refresh']);
+      String? newAccess = await _authUtils.refreshAccessToken(refresh: tokens['refresh']);
       if (newAccess != null) {
         Map<String, dynamic>? newMapped = _authUtils.parseToken(token: newAccess);
         _accessData = UserAccess.fromJSON(newMapped!);
@@ -74,10 +83,10 @@ class AuthProvider extends ChangeNotifier {
     if (_accessData == null) {
       return null;
     }
-    if (_accessData!.tokenIdentifier == parsedToken['jti']) {
+    if (_accessData!.tokenIdentifier == parsedToken['token_id']) {
       return _accessData;
     }
-    DateTime expires = DateTimeFormatting().fromJWTSeconds(parsedToken['exp']);
+    DateTime expires = DateTimeFormatting().fromJWTSeconds(parsedToken['expires']);
     if (_accessData!.expires.isAfter(expires)) {
       return _accessData;
     }

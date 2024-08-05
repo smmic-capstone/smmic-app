@@ -34,7 +34,7 @@ class AuthUtils {
   ///Verifies token validity from api. Returns `TokenStatus` enums, useful for validating access from and to database
   Future<TokenStatus> verifyToken({required String? token, bool refresh = false}) async {
     if (token == null){
-      return refresh ? TokenStatus.invalid : TokenStatus.forceLogin;
+      return refresh ? TokenStatus.forceLogin : TokenStatus.invalid;
     }
     Map<String, dynamic> parsed = Jwt.parseJwt(token);
     DateTime expires = _dateTimeFormatting.fromJWTSeconds(parsed['exp']);
@@ -55,30 +55,19 @@ class AuthUtils {
     return TokenStatus.unverified;
   }
 
-  ///Returns true if forced login is required
-  Future<bool> forceLoginCheck({required String?  refresh}) async {
-    TokenStatus refreshStatus = await verifyToken(token: refresh, refresh: true);
-    return refreshStatus == TokenStatus.forceLogin;
-  }
-
-  Future<dynamic> forceLogin(BuildContext context) {
-    return Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => const LoginPage(),
-      ),
-    );
-  }
-
-  ///Refreshes access token. Returns null if `refresh` is invalid, expired, or does not exist
-  Future<String?> refresh({required String refresh}) async {
+  ///Refreshes access token and stores the new token in SharedPreferences. Returns null if `refresh` is invalid, expired, or does not exist.
+  ///
+  ///Handle null value using forceLogin or other error handling functions to avoid the funny
+  Future<String?> refreshAccessToken({required String refresh}) async {
     try{
       final response = await http.post(Uri.parse(_apiRoutes.refreshToken), body: {'refresh': refresh});
       if(response.statusCode == 400 || response.statusCode == 401) {
+        //TODO: refactor error handling
         throw Exception('error on AuthUtils.refresh: check `refresh` header or refreshToken validity');
       }
       if(response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        await _sharedPrefsUtils.setToken(tokens: {Tokens.access: jsonData['access']});
+        await _sharedPrefsUtils.setTokens(tokens: {Tokens.access: jsonData['access']});
         return jsonData['access'];
       }
       return null;

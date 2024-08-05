@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 class Device {
   final String deviceID;
   String deviceName;

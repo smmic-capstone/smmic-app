@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:smmic/constants/api.dart';
-import 'package:smmic/providers/auth_provider.dart';
 import 'package:http/http.dart' as http;
 
 List<String> mockSinkNodesList = [
