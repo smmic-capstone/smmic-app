@@ -38,15 +38,14 @@ class AuthService {
         if (verifyRefresh != TokenStatus.valid) {
           return {'error_code':'refresh_token_invalid'};
         }
+        String? newAccess;
         if (verifyAccess != TokenStatus.valid) {
-          String? access = await _authUtils.refresh(refresh: jsonData['refresh']);
-          if (access != null){
-            await _sharedPrefsUtils.setToken(tokens: {Tokens.refresh: jsonData['refresh'], Tokens.access: access});
-            return {'access' : access, 'status' : verifyAccess};
-          }
+          newAccess = await _authUtils.refreshAccessToken(refresh: jsonData['refresh']);
+          verifyAccess = await _authUtils.verifyToken(token: newAccess);
         }
         if (verifyAccess == TokenStatus.valid) {
-          await _sharedPrefsUtils.setToken(tokens: {Tokens.refresh: jsonData['refresh'], Tokens.access: jsonData['access']});
+          await _sharedPrefsUtils.setTokens(tokens: {Tokens.refresh: jsonData['refresh'], Tokens.access: newAccess ?? jsonData['access']});
+          await _sharedPrefsUtils.setLoginFromRefresh(refresh: jsonData['refresh']);
           return {'access' : jsonData['access'], 'status' : verifyAccess};
         }
       }

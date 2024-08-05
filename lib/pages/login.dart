@@ -5,6 +5,7 @@ import 'package:jwt_decode/jwt_decode.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
+import 'package:smmic/main.dart';
 import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/pages/register.dart';
 import 'package:smmic/providers/auth_provider.dart';
@@ -120,10 +121,11 @@ class _LoginPageState extends State<LoginPage> {
                         child: MyButton(onTap: () async {
                           Map<String, dynamic>? token = await _authService.login(email: emailController.text, password: passController.text);
                           if (context.mounted && token != null) {
-                            if (token['status'] == TokenStatus.forceLogin) {
-                              _authUtils.forceLogin(context);
-                            }
+                            // if (token['status'] == TokenStatus.forceLogin) {
+                            //   _authUtils.forceLogin(context);
+                            // }
                             context.read<AuthProvider>().setAccess(token: token['access']);
+                            Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const AuthGate()), (route) => false);
                           }
                         })
                     ),
