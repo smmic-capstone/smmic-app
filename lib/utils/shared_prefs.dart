@@ -8,6 +8,10 @@ enum Tokens{
   access
 }
 
+
+List<String> _userDataKeys = ['UID', 'first_name', 'last_name', 'province', 'city', 'barangay', 'zone', 'zip_code', 'email', 'password', 'profilepic'];
+
+///SharedPreferences Utilities for setting and getting data from the SharedPreferences
 class SharedPrefsUtils {
   final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
   ///Gets `refresh` and `access` tokens from SharedPreferences. Returns both tokens by default
@@ -66,8 +70,43 @@ class SharedPrefsUtils {
     await sharedPreferences.remove('login');
   }
 
-  Future<void> userData({required Map<String,dynamic> userInfo}) async {
+  /// Stores Map of `user_data` to SharedPreferences as `List<String>`
+  Future<void> setUserData({required Map<String,dynamic> userInfo}) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    await sharedPreferences.setStringList('user_info',userInfo.keys.map((item) => userInfo[item].toString()).toList());
+    if(userInfo.keys.toList() != _userDataKeys){
+      throw ('error: User data Map keys provided to SharedPrefsUtils.setUserData did match registered user_data keys');
+    }
+    await sharedPreferences.setStringList('user_data', userInfo.keys.map((item) => userInfo[item].toString()).toList());
+  }
+
+
+  // [UID, first_name, last_name, province, city, barangay, zone, zip_code, email, password, profilepic]
+  /// Returns the user data stored from SharedPreferences as a Map.
+  ///
+  /// Returns a null of the `user_data` from SharedPreferences is empty.
+  ///
+  /// Returns an 'error' key if the registered `keys` length does not match with the retrieved String List length from SharedPreferences
+  Future<Map<String, dynamic>?> getUserData() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    if (!sharedPreferences.containsKey('user_data')){
+      return null;
+    }
+    if (sharedPreferences.getStringList('user_data') != null){
+      List<String> userData = sharedPreferences.getStringList('user_data')!;
+      return _userDataMapper(userData);
+    }
+    throw('An unexpected error has occurred on SharedPrefsUtils.getStringList');
+  }
+
+  /// Maps the StringList that `getUserData()` returns
+  Map<String, dynamic> _userDataMapper(List<String> userData) {
+    if(userData.length != _userDataKeys.length){
+      return {'error':'userData and keys length not matched, check userData contents'};
+    }
+    Map<String, dynamic> userMapped = {};
+    for(int i = 0; i < _userDataKeys.length; i++){
+      userMapped.addAll({_userDataKeys[i]:userData[i]});
+    }
+    return userMapped;
   }
 }

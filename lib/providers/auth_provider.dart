@@ -38,7 +38,6 @@ class AuthProvider extends ChangeNotifier {
     String? login = await _sharedPrefsUtils.getLogin();
     if(login == null) return;
     Map<String, dynamic> tokens = await _sharedPrefsUtils.getTokens();
-    print(tokens['refresh']);
     TokenStatus refreshStatus = await _authUtils.verifyToken(token: tokens['refresh'], refresh: true);
     if(refreshStatus == TokenStatus.forceLogin){
       _accessData = null;
@@ -67,14 +66,14 @@ class AuthProvider extends ChangeNotifier {
     return;
   }
 
-  Future<void> setAccess({required String token}) async {
-    Map<String, dynamic> parsedToken = _authUtils.parseToken(token: token)!;
+  /// Sets new access data for AuthProvider. If accessStatus is not provided, will verify token using AuthUtils.verifyToken
+  Future<void> setAccess({required String access, TokenStatus? accessStatus}) async {
+    Map<String, dynamic> parsedToken = _authUtils.parseToken(token: access)!;
     if (_checkSessionInstance(parsedToken) != null) {
       return;
     } else {
-      TokenStatus accessStatus = await _authUtils.verifyToken(token: token);
-      _accessData = UserAccess.fromJSON(_authUtils.parseToken(token: token)!);
-      _accessStatus = accessStatus;
+      _accessData = UserAccess.fromJSON(_authUtils.parseToken(token: access)!);
+      _accessStatus = accessStatus ?? await _authUtils.verifyToken(token: access);
     }
     notifyListeners();
   }

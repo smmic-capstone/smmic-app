@@ -1,6 +1,6 @@
 /// Defines API constants (routes, configs if any)
 class ApiRoutes {
-  final String _baseURL = 'http://localhost:8000/api';
+  final String _baseURL = 'http://10.0.2.2:8000/api';
   final String _loginURL = '/auth/jwt/create/';
   final String _logoutURL = '/blacklist';
   final String _registerURL = '/djoser/users/';

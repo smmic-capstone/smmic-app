@@ -1,14 +1,12 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:smmic/constants/api.dart';
-import 'package:smmic/pages/login.dart';
 import 'package:smmic/providers/auth_provider.dart'; //Token status
 import 'package:http/http.dart' as http;
 import 'package:smmic/utils/datetime_formatting.dart';
 import 'package:smmic/utils/shared_prefs.dart';
 
-///Authentication utilities, contains all reusable functions for authentication purposes, mainly token handling tokens (`verify token`, `initialize access token object`, `refresh access token`)
+///Authentication utilities, contains all reusable functions for authentication purposes, mainly token handling (`verify token`, `refresh access token`)
 class AuthUtils {
   final ApiRoutes _apiRoutes = ApiRoutes();
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
@@ -58,7 +56,7 @@ class AuthUtils {
   ///Refreshes access token and stores the new token in SharedPreferences. Returns null if `refresh` is invalid, expired, or does not exist.
   ///
   ///Handle null value using forceLogin or other error handling functions to avoid the funny
-  Future<String?> refreshAccessToken({required String refresh}) async {
+  Future<String?> refreshAccessToken({required String refresh, bool setAccess = false}) async {
     try{
       final response = await http.post(Uri.parse(_apiRoutes.refreshToken), body: {'refresh': refresh});
       if(response.statusCode == 400 || response.statusCode == 401) {

@@ -3,6 +3,7 @@ import 'package:jwt_decode/jwt_decode.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:http/http.dart' as http;
 import 'package:smmic/providers/auth_provider.dart';
+import 'package:smmic/providers/user_data_provider.dart';
 import 'package:smmic/utils/auth_utils.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
 import 'package:smmic/utils/shared_prefs.dart';
@@ -11,7 +12,7 @@ import 'package:smmic/utils/shared_prefs.dart';
 class AuthService {
 
   final ApiRoutes _apiRoutes = ApiRoutes();
-  final AuthProvider _authProvider = AuthProvider();
+  final UserDataProvider _userDataProvider = UserDataProvider();
   final AuthUtils _authUtils = AuthUtils();
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
   final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
@@ -46,6 +47,7 @@ class AuthService {
         if (verifyAccess == TokenStatus.valid) {
           await _sharedPrefsUtils.setTokens(tokens: {Tokens.refresh: jsonData['refresh'], Tokens.access: newAccess ?? jsonData['access']});
           await _sharedPrefsUtils.setLoginFromRefresh(refresh: jsonData['refresh']);
+          _userDataProvider.init();
           return {'access' : jsonData['access'], 'status' : verifyAccess};
         }
       }

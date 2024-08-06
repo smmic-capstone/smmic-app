@@ -20,7 +20,8 @@ void main() {
         ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
         ChangeNotifierProvider<DeviceOptionsNotifier>(create: (_) => DeviceOptionsNotifier()),
         ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()..init()),
-        ChangeNotifierProvider<UserDataProvider>(create: (_) => UserDataProvider()..init())
+        ChangeNotifierProvider<UserDataProvider>(create: (_) => UserDataProvider()),
+        ChangeNotifierProvider<UiProvider>(create: (_) => UiProvider()..init())
       ],
       child: const MyApp(),
     )
@@ -31,18 +32,13 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (BuildContext context) => UiProvider()..init(),
-      child: Consumer<UiProvider>(builder: (context, UiProvider notifier, child) {
-        return MaterialApp(
-          navigatorKey: locator<GlobalNavigator>().navigatorKey,
-          debugShowCheckedModeBanner: false,
-          themeMode: notifier.isDark ? ThemeMode.dark : ThemeMode.light,
-          darkTheme: notifier.isDark ? notifier.darktheme : notifier.lightTheme,
-          theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
-          home: const AuthGate(),
-        );
-      }),
+    return MaterialApp(
+      navigatorKey: locator<GlobalNavigator>().navigatorKey,
+      debugShowCheckedModeBanner: false,
+      themeMode: context.watch<UiProvider>().isDark ? ThemeMode.dark : ThemeMode.light,
+      darkTheme: context.watch<UiProvider>().isDark ? context.watch<UiProvider>().darktheme : context.watch<UiProvider>().lightTheme,
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
+      home: const AuthGate(),
     );
   }
 }
@@ -72,7 +68,7 @@ class _AuthGateState extends State<AuthGate> {
       future: _onStartupLogin(),
       builder: (context, AsyncSnapshot<bool> loginOnStartup) {
         if (loginOnStartup.connectionState == ConnectionState.waiting) {
-          //TODO: imlement loading screen
+          //TODO: implement loading screen
           return Container(
             color: Colors.white,
             child: const Center(child: CircularProgressIndicator()),
@@ -87,6 +83,8 @@ class _AuthGateState extends State<AuthGate> {
           if(loginOnStartup.data!){
             return const LoginPage();
           }
+          // initiate user data when logged in
+          context.read<UserDataProvider>().init();
           return const DashBoard();
         }
         return const Center(
