@@ -5,8 +5,8 @@ class UserDataProvider extends ChangeNotifier {
   User? _user;
   User? get user => _user;
 
-  void initUser({required Map<String, dynamic> userData}) {
-    _user = User.fromJson(userData);
+  void init() {
+    //_user = User.fromJson(userData);
   }
 
 }
