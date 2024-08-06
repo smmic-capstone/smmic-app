@@ -6,6 +6,7 @@ import 'package:smmic/providers/devices_providers.dart';
 import 'package:smmic/pages/login.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/providers/auth_provider.dart';
+import 'package:smmic/providers/user_data_provider.dart';
 import 'package:smmic/utils/auth_utils.dart';
 import 'package:smmic/utils/global_navigator.dart';
 import 'package:smmic/utils/shared_prefs.dart';
@@ -18,7 +19,8 @@ void main() {
       providers: [
         ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
         ChangeNotifierProvider<DeviceOptionsNotifier>(create: (_) => DeviceOptionsNotifier()),
-        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()..init())
+        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()..init()),
+        ChangeNotifierProvider<UserDataProvider>(create: (_) => UserDataProvider()..init())
       ],
       child: const MyApp(),
     )

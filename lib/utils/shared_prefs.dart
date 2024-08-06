@@ -65,4 +65,9 @@ class SharedPrefsUtils {
     await sharedPreferences.remove('access');
     await sharedPreferences.remove('login');
   }
+
+  Future<void> userData({required Map<String,dynamic> userInfo}) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    await sharedPreferences.setStringList('user_info',userInfo.keys.map((item) => userInfo[item].toString()).toList());
+  }
 }
