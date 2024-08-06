@@ -9,6 +9,7 @@ import 'package:smmic/main.dart';
 import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/pages/register.dart';
 import 'package:smmic/providers/auth_provider.dart';
+import 'package:smmic/providers/user_data_provider.dart';
 import 'package:smmic/services/auth_services.dart';
 import 'package:smmic/subcomponents/login/mybutton.dart';
 import 'package:smmic/subcomponents/login/textfield.dart';
@@ -124,7 +125,8 @@ class _LoginPageState extends State<LoginPage> {
                             // if (token['status'] == TokenStatus.forceLogin) {
                             //   _authUtils.forceLogin(context);
                             // }
-                            context.read<AuthProvider>().setAccess(token: token['access']);
+                            context.read<AuthProvider>().setAccess(access: token['access'], accessStatus: TokenStatus.valid);
+                            context.read<UserDataProvider>().init();
                             Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const AuthGate()), (route) => false);
                           }
                         })

@@ -3,6 +3,7 @@ class User {
   String firstName;
   String lastName;
   String email;
+  String password;
   String zipCode;
   String zone;
   String barangay;
@@ -17,6 +18,7 @@ class User {
     required this.firstName,
     required this.lastName,
     required this.email,
+    required this.password,
     required this.zipCode,
     required this.zone,
     required this.barangay,
@@ -31,6 +33,7 @@ class User {
         firstName: userData['first_name'],
         lastName: userData['last_name'],
         email: userData['email'],
+        password: userData['password'],
         zipCode: userData['zip_code'],
         zone: userData['zone'],
         barangay: userData['barangay'],

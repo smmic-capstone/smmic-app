@@ -39,7 +39,7 @@ class UserDataServices {
       if(accessStatus != TokenStatus.valid){
         Map<String,dynamic> refresh = await _sharedPrefsUtils.getTokens(refresh: true);
         accessToken = await _authUtils.refreshAccessToken(refresh: refresh['refresh']);
-        await _authProvider.setAccess(token: accessToken!);
+        await _authProvider.setAccess(access: accessToken!);
       }
 
       final response = await http.get(
