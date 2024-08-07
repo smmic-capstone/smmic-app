@@ -9,7 +9,10 @@ import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/providers/user_data_provider.dart';
 import 'package:smmic/utils/auth_utils.dart';
 import 'package:smmic/utils/global_navigator.dart';
+import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
+
+final Logs _logs = Logs(tag: 'Main.dart');
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -84,6 +87,7 @@ class _AuthGateState extends State<AuthGate> {
             return const LoginPage();
           }
           // initiate user data when logged in
+          _logs.info(message: 'AuthPage() => UserDataProvider.init()');
           context.read<UserDataProvider>().init();
           return const DashBoard();
         }

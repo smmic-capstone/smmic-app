@@ -33,7 +33,7 @@ class _Devices extends State<Devices> {
         centerTitle: true,
         actions: const [
           Padding(
-            padding: EdgeInsets.only(right: 20),
+            padding: EdgeInsets.only(right: 10),
             child: BottomDrawerButton(),
           )
         ],

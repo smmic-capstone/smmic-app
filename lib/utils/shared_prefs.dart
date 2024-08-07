@@ -8,6 +8,23 @@ enum Tokens{
   access
 }
 
+enum UserFields{
+  uid('UID'),
+  firstName('first_name'),
+  lastName('last_name'),
+  province('province'),
+  city('city'),
+  barangay('barangay'),
+  zone('zone'),
+  zipCode('zip_code'),
+  email('email'),
+  password('password'),
+  profilePic('profilepic');
+
+  final String key;
+
+  const UserFields(this.key);
+}
 
 List<String> _userDataKeys = ['UID', 'first_name', 'last_name', 'province', 'city', 'barangay', 'zone', 'zip_code', 'email', 'password', 'profilepic'];
 
@@ -70,6 +87,7 @@ class SharedPrefsUtils {
     await sharedPreferences.remove('login');
   }
 
+  //TODO: rework how user data is stored to SharedPreferences (key:value pair dapat)
   /// Stores Map of `user_data` to SharedPreferences as `List<String>`
   Future<void> setUserData({required Map<String,dynamic> userInfo}) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -78,7 +96,6 @@ class SharedPrefsUtils {
     }
     await sharedPreferences.setStringList('user_data', userInfo.keys.map((item) => userInfo[item].toString()).toList());
   }
-
 
   // [UID, first_name, last_name, province, city, barangay, zone, zip_code, email, password, profilepic]
   /// Returns the user data stored from SharedPreferences as a Map.

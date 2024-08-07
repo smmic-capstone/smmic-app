@@ -24,7 +24,7 @@ class _BottomDrawerButtonState extends State<BottomDrawerButton> {
               onPressed: () {
                 _openBottomSheet(context);
                 },
-              icon: const Icon(Icons.settings)
+              icon: const Icon(Icons.more_horiz, size: 25)
           );
         });
   }
