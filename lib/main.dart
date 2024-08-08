@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/pages/dashboard.dart';
-import 'package:smmic/providers/devices_providers.dart';
+import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/pages/login.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/providers/auth_provider.dart';
@@ -21,7 +21,6 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
-        ChangeNotifierProvider<DeviceOptionsNotifier>(create: (_) => DeviceOptionsNotifier()),
         ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()..init()),
         ChangeNotifierProvider<UserDataProvider>(create: (_) => UserDataProvider()),
         ChangeNotifierProvider<UiProvider>(create: (_) => UiProvider()..init())
@@ -87,7 +86,7 @@ class _AuthGateState extends State<AuthGate> {
             return const LoginPage();
           }
           // initiate user data when logged in
-          _logs.info(message: 'AuthPage() => UserDataProvider.init()');
+          _logs.info(message: 'AuthPage() ---> UserDataProvider.init()');
           context.read<UserDataProvider>().init();
           return const DashBoard();
         }

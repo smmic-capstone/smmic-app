@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smmic/models/device_data_models.dart';
+import 'package:smmic/services/devices_services.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
-import 'package:smmic/services/devices/sensor_data.dart';
 import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/gauge.dart';
 
@@ -14,6 +14,7 @@ class SensorNodeCardExpanded extends StatefulWidget {
   State<SensorNodeCardExpanded> createState() => _SensorNodeCardExpandedState();
 }
 class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
+  final DevicesServices _devicesServices = DevicesServices();
 
   late SensorNodeSnapshot _sensorNodeSnapshot;
   DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
@@ -22,7 +23,8 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
   void initState() {
     super.initState();
     //TODO: assign proper id variable for 'getSnapshot', preferably move this out of the initState() function too
-    _sensorNodeSnapshot = SensorNodeDataServices().getSnapshot(widget.deviceID);
+    //TODO: use
+    _sensorNodeSnapshot = _devicesServices.getSensorSnapshot(id: widget.deviceID);
   }
 
   @override

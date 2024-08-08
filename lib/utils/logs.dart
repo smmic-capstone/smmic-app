@@ -1,14 +1,13 @@
 // FUNCTIONS THAT LOG THE EVENTS AND ONGOING FUNCTIONS TO TRACE POSSIBLE BUGS FOR EASIER DEBUGGING
 import 'package:ansicolor/ansicolor.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 
-/// Provides logging functions of different levels (`error`, `info`, `warning`, `critical`) Useful for logging processes that execute
+/// Provides a colorful terminal logger for different levels (`error`, `info`, `warning`, `critical`) Useful for logging processes that execute
 ///
 /// Provide a tag as context of the log (i.e. Service, Utility, Widgets), `message` should provide context of the log
 class Logs {
 
-  /// Provides logging functions of different levels (`error`, `info`, `warning`, `critical`) Useful for logging processes that execute
+  /// Provides a colorful terminal logger for different levels (`error`, `info`, `warning`, `critical`) Useful for logging processes that execute
   ///
   /// Provide a tag as context of the log (i.e. Service, Utility, Widgets), `message` should provide context of the log
   Logs({required this.tag});
@@ -43,6 +42,11 @@ class Logs {
 
   void warning({String message = 'Warning'}){
     _pen..reset()..xterm(202);
+    _writer(message: message, pen: _pen);
+  }
+
+  void success({String message = 'Sucess'}){
+    _pen..reset()..green();
     _writer(message: message, pen: _pen);
   }
 }

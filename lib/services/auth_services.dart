@@ -38,7 +38,7 @@ class AuthService {
         TokenStatus verifyAccess = await _authUtils.verifyToken(token: jsonData['access'], refresh: false);
         TokenStatus verifyRefresh = await _authUtils.verifyToken(token: jsonData['refresh'], refresh: true);
         if (verifyRefresh != TokenStatus.valid) {
-          return {'error_code':'refresh_token_invalid'};
+          return {'refresh_err':'refresh_token_invalid'};
         }
         String? newAccess;
         if (verifyAccess != TokenStatus.valid) {

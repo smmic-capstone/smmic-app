@@ -1,4 +1,4 @@
-import 'package:smmic/models/device_data_models.dart';
+part of '../devices_services.dart';
 
 Map<String, Map<String, dynamic>> _mockSensorNodeDataSnapshots = {
   'SEx0e9bmweebii5y' : {
@@ -72,30 +72,28 @@ Map<String, List<Map<String, dynamic>>> _mockSensorNodeTimeSeries = {
   ]
 };
 
-class SensorNodeDataServices {
-
+class _SensorNodeDataServices {
   //TODO: refactor when api is up
-  SensorNodeSnapshot getSnapshot(String deviceID) {
-    return SensorNodeSnapshot.fromJSON(_mockSensorNodeDataSnapshots[deviceID]!);
+  SensorNodeSnapshot getSnapshot(String id) {
+    return SensorNodeSnapshot.fromJSON(_mockSensorNodeDataSnapshots[id]!);
   }
 
-  SensorNode getInfo(String deviceID) {
-    if(_mockSensorNodeDataSnapshots[deviceID] != null) {
-      Map<String, dynamic> data = _mockSensorNodeDataSnapshots[deviceID]!;
+  SensorNode getInfo(String id) {
+    if(_mockSensorNodeDataSnapshots[id] != null) {
+      Map<String, dynamic> data = _mockSensorNodeDataSnapshots[id]!;
       return SensorNode.fromJSON(data);
     }
     throw Exception('Device ID not identified!');
   }
-
   // void updateInfo(Map<String, dynamic> newInfo) {
   //
   // }
 
-  List<SensorNodeSnapshot> getTimeSeries(String sensorNodeID) {
+  List<SensorNodeSnapshot> getTimeSeries(String id) {
     //TODO: refactor this code!!
-    if (_mockSensorNodeTimeSeries.keys.contains(sensorNodeID)){
-      return _mockSensorNodeTimeSeries[sensorNodeID]!.map((snapshot){
-        snapshot.addAll({'deviceID':sensorNodeID});
+    if (_mockSensorNodeTimeSeries.keys.contains(id)){
+      return _mockSensorNodeTimeSeries[id]!.map((snapshot){
+        snapshot.addAll({'deviceID':id});
         return SensorNodeSnapshot.fromJSON(snapshot);
       }).toList();
     } else {
@@ -105,5 +103,4 @@ class SensorNodeDataServices {
       }).toList();
     }
   }
-
 }

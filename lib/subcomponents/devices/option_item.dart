@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/models/device_data_models.dart';
-import 'package:smmic/providers/devices_providers.dart';
+import 'package:smmic/providers/device_settings_provider.dart';
 
 class OptionItem extends StatefulWidget {
   const OptionItem({super.key, required this.title, required this.subtitle, required this.condition, required this.logic, required this.enabledConditions});

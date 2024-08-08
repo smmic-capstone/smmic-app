@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:smmic/models/device_data_models.dart';
+import 'package:smmic/services/devices_services.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
-import 'package:smmic/services/devices/sensor_data.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
-class LineChart extends StatefulWidget {
-  const LineChart({super.key, required this.deviceID});
+class StackedLineChart extends StatefulWidget {
+  const StackedLineChart({super.key, required this.deviceID});
 
   final String deviceID;
 
   @override
-  State<LineChart> createState() => _LineChartState();
+  State<StackedLineChart> createState() => _StackedLineChartState();
 }
 
-class _LineChartState extends State<LineChart> {
+class _StackedLineChartState extends State<StackedLineChart> {
 
   final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
+  final DevicesServices _devicesServices = DevicesServices();
 
   final List<Map<String, dynamic>> data = [
     {'name': 'soil moisture', 'legendTitle' : 'Soil Moisture (%)', 'type' : 'percentage',},
@@ -68,21 +69,21 @@ class _LineChartState extends State<LineChart> {
                     StackedLineSeries<SensorNodeSnapshot, String>(
                       color: _generateColor('soil moisture'),
                         groupName: 'Group A',
-                        dataSource: SensorNodeDataServices().getTimeSeries(widget.deviceID),
+                        dataSource: _devicesServices.getSensorTimeSeries(id: widget.deviceID),
                         xValueMapper: (SensorNodeSnapshot data, _) => _dateTimeFormatting.formatTimeClearZero(data.timestamp),
                         yValueMapper: (SensorNodeSnapshot data, _) => data.soilMoisture
                     ),
                     StackedLineSeries<SensorNodeSnapshot, String>(
                       color: _generateColor('humidity'),
                         groupName: 'Group B',
-                        dataSource: SensorNodeDataServices().getTimeSeries(widget.deviceID),
+                        dataSource: _devicesServices.getSensorTimeSeries(id: widget.deviceID),
                         xValueMapper: (SensorNodeSnapshot data, _) => _dateTimeFormatting.formatTimeClearZero(data.timestamp),
                         yValueMapper: (SensorNodeSnapshot data, _) => data.humidity
                     ),
                     StackedLineSeries<SensorNodeSnapshot, String>(
                       color: _generateColor('temperature'),
                         groupName: 'Group C',
-                        dataSource: SensorNodeDataServices().getTimeSeries(widget.deviceID),
+                        dataSource: _devicesServices.getSensorTimeSeries(id: widget.deviceID),
                         xValueMapper: (SensorNodeSnapshot data, _) => _dateTimeFormatting.formatTimeClearZero(data.timestamp),
                         yValueMapper: (SensorNodeSnapshot data, _) => _scaleTemp(data.temperature.toInt())
                     ),
@@ -104,7 +105,7 @@ class _LineChartState extends State<LineChart> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              ..._buildXAxisLabels(marks: SensorNodeDataServices().getTimeSeries(widget.deviceID).map((snapshot){
+              ..._buildXAxisLabels(marks: _devicesServices.getSensorTimeSeries(id: widget.deviceID).map((snapshot){
                 return _dateTimeFormatting.formatTimeClearZero(snapshot.timestamp);
               }).toList())
             ],

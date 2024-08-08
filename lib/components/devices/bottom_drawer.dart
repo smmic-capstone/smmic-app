@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
-import 'package:smmic/providers/devices_providers.dart';
+import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/subcomponents/devices/option_item.dart';
 import 'package:provider/provider.dart';
 

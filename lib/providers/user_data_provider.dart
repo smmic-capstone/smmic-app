@@ -16,7 +16,7 @@ class UserDataProvider extends ChangeNotifier {
   User? get user => _user;
 
   Future<void> init() async {
-    _logs.warning(message: 'init()');
+    _logs.info(message: 'init() executing...');
     Map<String, dynamic>? userData = await _sharedPrefsUtils.getUserData();
     if(userData == null){
       Map<String, dynamic> onSharedPrefsEmpty = await _onSharedPrefsEmpty();
@@ -33,6 +33,7 @@ class UserDataProvider extends ChangeNotifier {
     }
     //TODO: implement crosscheck with api to verify user data
     _user = User.fromJson(userData);
+    _logs.success(message: 'init() done...');
     notifyListeners();
   }
 
