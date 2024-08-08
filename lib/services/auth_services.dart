@@ -6,6 +6,7 @@ import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/providers/user_data_provider.dart';
 import 'package:smmic/utils/auth_utils.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
+import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
 
 ///Authentication services, contains all major authentication functions (`login`, `logout`, `create account`, `delete account`, `update account`)
@@ -37,7 +38,7 @@ class AuthService {
         TokenStatus verifyAccess = await _authUtils.verifyToken(token: jsonData['access'], refresh: false);
         TokenStatus verifyRefresh = await _authUtils.verifyToken(token: jsonData['refresh'], refresh: true);
         if (verifyRefresh != TokenStatus.valid) {
-          return {'error_code':'refresh_token_invalid'};
+          return {'refresh_err':'refresh_token_invalid'};
         }
         String? newAccess;
         if (verifyAccess != TokenStatus.valid) {
@@ -47,7 +48,7 @@ class AuthService {
         if (verifyAccess == TokenStatus.valid) {
           await _sharedPrefsUtils.setTokens(tokens: {Tokens.refresh: jsonData['refresh'], Tokens.access: newAccess ?? jsonData['access']});
           await _sharedPrefsUtils.setLoginFromRefresh(refresh: jsonData['refresh']);
-          _userDataProvider.init();
+          newAccess != null ? _userDataProvider.init() : (); //dont execute UserData.init() when newAccess is null
           return {'access' : jsonData['access'], 'status' : verifyAccess};
         }
       }

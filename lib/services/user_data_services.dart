@@ -35,13 +35,11 @@ class UserDataServices {
     try{
       String? accessToken;
       TokenStatus accessStatus = await _authUtils.verifyToken(token: token);
-
       if(accessStatus != TokenStatus.valid){
         Map<String,dynamic> refresh = await _sharedPrefsUtils.getTokens(refresh: true);
         accessToken = await _authUtils.refreshAccessToken(refresh: refresh['refresh']);
         await _authProvider.setAccess(access: accessToken!);
       }
-
       final response = await http.get(
           Uri.parse(_apiRoutes.getUserData),
         headers: {"Authorization":"Bearer ${accessToken ?? token}"}

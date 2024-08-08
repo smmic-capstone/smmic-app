@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/models/device_data_models.dart';
-import 'package:smmic/providers/devices_providers.dart';
+import 'package:smmic/providers/device_settings_provider.dart';
 
 class OptionItem extends StatefulWidget {
   const OptionItem({super.key, required this.title, required this.subtitle, required this.condition, required this.logic, required this.enabledConditions});
@@ -32,18 +31,31 @@ class _OptionItemState extends State<OptionItem>{
       contentPadding: const EdgeInsets.symmetric(horizontal: 30),
       title: Text(widget.title),
       subtitle: Text(widget.subtitle),
-      trailing: CupertinoSwitch(
-          value: switchValue,
-          onChanged: (bool vewValue) {
-            if(widget.enabledConditions.contains(widget.condition)) {
-              context.read<DeviceListOptionsNotifier>().disable(widget.condition);
-            } else {
-              context.read<DeviceListOptionsNotifier>().enable(widget.condition, widget.logic);
-            }
-            setState(() {
-              switchValue = !switchValue;
-            });
-          }),
+      trailing: Switch(
+        value: switchValue,
+        onChanged: (bool option) {
+          if(widget.enabledConditions.contains(widget.condition)) {
+            context.read<DeviceListOptionsNotifier>().disable(widget.condition);
+          } else {
+            context.read<DeviceListOptionsNotifier>().enable(widget.condition, widget.logic);
+          }
+          setState(() {
+            switchValue = !switchValue;
+          });
+        }
+      ),
+      // trailing: CupertinoSwitch(
+      //     value: switchValue,
+      //     onChanged: (bool vewValue) {
+      //       if(widget.enabledConditions.contains(widget.condition)) {
+      //         context.read<DeviceListOptionsNotifier>().disable(widget.condition);
+      //       } else {
+      //         context.read<DeviceListOptionsNotifier>().enable(widget.condition, widget.logic);
+      //       }
+      //       setState(() {
+      //         switchValue = !switchValue;
+      //       });
+      //     }),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smmic/models/user_data_model.dart';
 import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/services/user_data_services.dart';
+import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
 
 class UserDataProvider extends ChangeNotifier {
@@ -9,11 +10,13 @@ class UserDataProvider extends ChangeNotifier {
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
   final UserDataServices _userDataServices = UserDataServices();
   final AuthProvider _authProvider = AuthProvider();
+  final Logs _logs = Logs(tag: 'UserDataProvider');
 
   User? _user;
   User? get user => _user;
 
   Future<void> init() async {
+    _logs.info(message: 'init() executing...');
     Map<String, dynamic>? userData = await _sharedPrefsUtils.getUserData();
     if(userData == null){
       Map<String, dynamic> onSharedPrefsEmpty = await _onSharedPrefsEmpty();
@@ -30,6 +33,7 @@ class UserDataProvider extends ChangeNotifier {
     }
     //TODO: implement crosscheck with api to verify user data
     _user = User.fromJson(userData);
+    _logs.success(message: 'init() done...');
     notifyListeners();
   }
 

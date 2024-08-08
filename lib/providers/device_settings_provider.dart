@@ -30,8 +30,3 @@ class DeviceListOptionsNotifier extends ChangeNotifier {
     notifyListeners();
   }
 }
-
-class DeviceOptionsNotifier extends ChangeNotifier {
-  //TODO: Implement Device Options ChangeNotifier
-
-}

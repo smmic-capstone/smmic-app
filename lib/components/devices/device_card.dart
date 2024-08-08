@@ -4,7 +4,9 @@ import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/device_name.dart';
 import 'package:smmic/subcomponents/devices/digital_display.dart';
 import 'package:smmic/subcomponents/devices/gauge.dart';
+import 'package:smmic/utils/logs.dart';
 
+/// This widget is deprecated, please use `SensorNodeCard()` or `SinkNodeCard` instead...
 class DeviceCard extends StatefulWidget {
   const DeviceCard({super.key, required this.deviceData});
 
@@ -17,6 +19,7 @@ class DeviceCard extends StatefulWidget {
 class _DeviceCardState extends State<DeviceCard> {
   @override
   Widget build(BuildContext context) {
+    Logs(tag: 'Deprecated').warning(message: 'The widget DeviceCard() is deprecated, please use SensorNodeCard() or SinkNodeCard() instead');
     return Stack(
       children: [
         Container(
@@ -30,12 +33,12 @@ class _DeviceCardState extends State<DeviceCard> {
                     color: Colors.black.withOpacity(0.06),
                     spreadRadius: 0,
                     blurRadius: 4,
-                    offset: Offset(0, 4)
+                    offset: const Offset(0, 4)
                 )
               ]
           ),
           height: 160,
-          child: isSinkNode(widget.deviceData['id']) ? sinkNode(widget.deviceData) : sensorNode(widget.deviceData),
+          child: _buildCardContents(widget.deviceData),
         ),
         Container(
           padding: const EdgeInsets.only(right: 37, top: 12),
@@ -54,11 +57,7 @@ class _DeviceCardState extends State<DeviceCard> {
   }
 }
 
-bool isSinkNode(String id) {
-  return id.substring(0, 2) == 'SI';
-}
-
-Widget sensorNode(Map<String, dynamic> data) {
+Widget _buildCardContents(Map<String, dynamic> data) {
   return Row(
     children: [
       Expanded(
@@ -109,32 +108,6 @@ Widget sensorNode(Map<String, dynamic> data) {
               )
             ],
           )
-      ),
-    ],
-  );
-}
-
-Widget sinkNode(Map<String, dynamic> data) {
-  return Row(
-    children: [
-      Expanded(
-        flex: 2,
-        child: Column(
-          children: [
-            Expanded(
-              flex: 3,
-              child: DeviceName(deviceName: data['deviceName'])
-            ),
-            Expanded(
-              flex: 1,
-              child: BatteryLevel(batteryLevel: data['batteryLevel'])
-            )
-          ],
-        ),
-      ),
-      Expanded(
-        flex: 3,
-        child: Container(),
       ),
     ],
   );

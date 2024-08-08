@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:smmic/utils/auth_utils.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
 import 'package:smmic/utils/global_navigator.dart';
+import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
 
 ///Specifies current status of the token
@@ -25,6 +26,7 @@ class AuthProvider extends ChangeNotifier {
   final AuthUtils _authUtils = AuthUtils();
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
   final GlobalNavigator _globalNavigator = locator<GlobalNavigator>();
+  final Logs _logs = Logs(tag: 'AuthProvider()');
 
   ///Returns the access data
   UserAccess? _accessData;
@@ -38,30 +40,44 @@ class AuthProvider extends ChangeNotifier {
     String? login = await _sharedPrefsUtils.getLogin();
     if(login == null) return;
     Map<String, dynamic> tokens = await _sharedPrefsUtils.getTokens();
+
+    //refresh token status check
     TokenStatus refreshStatus = await _authUtils.verifyToken(token: tokens['refresh'], refresh: true);
+    //if refresh status check fails, verifyToken will return a TokenStatus.forceLogin and the forceLoginDialog is executed
     if(refreshStatus == TokenStatus.forceLogin){
       _accessData = null;
       _accessStatus = TokenStatus.forceLogin;
       _globalNavigator.forceLoginDialog();
       notifyListeners();
+      _logs.warning(message: 'forceLoginDialog() executed on .init()');
       return;
     }
+
+    //access token status check
     TokenStatus accessStatus = await _authUtils.verifyToken(token: tokens['access']);
-    if (accessStatus != TokenStatus.valid) {
-      String? newAccess = await _authUtils.refreshAccessToken(refresh: tokens['refresh']);
-      if (newAccess != null) {
-        Map<String, dynamic>? newMapped = _authUtils.parseToken(token: newAccess);
-        _accessData = UserAccess.fromJSON(newMapped!);
-        _accessStatus = await _authUtils.verifyToken(token: newAccess);
-      } else {
-        _accessData = null;
-        _accessStatus = TokenStatus.invalid;
-      }
-    } else {
+    //if access status valid, assign values to _accessData, _accessStatus
+    if(accessStatus == TokenStatus.valid){
+      _logs.success(message: 'init() executed without errors');
       Map<String, dynamic>? parsedToken = _authUtils.parseToken(token: tokens['access']);
       _accessData = UserAccess.fromJSON(parsedToken!);
       _accessStatus = accessStatus;
+    } else {
+      _logs.warning(message: 'access token from SharedPreferences failed AuthUtils.verifyToken() check, executing AuthUtils.refreshAccessToken()...');
+      String? newAccess = await _authUtils.refreshAccessToken(refresh: tokens['refresh']);
+      if (newAccess != null) {
+        _logs.info(message: 'access token refreshed');
+        Map<String, dynamic>? newMapped = _authUtils.parseToken(token: newAccess);
+        _accessData = UserAccess.fromJSON(newMapped!);
+        _accessStatus = await _authUtils.verifyToken(token: newAccess);
+        _logs.success(message: 'new accessToken created, init() done');
+      } else {
+        _accessData = null;
+        //TODO: handle scenario: invalid token
+        _accessStatus = TokenStatus.invalid;
+        _logs.warning(message: 'new access token invalid or null');
+      }
     }
+
     notifyListeners();
     return;
   }

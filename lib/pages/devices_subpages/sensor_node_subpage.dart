@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:smmic/components/devices/chart.dart';
-import 'package:smmic/components/devices/sensor_node_card_expanded.dart';
+import 'package:smmic/components/devices/sensor_node_subpage/stacked_line.dart';
+import 'package:smmic/components/devices/sensor_node_subpage/sensor_node_card_expanded.dart';
 
 class SensorNodePage extends StatefulWidget {
   const SensorNodePage({super.key, required this.deviceID, required this.deviceName});
@@ -54,7 +54,7 @@ class _SensorNodePageState extends State<SensorNodePage> {
                     ]
                 ),
                 height: 315,
-                child: LineChart(deviceID: widget.deviceID),
+                child: StackedLineChart(deviceID: widget.deviceID),
               ),
             ],
           ),

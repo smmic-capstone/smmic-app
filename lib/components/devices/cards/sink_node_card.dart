@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:smmic/models/device_data_models.dart';
-import 'package:smmic/pages/devices_subpages/sensor_node.dart';
-import 'package:smmic/services/devices/sink_data.dart';
+import 'package:smmic/pages/devices_subpages/sensor_node_subpage.dart';
 import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/device_name.dart';
 

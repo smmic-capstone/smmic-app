@@ -2,24 +2,48 @@ import 'package:jwt_decode/jwt_decode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/models/auth_models.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
+import 'package:smmic/utils/logs.dart';
 
 enum Tokens{
   refresh,
   access
 }
 
+enum UserFields{
+  uid('UID'),
+  firstName('first_name'),
+  lastName('last_name'),
+  province('province'),
+  city('city'),
+  barangay('barangay'),
+  zone('zone'),
+  zipCode('zip_code'),
+  email('email'),
+  password('password'),
+  profilePic('profilepic');
+
+  final String key;
+
+  const UserFields(this.key);
+}
 
 List<String> _userDataKeys = ['UID', 'first_name', 'last_name', 'province', 'city', 'barangay', 'zone', 'zip_code', 'email', 'password', 'profilepic'];
 
 ///SharedPreferences Utilities for setting and getting data from the SharedPreferences
 class SharedPrefsUtils {
+
+  //Dependencies
   final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
+  final Logs _logs = Logs(tag: 'SharedPrefsUtils()');
+
   ///Gets `refresh` and `access` tokens from SharedPreferences. Returns both tokens by default
   Future<Map<String, dynamic>> getTokens({bool? refresh, bool? access}) async {
     Map<String, dynamic> tokens = {};
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     String? refreshToken = sharedPreferences.getString('refresh');
+    _logs.info(message: 'getTokens() refreshToken: ${refreshToken.toString()}');
     String? accessToken = sharedPreferences.getString('access');
+    _logs.info(message: 'getTokens() accessToken: ${accessToken.toString()}');
     if(refresh == null && access == null){
       tokens.addAll({'refresh':refreshToken, 'access':accessToken});
       return tokens;
@@ -47,7 +71,7 @@ class SharedPrefsUtils {
     return;
   }
 
-  ///Sets the login timestamp
+  ///Sets the login timestamp parsed from a refresh token
   Future<void> setLoginFromRefresh({required String refresh}) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     Map<String, dynamic> parsed = Jwt.parseJwt(refresh);
@@ -60,16 +84,22 @@ class SharedPrefsUtils {
     return sharedPreferences.getString('login');
   }
 
-  /// This function clears both refresh and access tokens from SharedPreferences.
+  /// This function clears `access`, `refresh`, and `login` keys from SharedPreferences
   ///
   /// Useful when a forceLogin is required or when the user logs out. Outside of those two scenarios, use with caution.
   Future<void> clearTokens() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    await sharedPreferences.remove('refresh');
-    await sharedPreferences.remove('access');
-    await sharedPreferences.remove('login');
+    List<String> keys = ['refresh', 'access', 'login'];
+    int index = 0;
+    while(index < keys.length){
+      if(sharedPreferences.containsKey(keys[index])){
+        await sharedPreferences.remove(keys[index]);
+      }
+      index++;
+    }
   }
 
+  //TODO: rework how user data is stored to SharedPreferences (key:value pair dapat)
   /// Stores Map of `user_data` to SharedPreferences as `List<String>`
   Future<void> setUserData({required Map<String,dynamic> userInfo}) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -78,7 +108,6 @@ class SharedPrefsUtils {
     }
     await sharedPreferences.setStringList('user_data', userInfo.keys.map((item) => userInfo[item].toString()).toList());
   }
-
 
   // [UID, first_name, last_name, province, city, barangay, zone, zip_code, email, password, profilepic]
   /// Returns the user data stored from SharedPreferences as a Map.

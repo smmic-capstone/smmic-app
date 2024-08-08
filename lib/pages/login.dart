@@ -1,20 +1,13 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:jwt_decode/jwt_decode.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
 import 'package:smmic/main.dart';
-import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/pages/register.dart';
 import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/providers/user_data_provider.dart';
 import 'package:smmic/services/auth_services.dart';
 import 'package:smmic/subcomponents/login/mybutton.dart';
 import 'package:smmic/subcomponents/login/textfield.dart';
-import 'package:http/http.dart' as http;
-import 'package:smmic/utils/auth_utils.dart';
+import 'package:smmic/utils/logs.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -27,7 +20,6 @@ class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passController = TextEditingController();
   final AuthService _authService = AuthService();
-  final AuthUtils _authUtils = AuthUtils();
   bool obscurepassword = true;
 
   @override
@@ -121,13 +113,17 @@ class _LoginPageState extends State<LoginPage> {
                         alignment: Alignment.centerRight,
                         child: MyButton(onTap: () async {
                           Map<String, dynamic>? token = await _authService.login(email: emailController.text, password: passController.text);
-                          if (context.mounted && token != null) {
-                            // if (token['status'] == TokenStatus.forceLogin) {
-                            //   _authUtils.forceLogin(context);
-                            // }
-                            context.read<AuthProvider>().setAccess(access: token['access'], accessStatus: TokenStatus.valid);
-                            context.read<UserDataProvider>().init();
-                            Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const AuthGate()), (route) => false);
+                          if(context.mounted && token != null){
+                            if (context.mounted && token.containsKey('access')) {
+                              // if (token['status'] == TokenStatus.forceLogin) {
+                              //   _authUtils.forceLogin(context);
+                              // }
+                              context.read<AuthProvider>().setAccess(access: token['access'], accessStatus: TokenStatus.valid);
+                              context.read<UserDataProvider>().init();
+                              Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const AuthGate()), (route) => false);
+                            } else {
+                              /// TODO: handle login error
+                            }
                           }
                         })
                     ),
