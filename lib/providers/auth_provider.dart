@@ -67,7 +67,7 @@ class AuthProvider extends ChangeNotifier {
     TokenStatus accessStatus = await _authUtils.verifyToken(token: tokens['access']);
     //if access status valid, assign values to _accessData, _accessStatus
     if(accessStatus == TokenStatus.valid){
-      _logs.success(message: 'init() executed without errors or warning');
+      _logs.success(message: 'init() done without errors or warning');
       Map<String, dynamic>? parsedToken = _authUtils.parseToken(token: tokens['access']);
       _accessData = UserAccess.fromJSON(parsedToken!);
       _accessStatus = accessStatus;

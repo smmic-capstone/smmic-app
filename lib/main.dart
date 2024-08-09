@@ -23,7 +23,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
-        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
+        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()..init()),
         ChangeNotifierProvider<UserDataProvider>(create: (_) => UserDataProvider()),
         ChangeNotifierProvider<UiProvider>(create: (_) => UiProvider()..init())
       ],
@@ -72,8 +72,6 @@ class _AuthGateState extends State<AuthGate> {
       return false;
     }
 
-    await _authProvider.init();
-    await _userDataProvider.init();
     await Future.delayed(const Duration(seconds:  3));
     return true;
   }
@@ -100,6 +98,7 @@ class _AuthGateState extends State<AuthGate> {
               return const LoginPage();
             }
             // initiate user data when logged in
+            context.read<UserDataProvider>().init();
             return const MyBottomNav(indexPage: 0);
           }
           return const Center(

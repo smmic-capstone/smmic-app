@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:smmic/utils/logs.dart';
 
 class ApiRequest {
-  final Logs _logs = Logs(tag: 'ApiRequest()', disable: false);
+  final Logs _logs = Logs(tag: 'ApiRequest()', disable: true);
 
   /// Get request for api, returns a the response status code and the body if available
   Future<Map<String, dynamic>> get({required String route, Map<String, String>? headers}) async {
@@ -22,6 +22,7 @@ class ApiRequest {
         return {'error' : response.statusCode, 'data' : jsonDecode(response.body)};
       }
       if(response.statusCode == 200){
+        _logs.success(message: 'post() $route, returned with data ${response.statusCode}');
         return {'code' : response.statusCode, 'data' : jsonDecode(response.body)};
       }
     } catch(e) {

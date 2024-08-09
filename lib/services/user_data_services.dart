@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/auth_utils.dart';
+import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
 
 List<String> mockSinkNodesList = [
@@ -44,7 +45,7 @@ class UserDataServices {
       await _authProvider.setAccess(access: accessToken!);
     }
 
-    final Map<String, dynamic> data = await _apiRequest.get(route: _apiRoutes.getUserData);
+    final Map<String, dynamic> data = await _apiRequest.get(route: _apiRoutes.getUserData, headers: {'Authorization':'Bearer $token'});
 
     // TODO: HANDLE ERROR SCENARIO
     if(data.containsKey('error')){

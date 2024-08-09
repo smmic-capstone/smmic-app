@@ -16,25 +16,28 @@ class UserDataProvider extends ChangeNotifier {
   User? get user => _user;
 
   Future<void> init() async {
-    _logs.info2(message: 'init() executing...');
+    _logs.info2(message: 'init() executing');
     Map<String, dynamic>? userData = await _sharedPrefsUtils.getUserData();
-    if(userData == null){
+    if(userData != null){
+      _user = User.fromJson(userData);
+      await _sharedPrefsUtils.setUserData(userInfo: userData);
+      _logs.success(message: 'init() done without warnings or error');
+    } else {
+      _logs.warning(message: 'useData is null, executing _onSharedPrefsEmpty()');
       Map<String, dynamic> onSharedPrefsEmpty = await _onSharedPrefsEmpty();
-      if(onSharedPrefsEmpty.containsKey('logged_out')){
-        return;
-      }
+
+      //TODO: HANDLE ERROR
       if(onSharedPrefsEmpty.containsKey('error')){
+        _logs.critical(message: 'onSharedPrefsEmpty returned with `error` key');
         throw onSharedPrefsEmpty['error'];
       }
+
+      _logs.info(message: '_onSharedPrefsEmpty() returned with data');
       _user = User.fromJson(onSharedPrefsEmpty);
+      await _sharedPrefsUtils.setUserData(userInfo: onSharedPrefsEmpty);
+      _logs.success(message: 'init() done');
+      notifyListeners();
     }
-    if(userData!.containsKey('error')){
-      throw userData['errors'];
-    }
-    //TODO: implement crosscheck with api to verify user data
-    _user = User.fromJson(userData);
-    _logs.success(message: 'init() done...');
-    notifyListeners();
   }
 
   /// Triggered when user data from SharedPreferences does not exist.
@@ -42,13 +45,16 @@ class UserDataProvider extends ChangeNotifier {
   /// If current session is logged out, returns a `{logged_out: true}` key:value pair, otherwise, attempts to query the api for user data
   Future<Map<String, dynamic>> _onSharedPrefsEmpty() async {
     String? login = await _sharedPrefsUtils.getLogin();
+    Map<String, dynamic> tokens = await _sharedPrefsUtils.getTokens(access: true);
     if (login == null){
       return {'logged_out': true};
     } else {
       Map<String, dynamic>? userDataFromApi;
+      _logs.info(message: 'userDataFromAPI: ${tokens['access']}');
       try{
-        userDataFromApi = await _userDataServices.getUserInfo(token: _authProvider.accessData!.token);
-        return userDataFromApi ?? {'error' : 'unexpected error on UserDataProvider._userDataServices, no user data from API ??'};
+        userDataFromApi = await _userDataServices.getUserInfo(token: tokens['access']);
+        // TODO: HANDLE IF ERROR
+        return userDataFromApi!['data'];
       } catch (e) {
         return {'error': e.toString()};
       }
