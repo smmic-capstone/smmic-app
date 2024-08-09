@@ -31,7 +31,7 @@ class GlobalNavigator {
                 TextButton(
                     onPressed: () {
                       _sharedPrefsUtils.clearTokens();
-                      toLogin();
+                      _toLogin();
                     },
                     child: Text('OK')
                 )
@@ -42,7 +42,7 @@ class GlobalNavigator {
     });
   }
 
-  void toLogin() {
+  void _toLogin() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Navigator.pushAndRemoveUntil(navigatorKey.currentContext!, MaterialPageRoute(builder: (context) => const LoginPage()), (route) => false);
     });

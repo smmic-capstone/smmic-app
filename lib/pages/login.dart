@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:smmic/main.dart';
 import 'package:smmic/pages/register.dart';
-import 'package:smmic/providers/auth_provider.dart';
-import 'package:smmic/providers/user_data_provider.dart';
 import 'package:smmic/services/auth_services.dart';
 import 'package:smmic/subcomponents/login/mybutton.dart';
 import 'package:smmic/subcomponents/login/textfield.dart';
-import 'package:smmic/utils/logs.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,7 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passController = TextEditingController();
   final AuthService _authService = AuthService();
-  bool obscurepassword = true;
+  bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -75,17 +71,17 @@ class _LoginPageState extends State<LoginPage> {
                     child: MyTextField(
                       controller: passController,
                       hintText: 'Password',
-                      obscuretext: obscurepassword,
+                      obscuretext: _obscurePassword,
                       suffixIcon: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: IconButton(
                             onPressed: () {
                               setState(() {
-                                obscurepassword = !obscurepassword;
+                                _obscurePassword = !_obscurePassword;
                               });
                             },
                             color: Colors.black.withOpacity(0.7),
-                            icon: Icon(obscurepassword
+                            icon: Icon(_obscurePassword
                                 ? Icons.visibility_off
                                 : Icons.visibility)),
                       ),
@@ -112,19 +108,12 @@ class _LoginPageState extends State<LoginPage> {
                     child: Align(
                         alignment: Alignment.centerRight,
                         child: MyButton(onTap: () async {
-                          Map<String, dynamic>? token = await _authService.login(email: emailController.text, password: passController.text);
-                          if(context.mounted && token != null){
-                            if (context.mounted && token.containsKey('access')) {
-                              // if (token['status'] == TokenStatus.forceLogin) {
-                              //   _authUtils.forceLogin(context);
-                              // }
-                              context.read<AuthProvider>().setAccess(access: token['access'], accessStatus: TokenStatus.valid);
-                              context.read<UserDataProvider>().init();
-                              Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const AuthGate()), (route) => false);
-                            } else {
-                              /// TODO: handle login error
-                            }
-                          }
+                          await _authService.login(email: emailController.text, password: passController.text);
+                          // if (token['status'] == TokenStatus.forceLogin) {
+                          //   _authUtils.forceLogin(context);
+                          // }
+                          //context.read<AuthProvider>().setAccess(access: token['access'], accessStatus: TokenStatus.valid);
+                          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const AuthGate()), (route) => false);
                         })
                     ),
                   ),

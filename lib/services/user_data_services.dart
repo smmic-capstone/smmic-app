@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:smmic/constants/api.dart';
 import 'package:http/http.dart' as http;
 import 'package:smmic/providers/auth_provider.dart';
+import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/auth_utils.dart';
 import 'package:smmic/utils/shared_prefs.dart';
 
@@ -20,7 +21,7 @@ class UserDataServices {
   final AuthUtils _authUtils = AuthUtils();
   final AuthProvider _authProvider = AuthProvider();
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
-
+  final ApiRequest _apiRequest = ApiRequest();
 
   //TODO: refactor when api is up
   List<String> getSensorNodes(String sinkNodeID) {
@@ -31,32 +32,26 @@ class UserDataServices {
     return mockSinkNodesList;
   }
 
+  /// Returns a map of the user data, will return a map with an `error` String key if an error is returned from the request
   Future<Map<String, dynamic>?> getUserInfo({required String token}) async {
-    try{
-      String? accessToken;
-      TokenStatus accessStatus = await _authUtils.verifyToken(token: token);
-      if(accessStatus != TokenStatus.valid){
-        Map<String,dynamic> refresh = await _sharedPrefsUtils.getTokens(refresh: true);
-        accessToken = await _authUtils.refreshAccessToken(refresh: refresh['refresh']);
-        await _authProvider.setAccess(access: accessToken!);
-      }
-      final response = await http.get(
-          Uri.parse(_apiRoutes.getUserData),
-        headers: {"Authorization":"Bearer ${accessToken ?? token}"}
-      );
-      // if error
-      if (response.statusCode == 500 || response.statusCode == 401 || response.statusCode == 400) {
-        return {'error':response.statusCode};
-      }
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      }
-    } catch(error) {
-      return {'error': error};
+    String? accessToken;
+    TokenStatus accessStatus = await _authUtils.verifyToken(token: token);
+
+    // check access token validity, executes AuthUtils().refreshAccessToken() if access is invalid or expired
+    if(accessStatus != TokenStatus.valid){
+      Map<String,dynamic> refresh = await _sharedPrefsUtils.getTokens(refresh: true);
+      accessToken = await _authUtils.refreshAccessToken(refresh: refresh['refresh']);
+      await _authProvider.setAccess(access: accessToken!);
     }
-    return null;
+
+    final Map<String, dynamic> data = await _apiRequest.get(route: _apiRoutes.getUserData);
+
+    // TODO: HANDLE ERROR SCENARIO
+    if(data.containsKey('error')){
+      return data;
+    }
+
+    return data;
   }
-
-
 
 }

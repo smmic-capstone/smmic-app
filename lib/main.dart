@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
 import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/pages/login.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/providers/user_data_provider.dart';
+import 'package:smmic/services/auth_services.dart';
 import 'package:smmic/utils/auth_utils.dart';
 import 'package:smmic/utils/global_navigator.dart';
 import 'package:smmic/utils/logs.dart';
@@ -21,7 +23,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
-        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()..init()),
+        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
         ChangeNotifierProvider<UserDataProvider>(create: (_) => UserDataProvider()),
         ChangeNotifierProvider<UiProvider>(create: (_) => UiProvider()..init())
       ],
@@ -54,45 +56,56 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
 
-  Future<bool> _onStartupLogin() async {
-    //TODO: uncomment after debug
-    // await Future.delayed(const Duration(seconds: 2));
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    if (!sharedPreferences.containsKey('login')) {
-      return true;
+  // utils
+  final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
+
+  // providers
+  final AuthProvider _authProvider = AuthProvider();
+  final UserDataProvider _userDataProvider = UserDataProvider();
+
+  Future<bool> _authCheck() async {
+    _logs.info2(message: 'executing _authCheck()');
+
+    String? login = await _sharedPrefsUtils.getLogin();
+    if (login == null){
+      _logs.info(message: 'did not find login key from SharedPreferences, returning LoginPage()');
+      return false;
     }
-    return false;
+
+    await _authProvider.init();
+    await _userDataProvider.init();
+    await Future.delayed(const Duration(seconds:  3));
+    return true;
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: _onStartupLogin(),
-      builder: (context, AsyncSnapshot<bool> loginOnStartup) {
-        if (loginOnStartup.connectionState == ConnectionState.waiting) {
-          //TODO: implement loading screen
-          return Container(
-            color: Colors.white,
-            child: const Center(child: CircularProgressIndicator()),
-          );
-        }
-        if (loginOnStartup.hasError) {
-          return const Center(
-            child: Text('An unexpected error has occurred'),
-          );
-        }
-        if (loginOnStartup.hasData) {
-          if(loginOnStartup.data!){
-            return const LoginPage();
+    return FutureBuilder(
+        future: _authCheck(),
+        builder: (context, AsyncSnapshot<bool> authCheckSnapshot) {
+          if(authCheckSnapshot.connectionState == ConnectionState.waiting){
+            return Container(
+              color: Colors.white,
+              child: const Center(child: CircularProgressIndicator()),
+            );
           }
-          // initiate user data when logged in
-          _logs.info(message: 'AuthPage() ---> UserDataProvider.init()');
-          context.read<UserDataProvider>().init();
-          return const DashBoard();
+          if(authCheckSnapshot.hasError){
+            return const Center(
+              child: Text('An unexpected error has occurred'),
+            );
+          }
+          if (authCheckSnapshot.hasData) {
+            bool authCheck = authCheckSnapshot.data!;
+            if (!authCheck){
+              return const LoginPage();
+            }
+            // initiate user data when logged in
+            return const MyBottomNav(indexPage: 0);
+          }
+          return const Center(
+            child: Text('AuthPage._authCheck has returned a null value'),
+          );
         }
-        return const Center(
-          child: Text('AuthPage._onStartupLogin has returned a null value'),
-        );
-      });
+    );
   }
 }
