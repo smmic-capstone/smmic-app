@@ -1,14 +1,8 @@
-import 'dart:convert';
-import 'package:jwt_decode/jwt_decode.dart';
 import 'package:smmic/constants/api.dart';
-import 'package:http/http.dart' as http;
 import 'package:smmic/providers/auth_provider.dart';
-import 'package:smmic/providers/user_data_provider.dart';
 import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/auth_utils.dart';
-import 'package:smmic/utils/datetime_formatting.dart';
 import 'package:smmic/utils/global_navigator.dart';
-import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
 
 ///Authentication services, contains all major authentication functions (`login`, `logout`, `create account`, `delete account`, `update account`)
@@ -19,11 +13,9 @@ class AuthService {
   final ApiRequest _apiRequest = ApiRequest();
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
   final AuthUtils _authUtils = AuthUtils();
-  final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
   final GlobalNavigator _globalNavigator = locator<GlobalNavigator>();
 
   // providers
-  final UserDataProvider _userDataProvider = UserDataProvider();
   final AuthProvider _authProvider = AuthProvider();
 
   Future<void> login({required String email, required String password}) async {

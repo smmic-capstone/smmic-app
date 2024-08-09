@@ -105,7 +105,13 @@ class SharedPrefsUtils {
   /// Stores Map of `user_data` to SharedPreferences as `List<String>`
   Future<void> setUserData({required Map<String,dynamic> userInfo}) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    if(userInfo.keys.toList() != _userDataKeys){
+    bool matched = true;
+    for(int i = 0; i < _userDataKeys.length; i++){
+      if(userInfo.keys.toList()[i] != _userDataKeys[i]){
+        matched = false;
+      }
+    }
+    if(!matched){
       throw ('error: User data Map keys provided to SharedPrefsUtils.setUserData did match registered user_data keys');
     }
     await sharedPreferences.setStringList('user_data', userInfo.keys.map((item) => userInfo[item].toString()).toList());
@@ -124,13 +130,13 @@ class SharedPrefsUtils {
     }
     if (sharedPreferences.getStringList('user_data') != null){
       List<String> userData = sharedPreferences.getStringList('user_data')!;
-      return _userDataMapper(userData);
+      return userDataMapper(userData);
     }
     throw('An unexpected error has occurred on SharedPrefsUtils.getStringList');
   }
 
   /// Maps the StringList that `getUserData()` returns
-  Map<String, dynamic> _userDataMapper(List<String> userData) {
+  Map<String, dynamic> userDataMapper(List<String> userData) {
     if(userData.length != _userDataKeys.length){
       return {'error':'userData and keys length not matched, check userData contents'};
     }

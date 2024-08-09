@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smmic/models/auth_models.dart';
 import 'package:smmic/models/user_data_model.dart';
+import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/providers/user_data_provider.dart';
 import 'package:smmic/services/user_data_services.dart';
 import 'package:smmic/subcomponents/manageacc/labeltext.dart';
 import 'package:smmic/subcomponents/manageacc/textfield.dart';
+import 'package:smmic/utils/logs.dart';
 
 class ManageAccount extends StatefulWidget {
   const ManageAccount({super.key});
@@ -14,6 +17,8 @@ class ManageAccount extends StatefulWidget {
 }
 
 class _ManageAccount extends State<ManageAccount>{
+  final Logs _logs = Logs(tag: 'accountinfo.dart');
+
   UserDataServices getUserDetails = UserDataServices();
   Color? bgColor = const Color.fromRGBO(239, 239, 239, 1.0);
   final setEmailController = TextEditingController();
@@ -29,8 +34,12 @@ class _ManageAccount extends State<ManageAccount>{
   @override
   Widget build(BuildContext context){
     User? userData = context.watch<UserDataProvider>().user;
+    UserAccess? accessData = context.watch<AuthProvider>().accessData;
 
     if(userData == null){
+      _logs.warning(message: 'userData from UserDataProvider is null: $userData');
+
+      _logs.warning(message: 'userData from UserDataProvider is null: $accessData');
       throw Exception('error: user data == null!');
     }
 
