@@ -10,16 +10,20 @@ class Logs {
   /// Provides a colorful terminal logger for different levels (`error`, `info`, `warning`, `critical`) Useful for logging processes that execute
   ///
   /// Provide a tag as context of the log (i.e. Service, Utility, Widgets), `message` should provide context of the log
-  Logs({required this.tag});
+  Logs({required this.tag, this.disable = false});
 
   final String tag;
+  final bool disable;
+
   final AnsiPen _pen = AnsiPen();
 
   void _writer({required String message, required AnsiPen pen}) {
     assert(() {
       if(kDebugMode){
         ansiColorDisabled = false;
-        print(pen('$tag ---> $message'));
+        if(!disable){
+          print(pen('$tag ---> $message'));
+        }
       }
       return true;
     }());
@@ -36,6 +40,11 @@ class Logs {
   }
 
   void info({String? message}){
+    _pen..reset()..xterm(245);
+    _writer(message: message ?? 'Information', pen: _pen);
+  }
+
+  void info2({String? message}){
     _pen..reset()..xterm(039);
     _writer(message: message ?? 'Information', pen: _pen);
   }
@@ -45,7 +54,7 @@ class Logs {
     _writer(message: message, pen: _pen);
   }
 
-  void success({String message = 'Sucess'}){
+  void success({String message = 'Success'}){
     _pen..reset()..green();
     _writer(message: message, pen: _pen);
   }

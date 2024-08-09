@@ -41,18 +41,19 @@ class SharedPrefsUtils {
     Map<String, dynamic> tokens = {};
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     String? refreshToken = sharedPreferences.getString('refresh');
-    _logs.info(message: 'getTokens() refreshToken: ${refreshToken.toString()}');
     String? accessToken = sharedPreferences.getString('access');
-    _logs.info(message: 'getTokens() accessToken: ${accessToken.toString()}');
     if(refresh == null && access == null){
       tokens.addAll({'refresh':refreshToken, 'access':accessToken});
+      _logs.info(message: 'getTokens() refreshToken: ${refreshToken.toString().substring(0, 25)}..., accessToken: ${accessToken.toString().substring(0, 25)}...');
       return tokens;
     }
     if(refresh != null && refresh){
       tokens.addAll({'refresh':refreshToken});
+      _logs.info(message: 'getTokens() refreshToken: ${refreshToken.toString().substring(0, 25)}...');
     }
     if(access != null && access){
       tokens.addAll({'access':accessToken});
+      _logs.info(message: 'getTokens() accessToken: ${accessToken.toString().substring(0, 25)}...');
     }
     return tokens;
   }
@@ -76,6 +77,7 @@ class SharedPrefsUtils {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     Map<String, dynamic> parsed = Jwt.parseJwt(refresh);
     String timestamp = _dateTimeFormatting.fromJWTSeconds(parsed['iat']).toString();
+    _logs.info(message: 'setLoginFromRefresh timestamp from refreshToken: $timestamp');
     await sharedPreferences.setString('login', timestamp);
   }
 

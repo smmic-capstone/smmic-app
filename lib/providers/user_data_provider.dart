@@ -16,7 +16,7 @@ class UserDataProvider extends ChangeNotifier {
   User? get user => _user;
 
   Future<void> init() async {
-    _logs.info(message: 'init() executing...');
+    _logs.info2(message: 'init() executing...');
     Map<String, dynamic>? userData = await _sharedPrefsUtils.getUserData();
     if(userData == null){
       Map<String, dynamic> onSharedPrefsEmpty = await _onSharedPrefsEmpty();
