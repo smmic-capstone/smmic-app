@@ -44,7 +44,6 @@ class UserDataServices {
       accessToken = await _authUtils.refreshAccessToken(refresh: refresh['refresh']);
       await _authProvider.setAccess(access: accessToken!);
     }
-
     final Map<String, dynamic> data = await _apiRequest.get(route: _apiRoutes.getUserData, headers: {'Authorization':'Bearer $token'});
 
     // TODO: HANDLE ERROR SCENARIO

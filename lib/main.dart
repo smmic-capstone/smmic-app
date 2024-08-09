@@ -23,7 +23,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
-        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()..init()),
+        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
         ChangeNotifierProvider<UserDataProvider>(create: (_) => UserDataProvider()),
         ChangeNotifierProvider<UiProvider>(create: (_) => UiProvider()..init())
       ],
