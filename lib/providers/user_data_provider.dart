@@ -32,6 +32,7 @@ class UserDataProvider extends ChangeNotifier {
         throw onSharedPrefsEmpty['error'];
       }
 
+      // TODO: CREATE CROSS CHECKING WITH API FUNCTION
       _logs.info(message: '_onSharedPrefsEmpty() returned with data');
       _user = User.fromJson(onSharedPrefsEmpty);
       await _sharedPrefsUtils.setUserData(userInfo: onSharedPrefsEmpty);

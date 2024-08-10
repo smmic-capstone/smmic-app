@@ -117,7 +117,6 @@ class SharedPrefsUtils {
     await sharedPreferences.setStringList('user_data', userInfo.keys.map((item) => userInfo[item].toString()).toList());
   }
 
-  // [UID, first_name, last_name, province, city, barangay, zone, zip_code, email, password, profilepic]
   /// Returns the user data stored from SharedPreferences as a Map.
   ///
   /// Returns a null of the `user_data` from SharedPreferences is empty.
@@ -130,13 +129,13 @@ class SharedPrefsUtils {
     }
     if (sharedPreferences.getStringList('user_data') != null){
       List<String> userData = sharedPreferences.getStringList('user_data')!;
-      return userDataMapper(userData);
+      return _userDataMapper(userData);
     }
     throw('An unexpected error has occurred on SharedPrefsUtils.getStringList');
   }
 
   /// Maps the StringList that `getUserData()` returns
-  Map<String, dynamic> userDataMapper(List<String> userData) {
+  Map<String, dynamic> _userDataMapper(List<String> userData) {
     if(userData.length != _userDataKeys.length){
       return {'error':'userData and keys length not matched, check userData contents'};
     }
