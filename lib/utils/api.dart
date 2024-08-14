@@ -7,7 +7,7 @@ class ApiRequest {
   final Logs _logs = Logs(tag: 'ApiRequest()', disable: true);
 
   /// Get request for api, returns a the response status code and the body if available
-  Future<Map<String, dynamic>> get({required String route, Map<String, String>? headers}) async {
+  Future<dynamic> get({required String route, Map<String, String>? headers}) async {
     try{
       _logs.info(message: 'get() $route, headers: ${headers ?? 'none'}');
       final response = await http.get(Uri.parse(route), headers: headers);

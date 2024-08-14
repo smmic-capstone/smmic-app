@@ -1,10 +1,5 @@
-import 'dart:ui';
-
 import 'package:email_validator/email_validator.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:smmic/main.dart';
 import 'package:smmic/pages/register.dart';
 import 'package:smmic/services/auth_services.dart';

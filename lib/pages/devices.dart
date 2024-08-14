@@ -6,6 +6,7 @@ import 'package:smmic/components/devices/cards/sink_node_card.dart';
 import 'package:smmic/components/devices/bottom_drawer.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
+import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/services/devices_services.dart';
 import 'package:smmic/services/user_data_services.dart';
 
@@ -38,36 +39,57 @@ class _Devices extends State<Devices> {
       ),
       body: ListView(
         children: [
-          ..._buildCards(_userDataServices.getSinkNodes(), context.watch<DeviceListOptionsNotifier>().enabledConditions),
+          ..._buildCards(
+              sinkNodeList: context.watch<DevicesProvider>().sinkNodeList,
+              sensorNodeList: context.watch<DevicesProvider>().sensorNodeList,
+              options: context.watch<DeviceListOptionsNotifier>().enabledConditions
+          ),
         ],
       )
     );
   }
 
-  List<Widget> _buildCards(List<String> sinkNodesList, Map<String, bool Function(Device)> options) {
-    return _devices(sinkNodesList, options).map((device) {
-      if (device is SinkNode) {
-        return SinkNodeCard(deviceInfo: device, deviceData: _devicesServices.getSinkSnapshot(id: device.deviceID));
+  List<Widget> _buildCards({required List<SinkNode> sinkNodeList, required List<SensorNode> sensorNodeList, required Map<String, bool Function(Device)> options}){
+    List<Widget> cards = [];
+
+    for(int i = 0; i < sinkNodeList.length; i++){
+      cards.add(SinkNodeCard(deviceInfo: sinkNodeList[i]));
+      //List<SensorNode> sensorGroup = sensorNodeList.where((item) => item.registeredSinkNode == sinkNodeList[i].deviceID).toList();
+      for(int x = 0; x < sensorNodeList.length; x++){
+        if (sensorNodeList[x].registeredSinkNode == sinkNodeList[i].deviceID){
+          cards.add(SensorNodeCard(deviceInfo: sensorNodeList[x]));
+        }
       }
-      if (device is SensorNode) {
-        return SensorNodeCard(deviceInfo: device, deviceData: _devicesServices.getSensorSnapshot(id: device.deviceID));
-      }
-      throw Exception('Type mismatch: ${device.runtimeType.toString()}');
-    }).toList();
+    }
+
+    return cards;
   }
 
-  List<Device> _devices(List<String> sinkNodesIDList, Map<String, bool Function(Device)> options) {
-    List<Device> devices = sinkNodesIDList.expand((sinkNodeID) {
-      SinkNode sinkNodeInfo = _devicesServices.getSinkInfo(id: sinkNodeID);
-      List<String> sensorNodesList = sinkNodeInfo.registeredSensorNodes;
-      List<Device> sensorNodes = [
-        sinkNodeInfo,
-        ...sensorNodesList.map((sensorNode) {
-          return _devicesServices.getSensorInfo(id: sensorNode);
-        })
-      ];
-      return sensorNodes;
-    }).where((device) => options.keys.map((option) => options[option]!(device)).any((result) => result)).toList();
-    return devices;
-  }
+  // List<Widget> _buildCards(List<SinkNode> sinkNodesList, Map<String, bool Function(Device)> options) {
+  //   return _devices(sinkNodesList, options).map((device) {
+  //     if (device is SinkNode) {
+  //       return SinkNodeCard(deviceInfo: device, deviceData: _devicesServices.getSinkSnapshot(id: device.deviceID));
+  //     }
+  //     if (device is SensorNode) {
+  //       return SensorNodeCard(deviceInfo: device, deviceData: _devicesServices.getSensorSnapshot(id: device.deviceID));
+  //     }
+  //     throw Exception('Type mismatch: ${device.runtimeType.toString()}');
+  //   }).toList();
+  // }
+  //
+  // List<Device> _devices(List<SinkNode> sinkNodeList, Map<String, bool Function(Device)> options) {
+  //   List<Device> devices = sinkNodeList.expand((sinkNode) {
+  //     List<String> sensorNodesList = sinkNode.registeredSensorNodes;
+  //     List<Device> sensorNodes = [
+  //       sinkNode,
+  //       ...sensorNodesList.map((sensorNodeID) {
+  //         return _devicesServices.getSensorInfo(id: sensorNode);
+  //       })
+  //     ];
+  //     return sensorNodes;
+  //     // returns a list of all items that match the option condition
+  //     // TODO: use flutter isolates for this process
+  //   }).where((device) => options.keys.map((option) => options[option]!(device)).any((result) => result)).toList();
+  //   return devices;
+  // }
 }

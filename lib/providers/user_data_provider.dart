@@ -9,7 +9,6 @@ class UserDataProvider extends ChangeNotifier {
   //Dependencies
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
   final UserDataServices _userDataServices = UserDataServices();
-  final AuthProvider _authProvider = AuthProvider();
   final Logs _logs = Logs(tag: 'UserDataProvider');
 
   User? _user;
@@ -52,7 +51,7 @@ class UserDataProvider extends ChangeNotifier {
     } else {
       Map<String, dynamic>? userDataFromApi;
       _logs.info(message: 'userDataFromAPI: ${tokens['access']}');
-      try{
+      try {
         userDataFromApi = await _userDataServices.getUserInfo(token: tokens['access']);
         // TODO: HANDLE IF ERROR
         return userDataFromApi!['data'];
