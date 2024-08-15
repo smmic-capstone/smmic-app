@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
-import 'package:smmic/models/user_data_model.dart';
-import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/pages/login.dart';
 import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/providers/user_data_provider.dart';
-import 'package:smmic/services/auth_services.dart';
-import 'package:smmic/utils/auth_utils.dart';
 import 'package:smmic/utils/global_navigator.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';

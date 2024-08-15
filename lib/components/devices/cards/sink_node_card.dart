@@ -48,8 +48,8 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
                       children: [
                         Expanded(
                             flex: 3,
-                            child: DeviceName(deviceName: '${widget.deviceInfo.deviceName.substring(0, 5)}...')
-                           ),
+                            child: DeviceName(deviceName: '${widget.deviceInfo.deviceName.length > 10 ? widget.deviceInfo.deviceName.substring(0, 10) : widget.deviceInfo.deviceName}')
+                        ),
                         Expanded(
                             flex: 1,
                             //TODO: add snapshot data here

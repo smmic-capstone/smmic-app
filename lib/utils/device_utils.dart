@@ -2,6 +2,7 @@ import 'package:smmic/models/device_data_models.dart';
 
 class DeviceUtils {
 
+  /// Helper function to map a sink node map into an object
   SinkNode sinkNodeMapToObject(Map<String, dynamic> sinkMap){
     List<Map<String, dynamic>> sensorNodes = sinkMap['sensor_nodes'];
     List<String> sensorNodeIDList = [];
@@ -17,6 +18,7 @@ class DeviceUtils {
     return SinkNode.fromJSON(sinkNodeMap);
   }
 
+  /// Helper function to map a sensor node map into an object
   SensorNode sensorNodeMapToObject({required Map<String, dynamic> sensorMap, required String sinkNodeID}){
     Map<String, dynamic> sensorNodeMap = {
       'deviceID': sensorMap['SNID'],

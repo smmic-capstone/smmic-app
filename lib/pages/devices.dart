@@ -49,7 +49,7 @@ class _Devices extends State<Devices> {
     );
   }
 
-  List<Widget> _buildCards({required List<SinkNode> sinkNodeList, required List<SensorNode> sensorNodeList, required Map<String, bool Function(Device)> options}){
+  List<Widget> _buildCards({required List<SinkNode> sinkNodeList, required List<SensorNode> sensorNodeList, required Map<String, bool Function(Widget)> options}){
     List<Widget> cards = [];
 
     for(int i = 0; i < sinkNodeList.length; i++){
@@ -62,7 +62,9 @@ class _Devices extends State<Devices> {
       }
     }
 
-    return cards;
+    return cards.where((card) {
+      return options.keys.map((optionKey) => options[optionKey]!(card)).any((result) => result);
+    }).toList();
   }
 
   // List<Widget> _buildCards(List<SinkNode> sinkNodesList, Map<String, bool Function(Device)> options) {

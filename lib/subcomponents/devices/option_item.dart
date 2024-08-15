@@ -7,7 +7,7 @@ class OptionItem extends StatefulWidget {
   const OptionItem({super.key, required this.title, required this.subtitle, required this.condition, required this.logic, required this.enabledConditions});
 
   final String condition;
-  final bool Function(Device) logic;
+  final bool Function(Widget) logic;
   final List<String> enabledConditions;
   final String title;
   final String subtitle;
