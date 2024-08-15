@@ -8,10 +8,9 @@ import 'package:smmic/subcomponents/devices/digital_display.dart';
 import 'package:smmic/subcomponents/devices/gauge.dart';
 
 class SensorNodeCard extends StatefulWidget {
-  const SensorNodeCard({super.key, required this.deviceData, required this.deviceInfo});
+  const SensorNodeCard({super.key, required this.deviceInfo});
 
   final SensorNode deviceInfo;
-  final SensorNodeSnapshot deviceData;
 
   @override
   State<SensorNodeCard> createState() => _SensorNodeCardState();
@@ -22,7 +21,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) {
-        return SensorNodePage(deviceID: widget.deviceData.deviceID, deviceName: widget.deviceInfo.deviceName);
+        return SensorNodePage(deviceID: widget.deviceInfo.deviceID, deviceName: widget.deviceInfo.deviceName);
       })),
       child: Stack(
         children: [
@@ -50,11 +49,12 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                       children: [
                         Expanded(
                             flex: 3,
-                            child: DeviceName(deviceName: widget.deviceInfo.deviceName)
+                            child: DeviceName(deviceName: '${widget.deviceInfo.deviceName.substring(0, 10)}')
                         ),
                         Expanded(
                           flex: 1,
-                          child: BatteryLevel(batteryLevel: widget.deviceData.batteryLevel.toInt()),
+                          //TODO: add snapshot data here
+                          child: BatteryLevel(batteryLevel: 00),
                         )
                       ],
                     ),
@@ -69,11 +69,13 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 DigitalDisplay(
-                                  value: widget.deviceData.temperature,
+                                  //TODO: add snapshot data here
+                                  value: 00,
                                   valueType: 'temperature',
                                 ),
                                 DigitalDisplay(
-                                  value: widget.deviceData.humidity,
+                                  //TODO: add snapshot data here
+                                  value: 00,
                                   valueType: 'humidity',
                                 )
                               ],
@@ -85,7 +87,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                                 alignment: Alignment.center,
                                 child: RadialGauge(
                                     valueType: 'soilMoisture',
-                                    value: widget.deviceData.soilMoisture,
+                                    //TODO: add snapshot data here
+                                    value: 00,
                                     limit: 100
                                 )
                             ),

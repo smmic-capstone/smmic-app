@@ -85,6 +85,7 @@ class _SensorNodeDataServices {
     }
     throw Exception('Device ID not identified!');
   }
+
   // void updateInfo(Map<String, dynamic> newInfo) {
   //
   // }

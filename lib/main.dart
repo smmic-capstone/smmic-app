@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
-import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/pages/login.dart';
+import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/providers/user_data_provider.dart';
-import 'package:smmic/services/auth_services.dart';
-import 'package:smmic/utils/auth_utils.dart';
 import 'package:smmic/utils/global_navigator.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
@@ -25,7 +22,8 @@ void main() {
         ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
         ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
         ChangeNotifierProvider<UserDataProvider>(create: (_) => UserDataProvider()),
-        ChangeNotifierProvider<UiProvider>(create: (_) => UiProvider()..init())
+        ChangeNotifierProvider<UiProvider>(create: (_) => UiProvider()..init()),
+        ChangeNotifierProvider<DevicesProvider>(create: (_) => DevicesProvider())
       ],
       child: const MyApp(),
     )
@@ -40,7 +38,7 @@ class MyApp extends StatelessWidget {
       navigatorKey: locator<GlobalNavigator>().navigatorKey,
       debugShowCheckedModeBanner: false,
       themeMode: context.watch<UiProvider>().isDark ? ThemeMode.dark : ThemeMode.light,
-      darkTheme: context.watch<UiProvider>().isDark ? context.watch<UiProvider>().darktheme : context.watch<UiProvider>().lightTheme,
+      darkTheme: context.watch<UiProvider>().isDark ? context.watch<UiProvider>().darkTheme : context.watch<UiProvider>().lightTheme,
       theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
       home: const AuthGate(),
     );
@@ -99,6 +97,9 @@ class _AuthGateState extends State<AuthGate> {
             }
             // initiate user data when logged in
             context.read<UserDataProvider>().init();
+            context.read<DevicesProvider>().init();
+
+            // TODO: fix this hack
             return const MyBottomNav(indexPage: 0);
           }
           return const Center(

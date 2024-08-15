@@ -24,15 +24,6 @@ class UserDataServices {
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
   final ApiRequest _apiRequest = ApiRequest();
 
-  //TODO: refactor when api is up
-  List<String> getSensorNodes(String sinkNodeID) {
-    return mockSensorNodesList[sinkNodeID] ?? [];
-  }
-
-  List<String> getSinkNodes() {
-    return mockSinkNodesList;
-  }
-
   /// Returns a map of the user data, will return a map with an `error` String key if an error is returned from the request
   Future<Map<String, dynamic>?> getUserInfo({required String token}) async {
     String? accessToken;
@@ -44,6 +35,7 @@ class UserDataServices {
       accessToken = await _authUtils.refreshAccessToken(refresh: refresh['refresh']);
       await _authProvider.setAccess(access: accessToken!);
     }
+
     final Map<String, dynamic> data = await _apiRequest.get(route: _apiRoutes.getUserData, headers: {'Authorization':'Bearer $token'});
 
     // TODO: HANDLE ERROR SCENARIO

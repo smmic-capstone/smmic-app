@@ -6,10 +6,9 @@ import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/device_name.dart';
 
 class SinkNodeCard extends StatefulWidget {
-  const SinkNodeCard({super.key, required this.deviceData, required this.deviceInfo});
+  const SinkNodeCard({super.key, required this.deviceInfo});
 
   final SinkNode deviceInfo;
-  final SinkNodeSnapshot deviceData;
 
   @override
   State<SinkNodeCard> createState() => _SinkNodeCardState();
@@ -49,11 +48,12 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
                       children: [
                         Expanded(
                             flex: 3,
-                            child: DeviceName(deviceName: widget.deviceInfo.deviceName)
+                            child: DeviceName(deviceName: '${widget.deviceInfo.deviceName.length > 10 ? widget.deviceInfo.deviceName.substring(0, 10) : widget.deviceInfo.deviceName}')
                         ),
                         Expanded(
                             flex: 1,
-                            child: BatteryLevel(batteryLevel: widget.deviceData.batteryLevel.toInt())
+                            //TODO: add snapshot data here
+                            child: BatteryLevel(batteryLevel: 00)
                         )
                       ],
                     ),

@@ -7,6 +7,7 @@ class ApiRoutes {
   final String _getUserURL = '/djoser/users/me/';
   final String _verifyTokenURL = '/auth/jwt/verify';
   final String _refreshAccessURL = '/auth/jwt/refresh';
+  final String _getDevicesURL = '/getuserSKdevices/';
 
   /// Base url for the api
   //String get baseURL => _baseURL;
@@ -29,4 +30,6 @@ class ApiRoutes {
   ///Refreshes access token, requires the refresh token
   String get refreshToken => '$_baseURL$_refreshAccessURL';
 
+  /// Get user's registered devices
+  String get getDevices => '$_baseURL$_getDevicesURL';
 }
