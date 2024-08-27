@@ -7,6 +7,8 @@ import 'package:smmic/providers/user_data_provider.dart';
 import 'package:smmic/services/user_data_services.dart';
 import 'package:smmic/subcomponents/manageacc/labeltext.dart';
 import 'package:smmic/subcomponents/manageacc/textfield.dart';
+import 'package:smmic/utils/api.dart';
+import 'package:smmic/utils/global_navigator.dart';
 import 'package:smmic/utils/logs.dart';
 
 class ManageAccount extends StatefulWidget {
@@ -18,6 +20,9 @@ class ManageAccount extends StatefulWidget {
 
 class _ManageAccount extends State<ManageAccount>{
   final Logs _logs = Logs(tag: 'accountinfo.dart');
+  final UserDataServices _userDataServices = UserDataServices();
+  final AuthProvider _authProvider = AuthProvider();
+  final GlobalNavigator _globalNavigator = locator<GlobalNavigator>();
 
   UserDataServices getUserDetails = UserDataServices();
   Color? bgColor = const Color.fromRGBO(239, 239, 239, 1.0);
@@ -31,6 +36,7 @@ class _ManageAccount extends State<ManageAccount>{
   final setZipCodeController = TextEditingController();
   final setPasswordController = TextEditingController();
 
+
   @override
   Widget build(BuildContext context){
     User? userData = context.watch<UserDataProvider>().user;
@@ -43,15 +49,18 @@ class _ManageAccount extends State<ManageAccount>{
       throw Exception('error: user data == null!');
     }
 
+
+
     setFirstNameController.text = userData.firstName;
     setLastNameController.text = userData.lastName;
-    setProvinceController.text = userData.firstName;
+    setEmailController.text = userData.email;
+    setPasswordController.text = userData.password.toString().substring(0, userData.password.length < 10 ? userData.password.length : 10);
+    setProvinceController.text = userData.province;
     setCityController.text = userData.city;
     setBarangayController.text = userData.barangay;
     setZoneController.text = userData.zone;
     setZipCodeController.text = userData.zipCode;
-    setEmailController.text = userData.email;
-    setPasswordController.text = userData.password.toString().substring(0, userData.password.length < 10 ? userData.password.length : 10);
+
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -73,7 +82,7 @@ class _ManageAccount extends State<ManageAccount>{
                   children: [
                     CircleAvatar(
                         radius: 70,
-                        backgroundImage: NetworkImage(userData!.profilePicLink)
+                        backgroundImage: NetworkImage(userData.profilePicLink)
                     ),
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -81,7 +90,33 @@ class _ManageAccount extends State<ManageAccount>{
                       children: [
                         Text(userData.firstName, style: const TextStyle(fontSize: 26),),
                         Text(userData.lastName, style: const TextStyle(fontSize: 26),),
-                        const Text("Edit Profile"),
+                        GestureDetector(
+                          onTap: () async {
+                            UserAccess? _userAccess = context.read<AuthProvider>().accessData;
+                            if(_userAccess == null) {
+                              context.read<AuthProvider>().accessStatus == TokenStatus.forceLogin;
+                              _globalNavigator.forceLoginDialog();
+                            }else{
+                              Map<String,dynamic> uData = {
+                                'UID' : _userAccess.userID,
+                                'first_name' : setFirstNameController.text,
+                                'last_name' : setLastNameController.text,
+                                'province' : setProvinceController.text,
+                                'city' : setCityController.text,
+                                'barangay' : setBarangayController.text,
+                                'zone' : setZoneController.text,
+                                'zip_code' : setZipCodeController.text,
+                                'email' : setEmailController.text,
+                                'password' :setPasswordController.text,
+                                'profilepic' :userData.profilePicLink,
+                              };
+                              await _userDataServices.updateUserInfo(token: _userAccess.token, uid: _userAccess.userID, userData: uData);
+                              context.read<UserDataProvider>().userDataChange(uData);
+                            }
+                          },
+                          child: const Text("Edit Profile"),
+                        )
+
                       ],
                     )
                   ],
