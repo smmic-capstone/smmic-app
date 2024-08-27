@@ -46,4 +46,26 @@ class UserDataServices {
     return data;
   }
 
+  Future<Map<String, dynamic>?> updateUserInfo({required String token, required String uid, required Map<String,dynamic> userData}) async{
+    String? accessToken;
+    TokenStatus accessStatus = await _authUtils.verifyToken(token: token);
+    
+    if(accessStatus != TokenStatus.valid){
+      Map<String,dynamic> refresh = await _sharedPrefsUtils.getTokens(refresh: true);
+      accessToken = await _authUtils.refreshAccessToken(refresh: refresh['refresh']);
+      await _authProvider.setAccess(access: accessToken!);
+    }
+    
+    final Map<String,dynamic> data = await _apiRequest.put(route: _apiRoutes.updateData,
+        headers: {'Authorization' : 'Bearer $token','UID': uid },
+        body: userData);
+
+    // TODO: HANDLE ERROR SCENARIO
+    if(data.containsKey('error')){
+      return data;
+    }
+
+    return data;
+  }
+
 }

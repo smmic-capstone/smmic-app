@@ -13,7 +13,7 @@ class DeviceName extends StatelessWidget {
       child: Text(
           deviceName,
           style: const TextStyle(
-              fontSize: 20,
+              fontSize: 15,
               fontFamily: 'Inter',
               height: 1.1
           )

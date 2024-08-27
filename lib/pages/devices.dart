@@ -9,6 +9,7 @@ import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/services/devices_services.dart';
 import 'package:smmic/services/user_data_services.dart';
+import 'package:smmic/utils/logs.dart';
 
 class Devices extends StatefulWidget {
   const Devices({super.key});
@@ -18,6 +19,9 @@ class Devices extends StatefulWidget {
 }
 
 class _Devices extends State<Devices> {
+  final Logs _logs = Logs(tag: 'devices.dart');
+
+
   Color? bgColor = const Color.fromRGBO(239, 239, 239, 1.0);
   final UserDataServices _userDataServices = UserDataServices();
   final DevicesServices _devicesServices = DevicesServices();

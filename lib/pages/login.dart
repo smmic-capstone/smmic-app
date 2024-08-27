@@ -1,7 +1,9 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:smmic/main.dart';
 import 'package:smmic/pages/register.dart';
+import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/services/auth_services.dart';
 import 'package:smmic/subcomponents/login/mybutton.dart';
 import 'package:smmic/subcomponents/login/textfield.dart';
@@ -37,6 +39,7 @@ class _LoginPageState extends State<LoginPage> {
       _formKey.currentState?.save();
       await _authService.login(email: _emailController.text, password: _passwordController.text);
       if(context.mounted){
+        context.read<AuthProvider>().init();
         Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const AuthGate()), (route) => false);
       }
     }
