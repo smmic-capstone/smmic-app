@@ -62,5 +62,16 @@ class UserDataProvider extends ChangeNotifier {
   }
 
   //TODO: implement userDataChange
+  Future<void> userDataChange(Map<String,dynamic> updatedData) async {
+    bool success = await _sharedPrefsUtils.setUserData(userInfo: updatedData);
+
+    if(success){
+      _user = User.fromJson(updatedData);
+      _logs.info(message: 'provider $success');
+      notifyListeners();
+    }else{
+      _logs.error(message: "Wala man naka update");
+    }
+  }
 
 }
