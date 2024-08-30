@@ -49,7 +49,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                       children: [
                         Expanded(
                             flex: 3,
-                            child: DeviceName(deviceName: widget.deviceInfo.deviceName)
+                            child: DeviceName(deviceName: '${widget.deviceInfo.deviceName.substring(0, 10)}')
                         ),
                         Expanded(
                           flex: 1,

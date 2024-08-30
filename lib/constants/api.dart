@@ -9,8 +9,7 @@ class ApiRoutes {
   final String _refreshAccessURL = '/auth/jwt/refresh';
   final String _getDevicesURL = '/getuserSKdevices/';
   final String _updateUserData = '/updateuserdetails/';
-
-
+  
   /// Base url for the api
   //String get baseURL => _baseURL;
 
