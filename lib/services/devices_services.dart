@@ -19,15 +19,10 @@ class DevicesServices {
 
   /// Retrieves all devices registered to the user, requires the user id
   Future<List<Map<String, dynamic>>> getDevices({required String userID}) async {
-    final Map<String, dynamic> data = await _apiRequest.get(route: '${_apiRoutes.getDevices}$userID');
+    final Map<String, dynamic> data = await _apiRequest.get(route: _apiRoutes.getDevices, headers: {"UID":userID});
 
-    if(data.containsKey('error') || data.isEmpty){
+    if(data.containsKey('error') || data.isEmpty || data['data'] == null){
       _logs.error(message: 'data received from ApiRequest().get() contains error or invalid value: ${data.values}');
-      throw Exception('unhandled error on DevicesServices().getDevices()');
-    }
-
-    if (data['data'] == null || data['data'] == []){
-      _logs.error(message: 'data received from ApiRequest().get() is an empty list');
       throw Exception('unhandled error on DevicesServices().getDevices()');
     }
 
