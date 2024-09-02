@@ -8,12 +8,12 @@ class DeviceName extends StatelessWidget {
   @override
   Widget build(BuildContext context){
     return Container(
-      padding: EdgeInsets.only(top: 1),
+      padding: const EdgeInsets.only(top: 1),
       alignment: Alignment.topLeft,
       child: Text(
           deviceName,
           style: const TextStyle(
-              fontSize: 15,
+              fontSize: 24,
               fontFamily: 'Inter',
               height: 1.1
           )
