@@ -106,12 +106,7 @@ class SharedPrefsUtils {
   Future<bool> setUserData({required Map<String,dynamic> userInfo}) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
 
-    List <String> userData = userInfo.keys.map((key) => userInfo[key].toString()).toList();
-
-    bool success = await sharedPreferences.setStringList('user_data', userData);
-
-    return success;
-    /*bool matched = true;
+    bool matched = true;
     for(int i = 0; i < _userDataKeys.length; i++){
       if(userInfo.keys.toList()[i] != _userDataKeys[i]){
         matched = false;
@@ -120,7 +115,10 @@ class SharedPrefsUtils {
     if(!matched){
       throw ('error: User data Map keys provided to SharedPrefsUtils.setUserData did match registered user_data keys');
     }
-    await sharedPreferences.setStringList('user_data', userInfo.keys.map((item) => userInfo[item].toString()).toList());*/
+
+    bool success = await sharedPreferences.setStringList('user_data', userInfo.keys.map((item) => userInfo[item].toString()).toList());
+
+    return success;
   }
 
   /// Returns the user data stored from SharedPreferences as a Map.

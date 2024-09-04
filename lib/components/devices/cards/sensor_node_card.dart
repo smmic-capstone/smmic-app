@@ -51,7 +51,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                             flex: 3,
                             child: DeviceName(deviceName: widget.deviceInfo.deviceName)
                         ),
-                        Expanded(
+                        const Expanded(
                           flex: 1,
                           //TODO: add snapshot data here
                           child: BatteryLevel(batteryLevel: 00),
@@ -63,7 +63,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                       flex: 10,
                       child: Row(
                         children: [
-                          Expanded(
+                          const Expanded(
                             flex: 3,
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -85,7 +85,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                             flex: 4,
                             child: Container(
                                 alignment: Alignment.center,
-                                child: RadialGauge(
+                                child: const RadialGauge(
                                     valueType: 'soilMoisture',
                                     //TODO: add snapshot data here
                                     value: 00,

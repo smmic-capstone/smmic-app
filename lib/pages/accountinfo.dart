@@ -7,7 +7,6 @@ import 'package:smmic/providers/user_data_provider.dart';
 import 'package:smmic/services/user_data_services.dart';
 import 'package:smmic/subcomponents/manageacc/labeltext.dart';
 import 'package:smmic/subcomponents/manageacc/textfield.dart';
-import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/global_navigator.dart';
 import 'package:smmic/utils/logs.dart';
 
@@ -18,7 +17,7 @@ class ManageAccount extends StatefulWidget {
   State<ManageAccount> createState() => _ManageAccount();
 }
 
-class _ManageAccount extends State<ManageAccount>{
+class _ManageAccount extends State<ManageAccount> {
   final Logs _logs = Logs(tag: 'accountinfo.dart');
   final UserDataServices _userDataServices = UserDataServices();
   final AuthProvider _authProvider = AuthProvider();
@@ -36,31 +35,30 @@ class _ManageAccount extends State<ManageAccount>{
   final setZipCodeController = TextEditingController();
   final setPasswordController = TextEditingController();
 
-
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     User? userData = context.watch<UserDataProvider>().user;
     UserAccess? accessData = context.watch<AuthProvider>().accessData;
 
-    if(userData == null){
-      _logs.warning(message: 'userData from UserDataProvider is null: $userData');
+    if (userData == null) {
+      _logs.warning(
+          message: 'userData from UserDataProvider is null: $userData');
 
-      _logs.warning(message: 'userData from UserDataProvider is null: $accessData');
+      _logs.warning(
+          message: 'userData from UserDataProvider is null: $accessData');
       throw Exception('error: user data == null!');
     }
-
-
 
     setFirstNameController.text = userData.firstName;
     setLastNameController.text = userData.lastName;
     setEmailController.text = userData.email;
-    setPasswordController.text = userData.password.toString().substring(0, userData.password.length < 10 ? userData.password.length : 10);
+    setPasswordController.text = userData.password.toString().substring(
+        0, userData.password.length < 10 ? userData.password.length : 10);
     setProvinceController.text = userData.province;
     setCityController.text = userData.city;
     setBarangayController.text = userData.barangay;
     setZoneController.text = userData.zone;
     setZipCodeController.text = userData.zipCode;
-
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -82,41 +80,52 @@ class _ManageAccount extends State<ManageAccount>{
                   children: [
                     CircleAvatar(
                         radius: 70,
-                        backgroundImage: NetworkImage(userData.profilePicLink)
-                    ),
+                        backgroundImage: NetworkImage(userData.profilePicLink)),
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(userData.firstName, style: const TextStyle(fontSize: 26),),
-                        Text(userData.lastName, style: const TextStyle(fontSize: 26),),
+                        Text(
+                          userData.firstName,
+                          style: const TextStyle(fontSize: 26),
+                        ),
+                        Text(
+                          userData.lastName,
+                          style: const TextStyle(fontSize: 26),
+                        ),
                         GestureDetector(
                           onTap: () async {
-                            UserAccess? _userAccess = context.read<AuthProvider>().accessData;
-                            if(_userAccess == null) {
-                              context.read<AuthProvider>().accessStatus == TokenStatus.forceLogin;
+                            UserAccess? _userAccess =
+                                context.read<AuthProvider>().accessData;
+                            if (_userAccess == null) {
+                              context.read<AuthProvider>().accessStatus ==
+                                  TokenStatus.forceLogin;
                               _globalNavigator.forceLoginDialog();
-                            }else{
-                              Map<String,dynamic> uData = {
-                                'UID' : _userAccess.userID,
-                                'first_name' : setFirstNameController.text,
-                                'last_name' : setLastNameController.text,
-                                'province' : setProvinceController.text,
-                                'city' : setCityController.text,
-                                'barangay' : setBarangayController.text,
-                                'zone' : setZoneController.text,
-                                'zip_code' : setZipCodeController.text,
-                                'email' : setEmailController.text,
-                                'password' :setPasswordController.text,
-                                'profilepic' :userData.profilePicLink,
+                            } else {
+                              Map<String, dynamic> uData = {
+                                'UID': _userAccess.userID,
+                                'first_name': setFirstNameController.text,
+                                'last_name': setLastNameController.text,
+                                'province': setProvinceController.text,
+                                'city': setCityController.text,
+                                'barangay': setBarangayController.text,
+                                'zone': setZoneController.text,
+                                'zip_code': setZipCodeController.text,
+                                'email': setEmailController.text,
+                                'password': setPasswordController.text,
+                                'profilepic': userData.profilePicLink,
                               };
-                              await _userDataServices.updateUserInfo(token: _userAccess.token, uid: _userAccess.userID, userData: uData);
-                              context.read<UserDataProvider>().userDataChange(uData);
+                              await _userDataServices.updateUserInfo(
+                                  token: _userAccess.token,
+                                  uid: _userAccess.userID,
+                                  userData: uData);
+                              context
+                                  .read<UserDataProvider>()
+                                  .userDataChange(uData);
                             }
                           },
                           child: const Text("Edit Profile"),
                         )
-
                       ],
                     )
                   ],
@@ -126,48 +135,50 @@ class _ManageAccount extends State<ManageAccount>{
                 padding: EdgeInsets.only(top: 10.0),
                 child: LabelText(label: "Email"),
               ),
-              ManageAccountTextField(controller: setEmailController,
+              ManageAccountTextField(
+                  controller: setEmailController,
                   disableInput: true,
                   hintText: "Email",
                   obscuretext: false),
-
               const LabelText(label: "First Name"),
-              ManageAccountTextField(controller: setFirstNameController,
+              ManageAccountTextField(
+                  controller: setFirstNameController,
                   hintText: "First Name",
                   obscuretext: false),
-
               const LabelText(label: "Last Name"),
-              ManageAccountTextField(controller: setLastNameController,
+              ManageAccountTextField(
+                  controller: setLastNameController,
                   hintText: "Last Name",
                   obscuretext: false),
-
               const LabelText(label: "Province"),
-              ManageAccountTextField(controller: setProvinceController,
+              ManageAccountTextField(
+                  controller: setProvinceController,
                   hintText: "Province",
                   obscuretext: false),
-
               const LabelText(label: "City"),
-              ManageAccountTextField(controller: setCityController,
+              ManageAccountTextField(
+                controller: setCityController,
                 hintText: "City",
-                obscuretext: false,),
-
+                obscuretext: false,
+              ),
               const LabelText(label: "Barangay"),
-              ManageAccountTextField(controller: setBarangayController,
+              ManageAccountTextField(
+                  controller: setBarangayController,
                   hintText: "Barangay",
                   obscuretext: false),
-
               const LabelText(label: "Zone"),
-              ManageAccountTextField(controller: setZoneController,
+              ManageAccountTextField(
+                  controller: setZoneController,
                   hintText: "Zone",
                   obscuretext: false),
-
               const LabelText(label: "Zip Code"),
-              ManageAccountTextField(controller: setZipCodeController,
+              ManageAccountTextField(
+                  controller: setZipCodeController,
                   hintText: "Zip Code",
                   obscuretext: false),
-
               const LabelText(label: "Password"),
-              ManageAccountTextField(controller: setPasswordController,
+              ManageAccountTextField(
+                  controller: setPasswordController,
                   disableInput: true,
                   hintText: "Password",
                   obscuretext: true)
