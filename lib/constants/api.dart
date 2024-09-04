@@ -9,6 +9,8 @@ class ApiRoutes {
   final String _refreshAccessURL = '/auth/jwt/refresh';
   final String _getDevicesURL = '/getuserSKdevices/';
   final String _updateUserData = '/updateuserdetails/';
+  final String _updateSKDeviceName = '/updateuserSKdevicesname/';
+  final String _updateSNDeviceName = '/updateuserSNdevicesname/';
 
 
   /// Base url for the api
@@ -37,4 +39,11 @@ class ApiRoutes {
 
   ///Update User Data
   String get updateData => '$_baseURL$_updateUserData';
+
+  ///Update SK Name
+  String get updateSKName => '$_baseURL$_updateSKDeviceName';
+
+  ///Update SN Name
+  String get updateSNName => '$_baseURL$_updateSNDeviceName';
+
 }

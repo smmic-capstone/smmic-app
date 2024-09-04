@@ -71,31 +71,31 @@ class _Devices extends State<Devices> {
     }).toList();
   }
 
-  // List<Widget> _buildCards(List<SinkNode> sinkNodesList, Map<String, bool Function(Device)> options) {
-  //   return _devices(sinkNodesList, options).map((device) {
-  //     if (device is SinkNode) {
-  //       return SinkNodeCard(deviceInfo: device, deviceData: _devicesServices.getSinkSnapshot(id: device.deviceID));
-  //     }
-  //     if (device is SensorNode) {
-  //       return SensorNodeCard(deviceInfo: device, deviceData: _devicesServices.getSensorSnapshot(id: device.deviceID));
-  //     }
-  //     throw Exception('Type mismatch: ${device.runtimeType.toString()}');
-  //   }).toList();
-  // }
-  //
-  // List<Device> _devices(List<SinkNode> sinkNodeList, Map<String, bool Function(Device)> options) {
-  //   List<Device> devices = sinkNodeList.expand((sinkNode) {
-  //     List<String> sensorNodesList = sinkNode.registeredSensorNodes;
-  //     List<Device> sensorNodes = [
-  //       sinkNode,
-  //       ...sensorNodesList.map((sensorNodeID) {
-  //         return _devicesServices.getSensorInfo(id: sensorNode);
-  //       })
-  //     ];
-  //     return sensorNodes;
-  //     // returns a list of all items that match the option condition
-  //     // TODO: use flutter isolates for this process
-  //   }).where((device) => options.keys.map((option) => options[option]!(device)).any((result) => result)).toList();
-  //   return devices;
-  // }
+  /*List<Widget> _buildCards(List<SinkNode> sinkNodesList, Map<String, bool Function(Device)> options) {
+    return _devices(sinkNodesList, options).map((device) {
+      if (device is SinkNode) {
+        return SinkNodeCard(deviceInfo: device, deviceData: _devicesServices.getSinkSnapshot(id: device.deviceID));
+      }
+      if (device is SensorNode) {
+        return SensorNodeCard(deviceInfo: device, deviceData: _devicesServices.getSensorSnapshot(id: device.deviceID));
+      }
+      throw Exception('Type mismatch: ${device.runtimeType.toString()}');
+    }).toList();
+  }
+
+  List<Device> _devices(List<SinkNode> sinkNodeList, Map<String, bool Function(Device)> options) {
+    List<Device> devices = sinkNodeList.expand((sinkNode) {
+      List<String> sensorNodesList = sinkNode.registeredSensorNodes;
+      List<Device> sensorNodes = [
+        sinkNode,
+        ...sensorNodesList.map((sensorNodeID) {
+          return _devicesServices.getSensorInfo(id: sensorNode);
+        })
+      ];
+      return sensorNodes;
+      // returns a list of all items that match the option condition
+      // TODO: use flutter isolates for this process
+    }).where((device) => options.keys.map((option) => options[option]!(device)).any((result) => result)).toList();
+    return devices;
+  }*/
 }
