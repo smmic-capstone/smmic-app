@@ -19,7 +19,7 @@ class _BatteryLevelState extends State<BatteryLevel> {
     return Container(
       child: Row(
         children: [
-          const Icon(CupertinoIcons.battery_75_percent, size: 36, fill: 0),
+          const Icon(CupertinoIcons.battery_75_percent, size: 36, fill: 00),
           Container(
             padding: EdgeInsets.only(top: widget.alignmentAdjust),
             child: Padding(

@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/pages/devices_subpages/sensor_node_subpage.dart';
 import 'package:smmic/subcomponents/devices/battery_level.dart';
+import 'package:smmic/subcomponents/devices/device_dialog.dart';
 import 'package:smmic/subcomponents/devices/device_name.dart';
 
 class SinkNodeCard extends StatefulWidget {
@@ -15,8 +16,12 @@ class SinkNodeCard extends StatefulWidget {
 }
 
 class _SinkNodeCardState extends State<SinkNodeCard> {
+
   @override
   Widget build(BuildContext context) {
+
+    final SKDeviceDialog _skDeviceDialog = SKDeviceDialog(context: context, deviceID: widget.deviceInfo.deviceID);
+
     return GestureDetector(
       //TODO: IMPLEMENT ON TAP FUNCTION
       // onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) {
@@ -67,14 +72,30 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
           ),
           Container(
             padding: const EdgeInsets.only(right: 37, top: 12),
-            alignment: Alignment.topRight,
-            child: RotatedBox(
-              quarterTurns: 2,
-              child: Icon(
-                CupertinoIcons.arrow_down_left_circle,
-                size: 20,
-                color: Colors.black.withOpacity(0.25),
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                RotatedBox(
+                    quarterTurns: 2,
+                  child: IconButton(
+                    icon:const Icon(CupertinoIcons.pencil_circle, size: 20,),
+                    color: Colors.black.withOpacity(0.25),
+                    onPressed: () {
+                      _skDeviceDialog.renameDialog();
+                      },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ),
+                RotatedBox(
+                  quarterTurns: 2,
+                  child: Icon(
+                    CupertinoIcons.arrow_down_left_circle,
+                    size: 20,
+                    color: Colors.black.withOpacity(0.25),
+                  ),
+                ),
+              ],
             ),
           )
         ],

@@ -1,9 +1,10 @@
 class Device {
   final String deviceID;
   String deviceName;
-  String? coordinates;
+  String? longitude;
+  String? latitude;
 
-  Device({required this.deviceID, required this.deviceName, this.coordinates});
+  Device({required this.deviceID, required this.deviceName, this.longitude, this.latitude});
 
   //Updates the device information (deviceName and deviceID) of the object instance
   // void updateInfo(Map<String, dynamic> newInfo) {
@@ -22,7 +23,8 @@ class SinkNode extends Device {
   SinkNode._internal({
     required super.deviceID,
     required super.deviceName,
-    super.coordinates,
+    super.longitude,
+    super.latitude,
     required this.registeredSensorNodes
   }) : super();
 
@@ -31,7 +33,8 @@ class SinkNode extends Device {
     return SinkNode._internal(
       deviceID: deviceInfo['deviceID'],
       deviceName: deviceInfo['deviceName'],
-      coordinates: deviceInfo['coordinates'],
+      longitude: deviceInfo['longitude'],
+      latitude: deviceInfo['latitude'],
       registeredSensorNodes: deviceInfo['registeredSensorNodes']
     );
   }
@@ -43,7 +46,8 @@ class SensorNode extends Device {
   SensorNode._internal({
     required super.deviceID,
     required super.deviceName,
-    super.coordinates,
+    super.longitude,
+    super.latitude,
     required this.registeredSinkNode
   }) : super();
 
@@ -52,7 +56,8 @@ class SensorNode extends Device {
     return SensorNode._internal(
       deviceID: deviceInfo['deviceID'],
       deviceName: deviceInfo['deviceName'],
-      coordinates: deviceInfo['coordinates'],
+      longitude: deviceInfo['longitude'],
+      latitude: deviceInfo['latitude'],
       registeredSinkNode: deviceInfo['sinkNodeID']
     );
   }

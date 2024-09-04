@@ -102,13 +102,28 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
           Container(
             padding: const EdgeInsets.only(right: 37, top: 12),
             alignment: Alignment.topRight,
-            child: RotatedBox(
-              quarterTurns: 2,
-              child: Icon(
-                CupertinoIcons.arrow_down_left_circle,
-                size: 20,
-                color: Colors.black.withOpacity(0.25),
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                RotatedBox(
+                  quarterTurns: 2,
+                  child: IconButton(
+                    icon:const Icon(CupertinoIcons.pencil_circle, size: 20,),
+                    color: Colors.black.withOpacity(0.25),
+                    onPressed: () {  },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ),
+                RotatedBox(
+                  quarterTurns: 2,
+                  child: Icon(
+                    CupertinoIcons.arrow_down_left_circle,
+                    size: 20,
+                    color: Colors.black.withOpacity(0.25),
+                  ),
+                ),
+              ],
             ),
           )
         ],
