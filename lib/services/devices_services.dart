@@ -26,8 +26,7 @@ class DevicesServices {
   final Logs _logs = Logs(tag: 'DevicesServices()');
 
   /// Retrieves all devices registered to the user, requires the user id
-  Future<List<Map<String, dynamic>>> getDevices(
-      {required String userID, required String token}) async {
+  Future<List<Map<String, dynamic>>> getDevices({required String userID, required String token}) async {
     String? accessToken;
     TokenStatus accessStatus = await _authUtils.verifyToken(token: token);
 

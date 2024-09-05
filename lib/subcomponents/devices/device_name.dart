@@ -10,9 +10,14 @@ class DeviceName extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.only(top: 1),
       alignment: Alignment.topLeft,
-      child: Text(deviceName,
-          style:
-              const TextStyle(fontSize: 24, fontFamily: 'Inter', height: 1.1)),
+      child: Text(
+          deviceName,
+          style: const TextStyle(
+              fontSize: 24,
+              fontFamily: 'Inter',
+              height: 1.1
+          )
+      ),
     );
   }
 }
