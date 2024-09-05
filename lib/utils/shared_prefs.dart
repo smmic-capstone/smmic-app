@@ -149,4 +149,41 @@ class SharedPrefsUtils {
     }
     return userMapped;
   }
+
+  Future<bool> setSKList({required List<Map<String,dynamic>> sinkList}) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+
+    List <String> sinkData = sinkList.map((sink) => sink.keys.map((key) => (sink[key] == List<String>) ? sink[key].join(",") : sink[key] ).toList().join(":")).toList();
+
+    /// ["SKID : Name : Coordinates","SKID : Name : Coordinates"]
+
+    bool success = await sharedPreferences.setStringList('sink_data', sinkData);
+
+    return success;
+  }
+
+  Future<List<Map<String,dynamic>>?> getSKList() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+
+    List <String>? sinkNodeList =  sharedPreferences.getStringList('sink_data');
+    List <String> keys = ["deviceID","deviceName","latitude","longitude","registeredSensorNodes"];
+
+    _logs.info(message: sinkNodeList.toString());
+    List<Map<String,dynamic>> sinkNodeList_map = sinkNodeList == null? [] : sinkNodeList.map((sink){
+      Map<String,dynamic> map = {};
+      sink.split(":").map((value) => {
+        ///[SKID : Name : Coordinates : registeredSensorNodes]
+        ///registeredSensorNodes
+        keys.map((key) => map.addAll({key : value}))
+      });
+      return map;
+    }).toList();
+
+    if(sinkNodeList == null){
+      ///TODO:Error Handle
+      _logs.error(message: "Ala wabalo");
+    }
+    return sinkNodeList_map;
+    
+  }
 }

@@ -6,7 +6,7 @@ class DeviceName extends StatelessWidget {
   final String deviceName;
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.only(top: 1),
       alignment: Alignment.topLeft,

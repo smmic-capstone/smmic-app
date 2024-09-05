@@ -18,6 +18,21 @@ class DeviceUtils {
     return SinkNode.fromJSON(sinkNodeMap);
   }
 
+  Map<String,dynamic> mapSinkNode(Map<String, dynamic> sinkMap){
+    List<Map<String, dynamic>> sensorNodes = sinkMap['sensor_nodes'];
+    List<String> sensorNodeIDList = [];
+    for (int i = 0; i < sensorNodes.length; i++){
+      sensorNodeIDList.add((sensorNodes[i]['SNID']).toString());
+    }
+    Map<String, dynamic> sinkNodeMap = {
+      'deviceID': sinkMap['SKID'],
+      'deviceName': sinkMap['SK_Name'],
+      'coordinates' : sinkMap['coordinates'],
+      'registeredSensorNodes': sensorNodeIDList
+    };
+    return sinkNodeMap;
+  }
+
   /// Helper function to map a sensor node map into an object
   SensorNode sensorNodeMapToObject({required Map<String, dynamic> sensorMap, required String sinkNodeID}){
     Map<String, dynamic> sensorNodeMap = {
@@ -28,4 +43,5 @@ class DeviceUtils {
     };
     return SensorNode.fromJSON(sensorNodeMap);
   }
+
 }
