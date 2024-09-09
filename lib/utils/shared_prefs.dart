@@ -158,6 +158,7 @@ class SharedPrefsUtils {
     /// ["SKID : Name : Coordinates","SKID : Name : Coordinates"]
 
     bool success = await sharedPreferences.setStringList('sink_data', sinkData);
+    _logs.info(message: "setSKList shared prefs: $sinkData");
 
     return success;
   }
@@ -168,14 +169,23 @@ class SharedPrefsUtils {
     List <String>? sinkNodeList =  sharedPreferences.getStringList('sink_data');
     List <String> keys = ["deviceID","deviceName","latitude","longitude","registeredSensorNodes"];
 
-    _logs.info(message: sinkNodeList.toString());
-    List<Map<String,dynamic>> sinkNodeList_map = sinkNodeList == null? [] : sinkNodeList.map((sink){
+    _logs.info(message: "getSKList shared prefs: $sinkNodeList");
+    List<Map<String,dynamic>> sinkNodeList_map = sinkNodeList == null ? [] : sinkNodeList.map((sink){
       Map<String,dynamic> map = {};
-      sink.split(":").map((value) => {
+      List<String> values = sink.split(":");
+
+      for(int i =0; i <keys.length;i++){
+        if(keys == "registeredSensorNodes"){
+          map[keys[i]] = values[i].replaceAll(RegExp(r'[\[\]]'), '').split(',');
+        }else{
+          map[keys[i]] = values[i];
+        }
+      }
+      /*sink.split(":").map((value) => {
         ///[SKID : Name : Coordinates : registeredSensorNodes]
         ///registeredSensorNodes
         keys.map((key) => map.addAll({key : value}))
-      });
+      });*/
       return map;
     }).toList();
 
@@ -183,7 +193,59 @@ class SharedPrefsUtils {
       ///TODO:Error Handle
       _logs.error(message: "Ala wabalo");
     }
+    _logs.info(message: "sharedPrefs sinkNodeList_map : $sinkNodeList_map");
     return sinkNodeList_map;
-    
+  }
+
+  Future<bool> setSNList({required List <Map<String,dynamic>> sensorList}) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+
+    List<String> sensorData = sensorList.map((sensor) {
+      return sensor.keys.map((key) {
+        var value = sensor[key];
+        return value is List<String> ? value.join(',') : value.toString();
+      }).toList().join(":");
+    }).toList();
+
+    _logs.info(message: sensorData.toString());
+
+
+
+    /*List<String> sensorData = sensorList.map((sensor) =>
+        sensor.keys.map((key) =>
+        (sensor[key] == List<String>) ? sensor[key].join(',') : sensor[key]).toList().join(":")).toList();*/
+
+    bool success = await sharedPreferences.setStringList('sensor_data', sensorData);
+
+    return success;
+
+  }
+
+  Future <List<Map<String,dynamic>>?> getSNList() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+
+    List<String>? snData = sharedPreferences.getStringList('sensor_data');
+    List <String> keys = ["deviceID","deviceName","latitude","longitude","sinkNodeID"];
+
+    if(snData == null){
+      _logs.error(message: "snData is null");
+      _logs.error(message: snData.toString());
+      return null;
+    }
+
+    List<Map<String,dynamic>> sensorNodeListMap = snData.map((sensor) {
+      Map<String,dynamic> map = {};
+      List<String> values = sensor.split(":");
+
+      for (int i = 0; i < keys.length; i++){
+        map[keys[i]] = i == 2 || i == 3 ? double.parse(values[i]) : values[i];
+      }
+      return map;
+    }).toList();
+
+    if(sensorNodeListMap == null){
+      _logs.error(message: "sharedPrefs sensornodelist is null : $sensorNodeListMap");
+    }
+    return sensorNodeListMap;
   }
 }
