@@ -12,7 +12,8 @@ class DeviceUtils {
     Map<String, dynamic> sinkNodeMap = {
       'deviceID': sinkMap['SKID'],
       'deviceName': sinkMap['SK_Name'],
-      'coordinates' : sinkMap['coordinates'],
+      'latitude' : sinkMap['latitude'],
+      'longitude' : sinkMap['longitude'],
       'registeredSensorNodes': sensorNodeIDList
     };
     return SinkNode.fromJSON(sinkNodeMap);
@@ -27,7 +28,8 @@ class DeviceUtils {
     Map<String, dynamic> sinkNodeMap = {
       'deviceID': sinkMap['SKID'],
       'deviceName': sinkMap['SK_Name'],
-      'coordinates' : sinkMap['coordinates'],
+      'latitude' : sinkMap['latitude'],
+      'longitude' : sinkMap['longitude'],
       'registeredSensorNodes': sensorNodeIDList
     };
     return sinkNodeMap;
@@ -38,10 +40,23 @@ class DeviceUtils {
     Map<String, dynamic> sensorNodeMap = {
       'deviceID': sensorMap['SNID'],
       'deviceName': sensorMap['SensorNode_Name'],
-      'coordinates': sensorMap['coordinates'],
+      'latitude': sensorMap['latitude'],
+      'longitude':sensorMap['longitude'],
       'sinkNodeID': sinkNodeID
     };
     return SensorNode.fromJSON(sensorNodeMap);
+  }
+
+  Map<String,dynamic> mapSensorNode(Map<String, dynamic> sensorMap, String sinkNodeID){
+
+    Map<String, dynamic> sinkNodeMap = {
+      'deviceID': sensorMap['SNID'],
+      'deviceName': sensorMap['SensorNode_Name'],
+      'latitude' : sensorMap['latitude'],
+      'longitude' : sensorMap['longitude'],
+      'sinkNodeID': sinkNodeID
+    };
+    return sinkNodeMap;
   }
 
 }

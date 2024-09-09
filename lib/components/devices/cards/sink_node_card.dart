@@ -20,7 +20,12 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
   @override
   Widget build(BuildContext context) {
 
-    final SKDeviceDialog _skDeviceDialog = SKDeviceDialog(context: context, deviceID: widget.deviceInfo.deviceID);
+    final SKDeviceDialog _skDeviceDialog = SKDeviceDialog(
+        context: context,
+        deviceID: widget.deviceInfo.deviceID,
+        latitude: widget.deviceInfo.latitude,
+        longitude: widget.deviceInfo.longitude
+    );
 
     return GestureDetector(
       //TODO: IMPLEMENT ON TAP FUNCTION

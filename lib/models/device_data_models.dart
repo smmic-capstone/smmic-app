@@ -23,8 +23,8 @@ class SinkNode extends Device {
   SinkNode._internal({
     required super.deviceID,
     required super.deviceName,
-    super.longitude,
     super.latitude,
+    super.longitude,
     required this.registeredSensorNodes
   }) : super();
 
@@ -56,8 +56,8 @@ class SensorNode extends Device {
     return SensorNode._internal(
       deviceID: deviceInfo['deviceID'],
       deviceName: deviceInfo['deviceName'],
+      latitude:deviceInfo['latitude'],
       longitude: deviceInfo['longitude'],
-      latitude: deviceInfo['latitude'],
       registeredSinkNode: deviceInfo['sinkNodeID']
     );
   }
