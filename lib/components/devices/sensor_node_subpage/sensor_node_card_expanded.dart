@@ -6,26 +6,17 @@ import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/gauge.dart';
 
 class SensorNodeCardExpanded extends StatefulWidget {
-  const SensorNodeCardExpanded({super.key, required this.deviceID});
+  const SensorNodeCardExpanded({super.key, required this.deviceID, required this.snapshot});
 
+  final SensorNodeSnapshot? snapshot;
   final String deviceID;
 
   @override
   State<SensorNodeCardExpanded> createState() => _SensorNodeCardExpandedState();
 }
+
 class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
-  final DevicesServices _devicesServices = DevicesServices();
-
-  late SensorNodeSnapshot _sensorNodeSnapshot;
   DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
-
-  @override
-  void initState() {
-    super.initState();
-    //TODO: assign proper id variable for 'getSnapshot', preferably move this out of the initState() function too
-    //TODO: use
-    _sensorNodeSnapshot = _devicesServices.getSensorSnapshot(id: widget.deviceID);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,12 +47,12 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     BatteryLevel(
-                        batteryLevel: _sensorNodeSnapshot.batteryLevel.toInt(),
+                        batteryLevel: widget.snapshot == null ? 0 : widget.snapshot!.batteryLevel.toInt(),
                         alignmentAdjust: 1,
                         shrinkPercentSign: false
                     ),
                     Text(
-                        _dateTimeFormatting.formatTime(_sensorNodeSnapshot.timestamp),
+                        _dateTimeFormatting.formatTime(widget.snapshot == null ? DateTime.now() : widget.snapshot!.timestamp),
                         style: const TextStyle(fontFamily: 'Inter', fontSize: 20)
                     )
                   ],
@@ -72,7 +63,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
             flex: 4,
             child: RadialGauge(
                 valueType: 'soilMoisture',
-                value: _sensorNodeSnapshot.soilMoisture,
+                value: widget.snapshot == null ? 0 : widget.snapshot!.soilMoisture,
                 limit: 100,
                 scaleMultiplier: 1.5
             ),
@@ -87,7 +78,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                       width: 160,
                       child: RadialGauge(
                         valueType: 'temperature',
-                        value: _sensorNodeSnapshot.temperature,
+                        value: widget.snapshot == null ? 0 : widget.snapshot!.temperature,
                         limit: 100,
                         radiusMultiplier: 0.9,
                       ),
@@ -96,7 +87,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                       width: 160,
                       child: RadialGauge(
                         valueType: 'humidity',
-                        value: _sensorNodeSnapshot.humidity,
+                        value: widget.snapshot == null ? 0 : widget.snapshot!.humidity,
                         limit: 100,
                         radiusMultiplier: 0.9,
                       ),

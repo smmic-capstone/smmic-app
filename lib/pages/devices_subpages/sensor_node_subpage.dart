@@ -38,7 +38,8 @@ class _SensorNodePageState extends State<SensorNodePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SensorNodeCardExpanded(deviceID: widget.deviceID),
+              // TODO:
+              SensorNodeCardExpanded(deviceID: widget.deviceID, snapshot: null),
               Container(
                 margin: EdgeInsets.only(bottom: 25),
                 decoration: BoxDecoration(
