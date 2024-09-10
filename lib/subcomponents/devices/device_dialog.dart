@@ -7,6 +7,8 @@ import 'package:smmic/services/devices_services.dart';
 import '../../models/device_data_models.dart';
 import '../../utils/global_navigator.dart';
 
+// TODO: add longitude and latitude
+
 class SKDeviceDialog{
   SKDeviceDialog ({required this.context,required this.deviceID,required this.latitude,required this.longitude});
 
@@ -84,6 +86,7 @@ class SKDeviceDialog{
         builder: (context){
           return AlertDialog(
             title: const Text("Rename Node"),
+            // TODO: limit to 12 characters ang name
             content: TextField(
               decoration: const InputDecoration(hintText: "Enter New Name"),
               controller: sensorNameController,
