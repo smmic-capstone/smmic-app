@@ -31,6 +31,7 @@ class DevicesProvider extends ChangeNotifier {
     List<Map<String, dynamic>>? devices = await _devicesServices.getDevices(userID: userData['UID'], token: tokens['access']);
 
     // map sink nodes and append items into _sinkNodeList
+    _logs.info(message: 'devices init: $devices');
     for (int i = 0; i < devices.length; i++){
       SinkNode sink = _deviceUtils.sinkNodeMapToObject(devices[i]);
       if (_sinkNodeList.isNotEmpty && _sinkNodeList.any((item) => item.deviceID == sink.deviceID)){
@@ -54,18 +55,28 @@ class DevicesProvider extends ChangeNotifier {
         _sensorNodeList.add(sensor);
       }
     }
-    _logs.info(message: devices.toString());
+    _logs.info(message: "devices : $devices");
 
    /* _sharedPrefsUtils.setSKList(sinkList: devices);*/
-    List <Map<String,dynamic>> devicesSharedPrefs = [];
+    List <Map<String,dynamic>> sinkNodeSharedPrefs = [];
+    List<Map<String,dynamic>> sensorNodeSharedPrefs = [];
     for (int i = 0; i < devices.length; i++){
       Map<String,dynamic> sink = _deviceUtils.mapSinkNode(devices[i]);
 
-      devicesSharedPrefs.add(sink);
+      sinkNodeSharedPrefs.add(sink);
+      for(int j =0; j < devices[i]["sensor_nodes"].length; j++){
+        Map<String,dynamic> sensor = _deviceUtils.mapSensorNode(devices[i]['sensor_nodes'][j], sink['deviceID']);
+
+        sensorNodeSharedPrefs.add(sensor);
+      }
     }
-    _sharedPrefsUtils.setSKList(sinkList: devicesSharedPrefs);
+    _sharedPrefsUtils.setSKList(sinkList: sinkNodeSharedPrefs);
+    _logs.info(message: "deviceSharedPrefs data type: ${sinkNodeSharedPrefs.runtimeType}");
+    _sharedPrefsUtils.setSNList(sensorList: sensorNodeSharedPrefs);
+    /*extractSensorNodes(sensorNodeList: devices);*/
 
     _logs.success(message: 'init() done');
+    _logs.info(message: 'devices shared prefs init: $sinkNodeSharedPrefs');
     notifyListeners();
   }
 
@@ -78,13 +89,16 @@ class DevicesProvider extends ChangeNotifier {
     }
     _logs.info(message: "getSKList running ....");
     List<Map<String,dynamic>>? _getSKList = await _sharedPrefsUtils.getSKList();
+    _logs.info(message: "sharedPrefsUtils : ${_sharedPrefsUtils.getSKList}");
+    _logs.info(message: "_getSKList provider : $_getSKList");
     if(_getSKList == [] || _getSKList == null){
       _logs.error(message:"Way sulod si _getSKList");
       return;
     }else{
-      _logs.info(message: updatedSinkData.toString());
+      _logs.info(message: "updated sink data : $updatedSinkData");
+
       for(int i = 0; i < _getSKList.length; i++){
-        _logs.info(message: _getSKList[i]['deviceID'].toString());
+        _logs.info(message: "for loop getSKList: ${_getSKList[i]['deviceID'].toString()}");
 
         if(_getSKList[i]['deviceID'] == updatedSinkData['deviceID']){
           _logs.info(message: "Hello you have entered for loop");
@@ -109,5 +123,59 @@ class DevicesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> sensorNameChange(Map<String,dynamic> updatedData) async {
+    _logs.info(message: "sensorNameChange : $updatedData");
+    if(!_sensorNodeList.any((sensor) => sensor.deviceID == updatedData['deviceID'])){
+      ///TODO: Error Handle
+      return;
+    }
+    List<Map<String,dynamic>>? getSNList = await _sharedPrefsUtils.getSNList();
+
+    if(getSNList == null || getSNList.isEmpty){
+      _logs.error(message: "getSNList is empty");
+      return;
+    }else{
+      for(int i = 0; i < getSNList.length; i++){
+        if(getSNList[i]['deviceID'] == updatedData['deviceID']){
+          getSNList.removeAt(i);
+          getSNList.insert(i, updatedData);
+        }
+      }
+    }
+    bool success = await _sharedPrefsUtils.setSNList(sensorList: getSNList);
+    if(success){
+      SensorNode updatedSensor = SensorNode.fromJSON(updatedData);
+      SensorNode _oldSensor = _sensorNodeList.where((sensor) => sensor.deviceID == updatedSensor.deviceID).first;
+      int index = _sensorNodeList.indexOf(_oldSensor);
+      _sensorNodeList.remove(_sensorNodeList.where((sensor) => sensor.deviceID == updatedSensor.deviceID).first);
+      _sensorNodeList.insert(index, updatedSensor);
+      notifyListeners();
+    }else{
+      _logs.error(message: "err: sensor node dev provider sensorNameChange");
+    }
+    notifyListeners();
+  }
+
+  ///Extract Sensor Node
+  /*void extractSensorNodes({required List <Map<String, dynamic>> sensorNodeList}) {
+    List<Map<String,dynamic>> sensorNodes = [];
+
+    for(var device in sensorNodeList){
+      _logs.info(message: 'registeredSensorNodes type: ${device['registeredSensorNodes'].runtimeType}');
+      if (device.containsKey('registeredSensorNodes')){
+        List <Map<String,dynamic>> snList = device['registeredSensorNodes'];
+        for (var sensorNode in snList){
+          Map<String,dynamic> sensorNodeData = {
+            'deviceID' : sensorNode['SNID'],
+            'name' : sensorNode['SensorNode_Name'],
+            'sinkNodeID' :device['SKID'],
+          };
+          sensorNodes.add(sensorNodeData);
+        }
+      }
+    }
+    _logs.info(message: sensorNodes.toString());
+    _sharedPrefsUtils.setSNList(sensorList: sensorNodes);
+  }*/
 
 }

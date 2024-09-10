@@ -7,6 +7,8 @@ import 'package:smmic/subcomponents/devices/device_name.dart';
 import 'package:smmic/subcomponents/devices/digital_display.dart';
 import 'package:smmic/subcomponents/devices/gauge.dart';
 
+import '../../../subcomponents/devices/device_dialog.dart';
+
 class SensorNodeCard extends StatefulWidget {
   const SensorNodeCard({super.key, required this.deviceInfo});
 
@@ -19,6 +21,14 @@ class SensorNodeCard extends StatefulWidget {
 class _SensorNodeCardState extends State<SensorNodeCard> {
   @override
   Widget build(BuildContext context) {
+
+    final SKDeviceDialog _skDeviceDialog = SKDeviceDialog(
+        context: context,
+        deviceID: widget.deviceInfo.deviceID,
+        latitude: widget.deviceInfo.latitude,
+        longitude: widget.deviceInfo.longitude
+    );
+
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) {
         return SensorNodePage(deviceID: widget.deviceInfo.deviceID, deviceName: widget.deviceInfo.deviceName);
@@ -110,7 +120,9 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                   child: IconButton(
                     icon:const Icon(CupertinoIcons.pencil_circle, size: 20,),
                     color: Colors.black.withOpacity(0.25),
-                    onPressed: () {  },
+                    onPressed: () {
+                      _skDeviceDialog.renameSNDialog();
+                    },
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),

@@ -62,12 +62,16 @@ class DevicesServices {
       for (int x = 0; x < sensorNodesUnparsed.length; x++) {
         sensorNodesParsed.add({
           'SNID': sensorNodesUnparsed[x]['SNID'],
-          'SensorNode_Name': sensorNodesUnparsed[x]['SensorNode_Name']
+          'SensorNode_Name': sensorNodesUnparsed[x]['SensorNode_Name'],
+          'latitude' : sensorNodesUnparsed[x]['latitude'],
+          'longitude' : sensorNodesUnparsed[x]['longitude'],
         });
       }
       sinkNodesParsed.add({
         'SKID': sinkNodesUnparsed[i]['SKID'],
         'SK_Name': sinkNodesUnparsed[i]['SK_Name'],
+        'latitude' : sinkNodesUnparsed[i]['latitude'],
+        'longitude' : sinkNodesUnparsed[i]['longitude'],
         'sensor_nodes': sensorNodesParsed
       });
     }
@@ -118,10 +122,11 @@ class DevicesServices {
     return data;
   }
 
-  Future<Map<String, dynamic>?> updateSNDeviceName(
-      {required String token,
+  Future<Map<String, dynamic>?> updateSNDeviceName({
+      required String token,
       required String deviceID,
-      required String sensorName}) async {
+      required Map<String,dynamic> sensorName,
+      required String sinkNodeID}) async {
     String? accessToken;
     TokenStatus accessStatus = await _authUtils.verifyToken(token: token);
 
@@ -133,8 +138,8 @@ class DevicesServices {
       await _authProvider.setAccess(access: accessToken!);
     }
 
-    final Map<String, dynamic> data = await _apiRequest.put(
-        route: _apiRoutes.updateSKName,
+    final Map<String, dynamic> data = await _apiRequest.patch(
+        route: _apiRoutes.updateSNName,
         headers: {'Authorization': 'Bearer $token', 'Sensor': deviceID},
         body: sensorName);
 
