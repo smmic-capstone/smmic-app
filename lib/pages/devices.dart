@@ -10,33 +10,32 @@ class Devices extends StatefulWidget {
 }
 
 class _Devices extends State<Devices> {
-
   //TODO: assign theme
-  Color? bgColor = Color.fromRGBO(239, 239, 239, 100);
+  Color? bgColor = const Color.fromRGBO(239, 239, 239, 100);
 
   final List<Map<String, dynamic>> devices = [
     {
-      'id' : 'SIqokAO1BQBHyJVK',
-      'deviceName' : 'SINK NODE',
-      'batteryLevel' : 71,
+      'id': 'SIqokAO1BQBHyJVK',
+      'deviceName': 'SINK NODE',
+      'batteryLevel': 71,
     },
     {
-      'id' : 'SEqokAO1BQBHyJVK',
-      'deviceName' : 'DEVICE 101',
-      'batteryLevel' : 69,
-      'soilMoisture' : 65,
-      'temperature' : 23,
-      'humidity' : 62,
-      'timeStamp' : DateTime.now()
+      'id': 'SEqokAO1BQBHyJVK',
+      'deviceName': 'DEVICE 101',
+      'batteryLevel': 69,
+      'soilMoisture': 65,
+      'temperature': 23,
+      'humidity': 62,
+      'timeStamp': DateTime.now()
     },
     {
-      'id' : 'SEx0e9bmweebii5y',
-      'deviceName' : 'DEVICE 102',
-      'batteryLevel' : 64,
-      'soilMoisture' : 17,
-      'temperature' : 24,
-      'humidity' : 45,
-      'timeStamp' : DateTime.now()
+      'id': 'SEx0e9bmweebii5y',
+      'deviceName': 'DEVICE 102',
+      'batteryLevel': 64,
+      'soilMoisture': 17,
+      'temperature': 24,
+      'humidity': 45,
+      'timeStamp': DateTime.now()
     }
   ];
 
@@ -44,20 +43,18 @@ class _Devices extends State<Devices> {
   Widget build(BuildContext context) {
     double height = MediaQuery.sizeOf(context).height;
     return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
         backgroundColor: bgColor,
-        title: const Text('Devices'),
-        centerTitle: true,
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.only(top: 15),
-        itemCount: devices.length,
-        itemBuilder: (BuildContext context, int index) {
-          return DeviceCard(deviceData: devices[index]);
-        },
-      )
-    );
+        appBar: AppBar(
+          backgroundColor: bgColor,
+          title: const Text('Devices'),
+          centerTitle: true,
+        ),
+        body: ListView.builder(
+          padding: const EdgeInsets.only(top: 15),
+          itemCount: devices.length,
+          itemBuilder: (BuildContext context, int index) {
+            return DeviceCard(deviceData: devices[index]);
+          },
+        ));
   }
-
 }

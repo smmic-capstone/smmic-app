@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
-import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/pages/register.dart';
 import 'package:smmic/subcomponents/login/mybutton.dart';
 import 'package:smmic/subcomponents/login/textfield.dart';
