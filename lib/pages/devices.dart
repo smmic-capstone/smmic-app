@@ -19,100 +19,60 @@ class Devices extends StatefulWidget {
 }
 
 class _Devices extends State<Devices> {
-<<<<<<< HEAD
   //TODO: assign theme
-  Color? bgColor = const Color.fromRGBO(239, 239, 239, 100);
 
-  final List<Map<String, dynamic>> devices = [
-    {
-      'id': 'SIqokAO1BQBHyJVK',
-      'deviceName': 'SINK NODE',
-      'batteryLevel': 71,
-    },
-    {
-      'id': 'SEqokAO1BQBHyJVK',
-      'deviceName': 'DEVICE 101',
-      'batteryLevel': 69,
-      'soilMoisture': 65,
-      'temperature': 23,
-      'humidity': 62,
-      'timeStamp': DateTime.now()
-    },
-    {
-      'id': 'SEx0e9bmweebii5y',
-      'deviceName': 'DEVICE 102',
-      'batteryLevel': 64,
-      'soilMoisture': 17,
-      'temperature': 24,
-      'humidity': 45,
-      'timeStamp': DateTime.now()
-    }
-  ];
-=======
   final Logs _logs = Logs(tag: 'devices.dart');
-
 
   Color? bgColor = const Color.fromRGBO(239, 239, 239, 1.0);
   final UserDataServices _userDataServices = UserDataServices();
   final DevicesServices _devicesServices = DevicesServices();
->>>>>>> 8750afd815c72c13d15a8bfc7eddec322be129b1
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: bgColor,
-<<<<<<< HEAD
         appBar: AppBar(
-          backgroundColor: bgColor,
-          title: const Text('Devices'),
-          centerTitle: true,
-        ),
-        body: ListView.builder(
-          padding: const EdgeInsets.only(top: 15),
-          itemCount: devices.length,
-          itemBuilder: (BuildContext context, int index) {
-            return DeviceCard(deviceData: devices[index]);
-          },
+            backgroundColor: bgColor,
+            title: const Text('Devices'),
+            centerTitle: true,
+            actions: const [
+              Padding(
+                padding: EdgeInsets.only(right: 10),
+                child: BottomDrawerButton(),
+              )
+            ]),
+        body: ListView(
+          children: [
+            ..._buildCards(
+                sinkNodeList: context.watch<DevicesProvider>().sinkNodeList,
+                sensorNodeList: context.watch<DevicesProvider>().sensorNodeList,
+                options: context
+                    .watch<DeviceListOptionsNotifier>()
+                    .enabledConditions),
+          ],
         ));
   }
-}
-=======
-        title: const Text('Devices'),
-        centerTitle: true,
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 10),
-            child: BottomDrawerButton(),
-          )
-        ],
-      ),
-      body: ListView(
-        children: [
-          ..._buildCards(
-              sinkNodeList: context.watch<DevicesProvider>().sinkNodeList,
-              sensorNodeList: context.watch<DevicesProvider>().sensorNodeList,
-              options: context.watch<DeviceListOptionsNotifier>().enabledConditions
-          ),
-        ],
-      )
-    );
-  }
 
-  List<Widget> _buildCards({required List<SinkNode> sinkNodeList, required List<SensorNode> sensorNodeList, required Map<String, bool Function(Widget)> options}){
+  List<Widget> _buildCards(
+      {required List<SinkNode> sinkNodeList,
+      required List<SensorNode> sensorNodeList,
+      required Map<String, bool Function(Widget)> options}) {
     List<Widget> cards = [];
 
-    for(int i = 0; i < sinkNodeList.length; i++){
+    for (int i = 0; i < sinkNodeList.length; i++) {
       cards.add(SinkNodeCard(deviceInfo: sinkNodeList[i]));
       //List<SensorNode> sensorGroup = sensorNodeList.where((item) => item.registeredSinkNode == sinkNodeList[i].deviceID).toList();
-      for(int x = 0; x < sensorNodeList.length; x++){
-        if (sensorNodeList[x].registeredSinkNode == sinkNodeList[i].deviceID){
+      for (int x = 0; x < sensorNodeList.length; x++) {
+        if (sensorNodeList[x].registeredSinkNode == sinkNodeList[i].deviceID) {
           cards.add(SensorNodeCard(deviceInfo: sensorNodeList[x]));
         }
       }
     }
 
     return cards.where((card) {
-      return options.keys.map((optionKey) => options[optionKey]!(card)).any((result) => result);
+      return options.keys
+          .map((optionKey) => options[optionKey]!(card))
+          .any((result) => result);
     }).toList();
   }
 
@@ -144,4 +104,3 @@ class _Devices extends State<Devices> {
     return devices;
   }*/
 }
->>>>>>> 8750afd815c72c13d15a8bfc7eddec322be129b1

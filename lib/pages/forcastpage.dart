@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/components/drawer.dart';
-import 'package:smmic/provide/provide.dart';
+import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/services/api_key.dart';
 import 'package:weather/weather.dart';
 
