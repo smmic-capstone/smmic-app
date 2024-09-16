@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/device_name.dart';
 import 'package:smmic/subcomponents/devices/digital_display.dart';
-import 'package:syncfusion_flutter_gauges/gauges.dart';
+import 'package:smmic/subcomponents/devices/gauge.dart';
+import 'package:smmic/utils/logs.dart';
 
+/// This widget is deprecated, please use `SensorNodeCard()` or `SinkNodeCard` instead...
 class DeviceCard extends StatefulWidget {
   const DeviceCard({super.key, required this.deviceData});
 
@@ -17,6 +19,7 @@ class DeviceCard extends StatefulWidget {
 class _DeviceCardState extends State<DeviceCard> {
   @override
   Widget build(BuildContext context) {
+    Logs(tag: 'Deprecated').warning(message: 'The widget DeviceCard() is deprecated, please use SensorNodeCard() or SinkNodeCard() instead');
     return Stack(
       children: [
         Container(
@@ -30,12 +33,12 @@ class _DeviceCardState extends State<DeviceCard> {
                     color: Colors.black.withOpacity(0.06),
                     spreadRadius: 0,
                     blurRadius: 4,
-                    offset: Offset(0, 4))
-              ]),
+                    offset: const Offset(0, 4)
+                )
+              ]
+          ),
           height: 160,
-          child: isSinkNode(widget.deviceData['id'])
-              ? sinkNode(widget.deviceData)
-              : sensorNode(widget.deviceData),
+          child: _buildCardContents(widget.deviceData),
         ),
         Container(
           padding: const EdgeInsets.only(right: 37, top: 12),
@@ -54,11 +57,7 @@ class _DeviceCardState extends State<DeviceCard> {
   }
 }
 
-bool isSinkNode(String id) {
-  return id.substring(0, 2) == 'SI';
-}
-
-Widget sensorNode(Map<String, dynamic> data) {
+Widget _buildCardContents(Map<String, dynamic> data) {
   return Row(
     children: [
       Expanded(
@@ -66,7 +65,9 @@ Widget sensorNode(Map<String, dynamic> data) {
         child: Column(
           children: [
             Expanded(
-                flex: 3, child: DeviceName(deviceName: data['deviceName'])),
+              flex: 3,
+              child: DeviceName(deviceName: data['deviceName'])
+            ),
             Expanded(
               flex: 1,
               child: BatteryLevel(batteryLevel: data['batteryLevel']),
@@ -84,12 +85,12 @@ Widget sensorNode(Map<String, dynamic> data) {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     DigitalDisplay(
-                      data: data['temperature'],
-                      type: 'temperature',
+                      value: data['temperature'],
+                      valueType: 'temperature',
                     ),
                     DigitalDisplay(
-                      data: data['humidity'],
-                      type: 'humidity',
+                      value: data['humidity'],
+                      valueType: 'humidity',
                     )
                   ],
                 ),
@@ -97,88 +98,16 @@ Widget sensorNode(Map<String, dynamic> data) {
               Expanded(
                 flex: 4,
                 child: Container(
-                  alignment: Alignment.center,
-                  child: SfRadialGauge(
-                    axes: <RadialAxis>[
-                      RadialAxis(
-                        axisLineStyle: AxisLineStyle(
-                            thickness: 8,
-                            color: Color.fromRGBO(216, 216, 216, 1),
-                            cornerStyle: CornerStyle.bothCurve),
-                        radiusFactor: 0.95,
-                        showTicks: false,
-                        showLabels: false,
-                        startAngle: 135,
-                        endAngle: 45,
-                        minimum: 0,
-                        maximum: 100,
-                        pointers: <GaugePointer>[
-                          RangePointer(
-                            value: data['soilMoisture'],
-                            cornerStyle: CornerStyle.bothCurve,
-                            width: 8,
-                            color: Colors.red,
-                          )
-                        ],
-                        annotations: <GaugeAnnotation>[
-                          GaugeAnnotation(
-                              positionFactor: 0,
-                              widget: RichText(
-                                text: TextSpan(
-                                    text: data['soilMoisture'].toString(),
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 30,
-                                    ),
-                                    children: [
-                                      TextSpan(
-                                          text: '%',
-                                          style: TextStyle(fontSize: 17))
-                                    ]),
-                              )),
-                          GaugeAnnotation(
-                            angle: 90,
-                            positionFactor: 0.8,
-                            widget: Text(
-                              'Soil\nMoisture',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontFamily: 'Inter',
-                              ),
-                            ),
-                          )
-                        ],
-                      )
-                    ],
-                  ),
+                    alignment: Alignment.center,
+                    child: RadialGauge(
+                        valueType: 'sm',
+                        value: data['soilMoisture'] * 1.0,
+                        limit: 100
+                    )
                 ),
               )
             ],
-          )),
-    ],
-  );
-}
-
-Widget sinkNode(Map<String, dynamic> data) {
-  return Row(
-    children: [
-      Expanded(
-        flex: 2,
-        child: Column(
-          children: [
-            Expanded(
-                flex: 3, child: DeviceName(deviceName: data['deviceName'])),
-            Expanded(
-              flex: 1,
-              child: BatteryLevel(batteryLevel: data['batteryLevel']),
-            )
-          ],
-        ),
-      ),
-      Expanded(
-        flex: 3,
-        child: Container(),
+          )
       ),
     ],
   );

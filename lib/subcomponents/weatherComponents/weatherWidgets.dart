@@ -14,7 +14,8 @@ class WeatherComponentsWidget extends StatefulWidget {
 class _WeatherComponentsWidgetState extends State<WeatherComponentsWidget> {
   final WeatherFactory _wf = WeatherFactory(OPENWEATHER_API_KEY);
 
-  Weather? _currentWeather;
+  Weather? _weather;
+
   @override
   void initState() {
     super.initState();
@@ -23,12 +24,9 @@ class _WeatherComponentsWidgetState extends State<WeatherComponentsWidget> {
 
   Future<void> _getWeather() async {
     try {
-      // Fetch current weather
-      Weather currentWeather =
-          await _wf.currentWeatherByCityName("Cagayan de Oro");
-
+      Weather w = await _wf.currentWeatherByCityName("Salimbalan");
       setState(() {
-        _currentWeather = currentWeather;
+        _weather = w;
       });
     } catch (e) {
       print("Error fetching weather");
@@ -41,102 +39,101 @@ class _WeatherComponentsWidgetState extends State<WeatherComponentsWidget> {
   }
 
   Widget _buildUi() {
-    if (_currentWeather == null) {
+    if (_weather == null) {
       return const Center(
         child: CircularProgressIndicator(),
       );
     }
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
+    return SizedBox(
+        width: MediaQuery.of(context).size.width,
+        height:
+            MediaQuery.of(context).size.height * 0.2, // Adjust height as needed
+        child: Column(children: [
+          const SizedBox(
+            height: 20,
+          ),
           _locationHeader(),
-          _currentWeatherUi(),
-        ],
-      ),
-    );
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [_weatherIcon(), _currentTemp()],
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          _extraInfo()
+        ]));
   }
 
   Widget _locationHeader() {
-    return Text(_currentWeather?.areaName ?? "Unknown location",
-        style: const TextStyle(
-            fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black));
-  }
-
-  Widget _currentWeatherUi() {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _weatherIcon(_currentWeather!),
-            _currentTemp(_currentWeather!),
-          ],
-        ),
-        const SizedBox(height: 10),
-        _extraInfo(_currentWeather!)
-      ],
+    return Text(
+      _weather?.areaName ?? "Unknown location",
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
     );
   }
 
-  DateTime convertToLocalTime(DateTime utcTime, {int offsetInHours = 8}) {
-    return utcTime.add(Duration(hours: offsetInHours));
-  }
-
-  Widget _dateTimeInfo(Weather weather) {
-    DateTime utcTime = weather.date!;
-    DateTime localTime = convertToLocalTime(utcTime, offsetInHours: 8);
+  Widget _dateTimeInfo() {
+    DateTime now = _weather!.date!;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          DateFormat("EEEE, MMM d").format(localTime),
-          style: const TextStyle(fontWeight: FontWeight.w700),
+          DateFormat("h:mm a").format(now),
+          style: const TextStyle(fontSize: 14),
         ),
-        Text(
-          DateFormat("h:mm a").format(localTime),
-        )
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              DateFormat("EEEE").format(now),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            Text(
+              " ${DateFormat("M/d/y").format(now)}",
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
       ],
     );
   }
 
-  Widget _weatherIcon(Weather weather) {
+  Widget _weatherIcon() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          height: 50, // Adjust size as needed
+          height: 30, // Adjust size as needed
           width: 50, // Adjust size as needed
           decoration: BoxDecoration(
             image: DecorationImage(
               image: NetworkImage(
-                "http://openweathermap.org/img/wn/${weather.weatherIcon}@2x.png",
+                "http://openweathermap.org/img/wn/${_weather?.weatherIcon}@4x.png",
               ),
               fit: BoxFit.cover,
             ),
           ),
         ),
         Text(
-          weather.weatherDescription ?? "",
+          _weather?.weatherDescription ?? "",
           style: const TextStyle(color: Colors.black, fontSize: 14),
         ),
       ],
     );
   }
 
-  Widget _currentTemp(Weather weather) {
+  Widget _currentTemp() {
     return Text(
-      "${weather.temperature?.celsius?.toStringAsFixed(0)}°C",
+      "${_weather?.temperature?.celsius?.toStringAsFixed(0)}°C",
       style: const TextStyle(
           color: Colors.black, fontSize: 30, fontWeight: FontWeight.w500),
     );
   }
 
-  Widget _extraInfo(Weather weather) {
+  Widget _extraInfo() {
     return Text(
-      "Humidity: ${weather.humidity?.toStringAsFixed(0)}%",
-      style: const TextStyle(color: Colors.black, fontSize: 15),
+      "Humidity: ${_weather?.humidity?.toStringAsFixed(0)}%",
+      style: const TextStyle(color: Colors.white, fontSize: 15),
     );
   }
 }

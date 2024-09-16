@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/pages/devices.dart';
 import 'package:smmic/pages/notification.dart';
-import 'package:smmic/provide/provide.dart';
+import 'package:smmic/providers/theme_provider.dart';
 
 class MyBottomNav extends StatefulWidget {
   final int? indexPage;
