@@ -16,18 +16,18 @@ final Logs _logs = Logs(tag: 'Main.dart');
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   GlobalNavigator().setupLocator();
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
-        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
-        ChangeNotifierProvider<UserDataProvider>(create: (_) => UserDataProvider()),
-        ChangeNotifierProvider<UiProvider>(create: (_) => UiProvider()..init()),
-        ChangeNotifierProvider<DevicesProvider>(create: (_) => DevicesProvider())
-      ],
-      child: const MyApp(),
-    )
-  );
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider<DeviceListOptionsNotifier>(
+          create: (_) => DeviceListOptionsNotifier()),
+      ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
+      ChangeNotifierProvider<UserDataProvider>(
+          create: (_) => UserDataProvider()),
+      ChangeNotifierProvider<UiProvider>(create: (_) => UiProvider()),
+      ChangeNotifierProvider<DevicesProvider>(create: (_) => DevicesProvider())
+    ],
+    child: const MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
@@ -37,9 +37,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       navigatorKey: locator<GlobalNavigator>().navigatorKey,
       debugShowCheckedModeBanner: false,
-      themeMode: context.watch<UiProvider>().isDark ? ThemeMode.dark : ThemeMode.light,
-      darkTheme: context.watch<UiProvider>().isDark ? context.watch<UiProvider>().darkTheme : context.watch<UiProvider>().lightTheme,
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
+      themeMode:
+          context.watch<UiProvider>().isDark ? ThemeMode.dark : ThemeMode.light,
+      darkTheme: context.watch<UiProvider>().isDark
+          ? context.watch<UiProvider>().darkTheme
+          : context.watch<UiProvider>().lightTheme,
+      theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
       home: const AuthGate(),
     );
   }
@@ -53,7 +57,6 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-
   // utils
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
 
@@ -65,8 +68,10 @@ class _AuthGateState extends State<AuthGate> {
     _logs.info2(message: 'executing _authCheck()');
 
     String? login = await _sharedPrefsUtils.getLogin();
-    if (login == null){
-      _logs.info(message: 'did not find login key from SharedPreferences, returning LoginPage()');
+    if (login == null) {
+      _logs.info(
+          message:
+              'did not find login key from SharedPreferences, returning LoginPage()');
       return false;
     }
 
@@ -79,20 +84,20 @@ class _AuthGateState extends State<AuthGate> {
     return FutureBuilder(
         future: _authCheck(),
         builder: (context, AsyncSnapshot<bool> authCheckSnapshot) {
-          if(authCheckSnapshot.connectionState == ConnectionState.waiting){
+          if (authCheckSnapshot.connectionState == ConnectionState.waiting) {
             return Container(
               color: Colors.white,
               child: const Center(child: CircularProgressIndicator()),
             );
           }
-          if(authCheckSnapshot.hasError){
+          if (authCheckSnapshot.hasError) {
             return const Center(
               child: Text('An unexpected error has occurred'),
             );
           }
           if (authCheckSnapshot.hasData) {
             bool authCheck = authCheckSnapshot.data!;
-            if (!authCheck){
+            if (!authCheck) {
               return const LoginPage();
             }
             // initiate user data when logged in
@@ -106,7 +111,6 @@ class _AuthGateState extends State<AuthGate> {
           return const Center(
             child: Text('AuthPage._authCheck has returned a null value'),
           );
-        }
-    );
+        });
   }
 }
