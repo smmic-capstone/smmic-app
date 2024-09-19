@@ -24,7 +24,7 @@ class _WeatherComponentsWidgetState extends State<WeatherComponentsWidget> {
 
   Future<void> _getWeather() async {
     try {
-      Weather w = await _wf.currentWeatherByCityName("Salimbalan");
+      Weather w = await _wf.currentWeatherByCityName("Cagayan de Oro");
       setState(() {
         _weather = w;
       });

@@ -19,8 +19,9 @@ class Devices extends StatefulWidget {
 }
 
 class _Devices extends State<Devices> {
-  final Logs _logs = Logs(tag: 'devices.dart');
+  //TODO: assign theme
 
+  final Logs _logs = Logs(tag: 'devices.dart');
 
   Color? bgColor = const Color.fromRGBO(239, 239, 239, 1.0);
   final UserDataServices _userDataServices = UserDataServices();
@@ -29,45 +30,49 @@ class _Devices extends State<Devices> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
         backgroundColor: bgColor,
-        title: const Text('Devices'),
-        centerTitle: true,
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 10),
-            child: BottomDrawerButton(),
-          )
-        ],
-      ),
-      body: ListView(
-        children: [
-          ..._buildCards(
-              sinkNodeList: context.watch<DevicesProvider>().sinkNodeList,
-              sensorNodeList: context.watch<DevicesProvider>().sensorNodeList,
-              options: context.watch<DeviceListOptionsNotifier>().enabledConditions
-          ),
-        ],
-      )
-    );
+        appBar: AppBar(
+            backgroundColor: bgColor,
+            title: const Text('Devices'),
+            centerTitle: true,
+            actions: const [
+              Padding(
+                padding: EdgeInsets.only(right: 10),
+                child: BottomDrawerButton(),
+              )
+            ]),
+        body: ListView(
+          children: [
+            ..._buildCards(
+                sinkNodeList: context.watch<DevicesProvider>().sinkNodeList,
+                sensorNodeList: context.watch<DevicesProvider>().sensorNodeList,
+                options: context
+                    .watch<DeviceListOptionsNotifier>()
+                    .enabledConditions),
+          ],
+        ));
   }
 
-  List<Widget> _buildCards({required List<SinkNode> sinkNodeList, required List<SensorNode> sensorNodeList, required Map<String, bool Function(Widget)> options}){
+  List<Widget> _buildCards(
+      {required List<SinkNode> sinkNodeList,
+      required List<SensorNode> sensorNodeList,
+      required Map<String, bool Function(Widget)> options}) {
     List<Widget> cards = [];
 
-    for(int i = 0; i < sinkNodeList.length; i++){
+    for (int i = 0; i < sinkNodeList.length; i++) {
       cards.add(SinkNodeCard(deviceInfo: sinkNodeList[i]));
       //List<SensorNode> sensorGroup = sensorNodeList.where((item) => item.registeredSinkNode == sinkNodeList[i].deviceID).toList();
-      for(int x = 0; x < sensorNodeList.length; x++){
-        if (sensorNodeList[x].registeredSinkNode == sinkNodeList[i].deviceID){
+      for (int x = 0; x < sensorNodeList.length; x++) {
+        if (sensorNodeList[x].registeredSinkNode == sinkNodeList[i].deviceID) {
           cards.add(SensorNodeCard(deviceInfo: sensorNodeList[x]));
         }
       }
     }
 
     return cards.where((card) {
-      return options.keys.map((optionKey) => options[optionKey]!(card)).any((result) => result);
+      return options.keys
+          .map((optionKey) => options[optionKey]!(card))
+          .any((result) => result);
     }).toList();
   }
 

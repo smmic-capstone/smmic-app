@@ -35,18 +35,22 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _onSubmitForm(BuildContext context) async {
-    if(_formKey.currentState?.validate() ?? false){
+    if (_formKey.currentState?.validate() ?? false) {
       _formKey.currentState?.save();
-      await _authService.login(email: _emailController.text, password: _passwordController.text);
-      if(context.mounted){
+      await _authService.login(
+          email: _emailController.text, password: _passwordController.text);
+      if (context.mounted) {
         context.read<AuthProvider>().init();
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const AuthGate()), (route) => false);
+        Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const AuthGate()),
+            (route) => false);
       }
     }
   }
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       backgroundColor: Colors.black,
@@ -61,34 +65,32 @@ class _LoginPageState extends State<LoginPage> {
         ),
         child: SafeArea(
             child: SingleChildScrollView(
-              physics: const NeverScrollableScrollPhysics(),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    //color: Colors.blue,
-                    alignment: Alignment.centerLeft,
-                    height: (25 / 100) * screenHeight,
-                    child: _headers(),
-                  ),
-                  SizedBox(
-                    //color: Colors.yellow,
-                    height: (58 / 100) * screenHeight,
-                    child: Form(
-                        key: _formKey,
-                        child: _form(_emailController, _passwordController)
-                    ),
-                  ),
-                  Container(
-                    //color: Colors.orange,
-                    alignment: Alignment.bottomCenter,
-                    height: (13 / 100) * screenHeight,
-                    child: _footer(),
-                  )
-                ],
+          physics: const NeverScrollableScrollPhysics(),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                //color: Colors.blue,
+                alignment: Alignment.centerLeft,
+                height: (25 / 100) * screenHeight,
+                child: _headers(),
               ),
-            )
-        ),
+              SizedBox(
+                //color: Colors.yellow,
+                height: (58 / 100) * screenHeight,
+                child: Form(
+                    key: _formKey,
+                    child: _form(_emailController, _passwordController)),
+              ),
+              Container(
+                //color: Colors.orange,
+                alignment: Alignment.bottomCenter,
+                height: (13 / 100) * screenHeight,
+                child: _footer(),
+              )
+            ],
+          ),
+        )),
       ),
     );
   }
@@ -99,27 +101,30 @@ class _LoginPageState extends State<LoginPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // TODO: ASSIGN STYLES FROM THEME PROVIDER
-        Text(
-            'Login',
-            style: TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Colors.white)
-        ),
-        Text(
-            'Enter your email and password to continue',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: Colors.white)
-        ),
+        Text('Login',
+            style: TextStyle(
+                fontSize: 60,
+                fontWeight: FontWeight.bold,
+                color: Colors.white)),
+        Text('Enter your email and password to continue',
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: Colors.white)),
       ],
     );
   }
 
-  Widget _form(TextEditingController emailController, TextEditingController passwordController) {
+  Widget _form(TextEditingController emailController,
+      TextEditingController passwordController) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         MyTextField(
-          validator: (value){
-            if(value == null || value.isEmpty){
+          validator: (value) {
+            if (value == null || value.isEmpty) {
               return 'Please enter your email';
-            } else if (!EmailValidator.validate(value)){
+            } else if (!EmailValidator.validate(value)) {
               return 'Please enter a valid email address';
             }
             return null;
@@ -128,15 +133,13 @@ class _LoginPageState extends State<LoginPage> {
           hintText: 'Email',
           obscureText: false,
           suffixIcon: const Padding(
-              padding: EdgeInsets.only(right: 15),
-              child: Icon(Icons.person)
-          ),
+              padding: EdgeInsets.only(right: 15), child: Icon(Icons.person)),
           padding: EdgeInsets.zero,
         ),
         const SizedBox(height: 10),
         MyTextField(
-          validator: (value){
-            if(value == null || value.isEmpty){
+          validator: (value) {
+            if (value == null || value.isEmpty) {
               return 'Please enter your password';
             }
             return null;
@@ -148,14 +151,14 @@ class _LoginPageState extends State<LoginPage> {
               padding: const EdgeInsets.all(8.0),
               child: IconButton(
                   onPressed: () {
-                    setState( () {
+                    setState(() {
                       _obscurePassword = !_obscurePassword;
                     });
                   },
                   color: Colors.black.withOpacity(0.7),
-                  icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility)
-              )
-          ),
+                  icon: Icon(_obscurePassword
+                      ? Icons.visibility_off
+                      : Icons.visibility))),
           padding: EdgeInsets.zero,
         ),
         const SizedBox(height: 10),
@@ -165,17 +168,19 @@ class _LoginPageState extends State<LoginPage> {
             onTap: () {},
             child: const Text(
               'Forgot Password',
-              style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline, fontSize: 11),
+              style: TextStyle(
+                  color: Colors.blue,
+                  decoration: TextDecoration.underline,
+                  fontSize: 11),
             ),
           ),
         ),
         const SizedBox(height: 25),
         Align(
-          alignment: Alignment.centerRight,
-          child: MyButton(onTap: () async {
-            await _onSubmitForm(context);
-          })
-        ),
+            alignment: Alignment.centerRight,
+            child: MyButton(onTap: () async {
+              await _onSubmitForm(context);
+            })),
         const SizedBox(height: 100)
       ],
     );
@@ -184,23 +189,22 @@ class _LoginPageState extends State<LoginPage> {
   Widget _footer() {
     return GestureDetector(
       onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const Register()));
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => const Register()));
       },
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 20),
-        child: RichText(
-          text: const TextSpan(
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w300),
-              text: 'Don\'t have an account?',
-              children: [
-                TextSpan(
-                  text: ' Sign Up',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                )
-              ]
-          ),
-        )
-      ),
+          padding: const EdgeInsets.only(bottom: 20),
+          child: RichText(
+            text: const TextSpan(
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w300),
+                text: 'Don\'t have an account?',
+                children: [
+                  TextSpan(
+                    text: ' Sign Up',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  )
+                ]),
+          )),
     );
   }
 }
