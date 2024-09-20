@@ -25,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   // services
   final AuthService _authService = AuthService();
 
-  bool _obscurePassword = true;
+  bool obscurePassword = true;
 
   @override
   void dispose() {
@@ -54,43 +54,46 @@ class _LoginPageState extends State<LoginPage> {
     double screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 35),
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            opacity: 0.5,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const Image(
             image: AssetImage('assets/background.jpg'),
             fit: BoxFit.cover,
+            opacity: AlwaysStoppedAnimation(0.5),
           ),
-        ),
-        child: SafeArea(
+          SafeArea(
+              child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 35),
             child: SingleChildScrollView(
-          physics: const NeverScrollableScrollPhysics(),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                //color: Colors.blue,
-                alignment: Alignment.centerLeft,
-                height: (25 / 100) * screenHeight,
-                child: _headers(),
+              physics: const NeverScrollableScrollPhysics(),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    //color: Colors.blue,
+                    alignment: Alignment.centerLeft,
+                    height: (25 / 100) * screenHeight,
+                    child: _headers(),
+                  ),
+                  SizedBox(
+                    //color: Colors.yellow,
+                    height: (58 / 100) * screenHeight,
+                    child: Form(
+                        key: _formKey,
+                        child: _form(_emailController, _passwordController)),
+                  ),
+                  Container(
+                    //color: Colors.orange,
+                    alignment: Alignment.bottomCenter,
+                    height: (13 / 100) * screenHeight,
+                    child: _footer(),
+                  )
+                ],
               ),
-              SizedBox(
-                //color: Colors.yellow,
-                height: (58 / 100) * screenHeight,
-                child: Form(
-                    key: _formKey,
-                    child: _form(_emailController, _passwordController)),
-              ),
-              Container(
-                //color: Colors.orange,
-                alignment: Alignment.bottomCenter,
-                height: (13 / 100) * screenHeight,
-                child: _footer(),
-              )
-            ],
-          ),
-        )),
+            ),
+          )),
+        ],
       ),
     );
   }
@@ -146,17 +149,17 @@ class _LoginPageState extends State<LoginPage> {
           },
           controller: passwordController,
           hintText: 'Password',
-          obscureText: true,
+          obscureText: obscurePassword,
           suffixIcon: Padding(
               padding: const EdgeInsets.all(8.0),
               child: IconButton(
                   onPressed: () {
                     setState(() {
-                      _obscurePassword = !_obscurePassword;
+                      obscurePassword = !obscurePassword;
                     });
                   },
                   color: Colors.black.withOpacity(0.7),
-                  icon: Icon(_obscurePassword
+                  icon: Icon(obscurePassword
                       ? Icons.visibility_off
                       : Icons.visibility))),
           padding: EdgeInsets.zero,
@@ -193,15 +196,21 @@ class _LoginPageState extends State<LoginPage> {
             context, MaterialPageRoute(builder: (context) => const Register()));
       },
       child: Padding(
-          padding: const EdgeInsets.only(bottom: 20),
+          padding: const EdgeInsets.only(bottom: 5),
           child: RichText(
             text: const TextSpan(
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w300),
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w300,
+                    color: Colors.white),
                 text: 'Don\'t have an account?',
                 children: [
                   TextSpan(
                     text: ' Sign Up',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   )
                 ]),
           )),

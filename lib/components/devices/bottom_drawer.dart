@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
+import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/subcomponents/devices/option_item.dart';
 import 'package:provider/provider.dart';
 
@@ -14,19 +15,18 @@ class BottomDrawerButton extends StatefulWidget {
 
 class _BottomDrawerButtonState extends State<BottomDrawerButton> {
   bool viewSensors = false;
-  final DeviceListOptionsNotifier _deviceListOptionsNotifier = DeviceListOptionsNotifier();
+  final DeviceListOptionsNotifier _deviceListOptionsNotifier =
+      DeviceListOptionsNotifier();
 
   @override
   Widget build(BuildContext context) {
-    return Builder(
-        builder: (context) {
-          return IconButton(
-              onPressed: () {
-                _openBottomSheet(context);
-                },
-              icon: const Icon(Icons.more_horiz, size: 25)
-          );
-        });
+    return Builder(builder: (context) {
+      return IconButton(
+          onPressed: () {
+            _openBottomSheet(context);
+          },
+          icon: const Icon(Icons.more_horiz, size: 25));
+    });
   }
 
   void _openBottomSheet(BuildContext context) {
@@ -34,18 +34,25 @@ class _BottomDrawerButtonState extends State<BottomDrawerButton> {
         enableDrag: true,
         context: context,
         builder: (context) {
-          List<String> enabledConditions = context.watch<DeviceListOptionsNotifier>().enabledConditions.keys.toList();
+          List<String> enabledConditions = context
+              .watch<DeviceListOptionsNotifier>()
+              .enabledConditions
+              .keys
+              .toList();
           return Container(
             alignment: Alignment.topCenter,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.all(Radius.circular(16))
-            ),
+            decoration: BoxDecoration(
+                color: context.watch<UiProvider>().isDark
+                    ? Colors.black
+                    : Colors.white,
+                borderRadius: BorderRadius.all(Radius.circular(16))),
             height: 320,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Text('Options', style: TextStyle(fontSize: 17))),
+                Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    child: Text('Options', style: TextStyle(fontSize: 17))),
                 OptionItem(
                   title: 'Sensor Nodes',
                   subtitle: 'Show all Sensor Nodes',
@@ -54,15 +61,15 @@ class _BottomDrawerButtonState extends State<BottomDrawerButton> {
                   enabledConditions: enabledConditions,
                 ),
                 OptionItem(
-                  title: 'Sink Nodes',
-                  subtitle: 'Show all Sink Nodes',
-                  condition: 'showSinks',
-                  logic: _deviceListOptionsNotifier.showSinks,
-                  enabledConditions: enabledConditions
-                ),
+                    title: 'Sink Nodes',
+                    subtitle: 'Show all Sink Nodes',
+                    condition: 'showSinks',
+                    logic: _deviceListOptionsNotifier.showSinks,
+                    enabledConditions: enabledConditions),
                 OptionItem(
                   title: 'Color Code',
-                  subtitle: 'Color code Devices that belong to the same Sink Node',
+                  subtitle:
+                      'Color code Devices that belong to the same Sink Node',
                   condition: 'none',
                   logic: _deviceListOptionsNotifier.dummyCondition,
                   enabledConditions: enabledConditions,
@@ -70,7 +77,6 @@ class _BottomDrawerButtonState extends State<BottomDrawerButton> {
               ],
             ),
           );
-        }
-    );
+        });
   }
 }
