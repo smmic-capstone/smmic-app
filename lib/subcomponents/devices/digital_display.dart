@@ -21,7 +21,10 @@ class _DigitalDisplayState extends State<DigitalDisplay> {
         alignment: Alignment.centerLeft,
         decoration: BoxDecoration(
             borderRadius: BorderRadius.all(Radius.circular(8)),
-            border: Border.all(color: Colors.black12)),
+            border: Border.all(
+                color: context.watch<UiProvider>().isDark
+                    ? Colors.white
+                    : Colors.black)),
         height: 53,
         width: 73,
         child: Column(
@@ -48,8 +51,8 @@ class _DigitalDisplayState extends State<DigitalDisplay> {
                             fontSize: 14,
                             fontFamily: 'Inter',
                             color: context.watch<UiProvider>().isDark
-                                ? Colors.white
-                                : Colors.black)),
+                                ? Colors.black
+                                : Colors.white)),
                     TextSpan(
                         text: widget.valueType == 'soil moisture'
                             ? 'Soil Moisture'
