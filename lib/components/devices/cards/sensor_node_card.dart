@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/pages/devices_subpages/sensor_node_subpage.dart';
+import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/device_name.dart';
 import 'package:smmic/subcomponents/devices/digital_display.dart';
@@ -21,17 +23,18 @@ class SensorNodeCard extends StatefulWidget {
 class _SensorNodeCardState extends State<SensorNodeCard> {
   @override
   Widget build(BuildContext context) {
-
     final SKDeviceDialog _skDeviceDialog = SKDeviceDialog(
         context: context,
         deviceID: widget.deviceInfo.deviceID,
         latitude: widget.deviceInfo.latitude,
-        longitude: widget.deviceInfo.longitude
-    );
+        longitude: widget.deviceInfo.longitude);
 
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) {
-        return SensorNodePage(deviceID: widget.deviceInfo.deviceID, deviceName: widget.deviceInfo.deviceName);
+      onTap: () =>
+          Navigator.push(context, MaterialPageRoute(builder: (context) {
+        return SensorNodePage(
+            deviceID: widget.deviceInfo.deviceID,
+            deviceName: widget.deviceInfo.deviceName);
       })),
       child: Stack(
         children: [
@@ -39,17 +42,19 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
               margin: const EdgeInsets.only(left: 25, right: 25, bottom: 15),
               padding: const EdgeInsets.symmetric(horizontal: 19, vertical: 18),
               decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.watch<UiProvider>().isDark
+                      ? Colors.black
+                      : Colors.white,
                   borderRadius: const BorderRadius.all(Radius.circular(15)),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
+                        color: context.watch<UiProvider>().isDark
+                            ? Colors.white.withOpacity(0.09)
+                            : Colors.black.withOpacity(0.09),
                         spreadRadius: 0,
                         blurRadius: 4,
-                        offset: const Offset(0, 4)
-                    )
-                  ]
-              ),
+                        offset: const Offset(0, 4))
+                  ]),
               height: 160,
               child: Row(
                 children: [
@@ -59,8 +64,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                       children: [
                         Expanded(
                             flex: 3,
-                            child: DeviceName(deviceName: widget.deviceInfo.deviceName)
-                        ),
+                            child: DeviceName(
+                                deviceName: widget.deviceInfo.deviceName)),
                         const Expanded(
                           flex: 1,
                           //TODO: add snapshot data here
@@ -99,16 +104,12 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                                     valueType: 'soilMoisture',
                                     //TODO: add snapshot data here
                                     value: 00,
-                                    limit: 100
-                                )
-                            ),
+                                    limit: 100)),
                           )
                         ],
-                      )
-                  ),
+                      )),
                 ],
-              )
-          ),
+              )),
           Container(
             padding: const EdgeInsets.only(right: 37, top: 12),
             alignment: Alignment.topRight,
@@ -118,8 +119,13 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                 RotatedBox(
                   quarterTurns: 2,
                   child: IconButton(
-                    icon:const Icon(CupertinoIcons.pencil_circle, size: 20,),
-                    color: Colors.black.withOpacity(0.25),
+                    icon: const Icon(
+                      CupertinoIcons.pencil_circle,
+                      size: 20,
+                    ),
+                    color: context.watch<UiProvider>().isDark
+                        ? Colors.white
+                        : Colors.black,
                     onPressed: () {
                       _skDeviceDialog.renameSNDialog();
                     },
@@ -132,7 +138,9 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                   child: Icon(
                     CupertinoIcons.arrow_down_left_circle,
                     size: 20,
-                    color: Colors.black.withOpacity(0.25),
+                    color: context.watch<UiProvider>().isDark
+                        ? Colors.white
+                        : Colors.black,
                   ),
                 ),
               ],

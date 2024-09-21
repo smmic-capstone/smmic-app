@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/device_name.dart';
 import 'package:smmic/subcomponents/devices/digital_display.dart';
@@ -19,24 +21,26 @@ class DeviceCard extends StatefulWidget {
 class _DeviceCardState extends State<DeviceCard> {
   @override
   Widget build(BuildContext context) {
-    Logs(tag: 'Deprecated').warning(message: 'The widget DeviceCard() is deprecated, please use SensorNodeCard() or SinkNodeCard() instead');
+    Logs(tag: 'Deprecated').warning(
+        message:
+            'The widget DeviceCard() is deprecated, please use SensorNodeCard() or SinkNodeCard() instead');
     return Stack(
       children: [
         Container(
           margin: const EdgeInsets.only(left: 25, right: 25, bottom: 15),
           padding: const EdgeInsets.symmetric(horizontal: 19, vertical: 18),
           decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.watch<UiProvider>().isDark
+                  ? Colors.white
+                  : Colors.black,
               borderRadius: const BorderRadius.all(Radius.circular(15)),
               boxShadow: [
                 BoxShadow(
                     color: Colors.black.withOpacity(0.06),
                     spreadRadius: 0,
                     blurRadius: 4,
-                    offset: const Offset(0, 4)
-                )
-              ]
-          ),
+                    offset: const Offset(0, 4))
+              ]),
           height: 160,
           child: _buildCardContents(widget.deviceData),
         ),
@@ -65,9 +69,7 @@ Widget _buildCardContents(Map<String, dynamic> data) {
         child: Column(
           children: [
             Expanded(
-              flex: 3,
-              child: DeviceName(deviceName: data['deviceName'])
-            ),
+                flex: 3, child: DeviceName(deviceName: data['deviceName'])),
             Expanded(
               flex: 1,
               child: BatteryLevel(batteryLevel: data['batteryLevel']),
@@ -102,13 +104,10 @@ Widget _buildCardContents(Map<String, dynamic> data) {
                     child: RadialGauge(
                         valueType: 'sm',
                         value: data['soilMoisture'] * 1.0,
-                        limit: 100
-                    )
-                ),
+                        limit: 100)),
               )
             ],
-          )
-      ),
+          )),
     ],
   );
 }

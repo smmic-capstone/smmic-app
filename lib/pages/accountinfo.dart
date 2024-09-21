@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:smmic/models/auth_models.dart';
 import 'package:smmic/models/user_data_model.dart';
 import 'package:smmic/providers/auth_provider.dart';
+import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/providers/user_data_provider.dart';
 import 'package:smmic/services/user_data_services.dart';
 import 'package:smmic/subcomponents/manageacc/labeltext.dart';
@@ -61,7 +62,6 @@ class _ManageAccount extends State<ManageAccount> {
     setZipCodeController.text = userData.zipCode;
 
     return Scaffold(
-      backgroundColor: bgColor,
       appBar: AppBar(
         title: const Text("Manage Account"),
       ),
@@ -87,7 +87,11 @@ class _ManageAccount extends State<ManageAccount> {
                       children: [
                         Text(
                           userData.firstName,
-                          style: const TextStyle(fontSize: 26),
+                          style: TextStyle(
+                              fontSize: 26,
+                              color: context.watch<UiProvider>().isDark
+                                  ? Colors.white
+                                  : Colors.black),
                         ),
                         Text(
                           userData.lastName,
