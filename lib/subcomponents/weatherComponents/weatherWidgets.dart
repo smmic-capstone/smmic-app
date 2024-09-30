@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/services/api_key.dart';
 import 'package:weather/weather.dart';
 
@@ -68,7 +70,8 @@ class _WeatherComponentsWidgetState extends State<WeatherComponentsWidget> {
   Widget _locationHeader() {
     return Text(
       _weather?.areaName ?? "Unknown location",
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      style: const TextStyle(
+          fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black),
     );
   }
 
@@ -133,7 +136,7 @@ class _WeatherComponentsWidgetState extends State<WeatherComponentsWidget> {
   Widget _extraInfo() {
     return Text(
       "Humidity: ${_weather?.humidity?.toStringAsFixed(0)}%",
-      style: const TextStyle(color: Colors.white, fontSize: 15),
+      style: const TextStyle(color: Colors.black, fontSize: 15),
     );
   }
 }

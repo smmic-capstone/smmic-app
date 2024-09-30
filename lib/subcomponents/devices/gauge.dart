@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:smmic/providers/theme_provider.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 class RadialGauge extends StatefulWidget {
-  const RadialGauge({super.key, required this.valueType, required this.value, required this.limit, this.scaleMultiplier = 1, this.radiusMultiplier = 1});
+  const RadialGauge(
+      {super.key,
+      required this.valueType,
+      required this.value,
+      required this.limit,
+      this.scaleMultiplier = 1,
+      this.radiusMultiplier = 1});
 
   final String valueType;
   final double value;
@@ -14,14 +22,16 @@ class RadialGauge extends StatefulWidget {
   State<StatefulWidget> createState() => _RadialGaugeState();
 }
 
-class _RadialGaugeState extends State<RadialGauge>{
+class _RadialGaugeState extends State<RadialGauge> {
   @override
   Widget build(BuildContext context) {
     return SfRadialGauge(
       axes: <RadialAxis>[
         RadialAxis(
-          axisLineStyle: const AxisLineStyle(
-            color: Color.fromRGBO(216, 216, 216, 1),
+          axisLineStyle: AxisLineStyle(
+            color: context.watch<UiProvider>().isDark
+                ? Colors.white
+                : Colors.black,
             cornerStyle: CornerStyle.bothCurve,
             thickness: 8,
           ),
@@ -42,41 +52,42 @@ class _RadialGaugeState extends State<RadialGauge>{
           ],
           annotations: [
             GaugeAnnotation(
-              positionFactor: 0,
-              widget: RichText(
-                text: TextSpan(
-                  text: widget.value.toInt().toString(),
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 30 * widget.scaleMultiplier,
-                    color: Colors.black
+                positionFactor: 0,
+                widget: RichText(
+                  text: TextSpan(
+                    text: widget.value.toInt().toString(),
+                    style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 30 * widget.scaleMultiplier,
+                        color: context.watch<UiProvider>().isDark
+                            ? Colors.white
+                            : Colors.black),
+                    children: [
+                      TextSpan(
+                          text: setSymbol(widget.valueType),
+                          style:
+                              TextStyle(fontSize: 17 * widget.scaleMultiplier))
+                    ],
                   ),
-                  children: [
-                    TextSpan(
-                      text: setSymbol(widget.valueType),
-                      style: TextStyle(
-                        fontSize: 17 * widget.scaleMultiplier
-                      )
-                    )
-                  ],
-                ),
-              )
-            ),
+                )),
             GaugeAnnotation(
-              angle: 90,
-              positionFactor: 0.8,
-              widget: SizedBox(
-                child: Text(
-                  setTitle(widget.valueType),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 10 * (!(widget.scaleMultiplier == 1) ? widget.scaleMultiplier * 0.9 : 1),
-                    fontFamily: 'Inter',
-                    color: Colors.black
+                angle: 90,
+                positionFactor: 0.8,
+                widget: SizedBox(
+                  child: Text(
+                    setTitle(widget.valueType),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 10 *
+                            (!(widget.scaleMultiplier == 1)
+                                ? widget.scaleMultiplier * 0.9
+                                : 1),
+                        fontFamily: 'Inter',
+                        color: context.watch<UiProvider>().isDark
+                            ? Colors.white
+                            : Colors.black),
                   ),
-                ),
-              )
-            )
+                ))
           ],
         )
       ],
@@ -85,7 +96,7 @@ class _RadialGaugeState extends State<RadialGauge>{
 }
 
 String setSymbol(String type) {
-  switch(type) {
+  switch (type) {
     case == 'soilMoisture' || 'humidity':
       return '%';
     case == 'temperature':
@@ -96,7 +107,7 @@ String setSymbol(String type) {
 }
 
 String setTitle(String type) {
-  switch(type) {
+  switch (type) {
     case == 'soilMoisture':
       return 'Soil\nMoisture';
     case == 'temperature':
@@ -109,7 +120,6 @@ String setTitle(String type) {
 }
 
 MaterialColor setColor(double value, double limit) {
-
   double percent = (value / limit) * 100;
   MaterialColor? color;
 

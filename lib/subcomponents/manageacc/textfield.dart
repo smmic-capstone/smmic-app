@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:smmic/providers/theme_provider.dart';
 
 class ManageAccountTextField extends StatelessWidget {
   final TextEditingController? controller;
@@ -11,18 +13,18 @@ class ManageAccountTextField extends StatelessWidget {
 
   const ManageAccountTextField(
       {super.key,
-        this.controller,
-        required this.hintText,
-        required this.obscuretext,
-        this.disableInput,
-        this.icon,
-        this.suffixIcon,
-        this.opacity = 0.9});
+      this.controller,
+      required this.hintText,
+      required this.obscuretext,
+      this.disableInput,
+      this.icon,
+      this.suffixIcon,
+      this.opacity = 0.9});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 25.0,right: 25, bottom: 25),
+      padding: const EdgeInsets.only(left: 25.0, right: 25, bottom: 25),
       child: Opacity(
         opacity: opacity,
         child: TextField(
@@ -39,10 +41,15 @@ class ManageAccountTextField extends StatelessWidget {
               borderRadius: BorderRadius.circular(5),
               borderSide: const BorderSide(color: Colors.white),
             ),
-            fillColor: Colors.white,
+            fillColor: context.watch<UiProvider>().isDark
+                ? Colors.black
+                : Colors.white,
             filled: true,
             hintText: hintText,
-            hintStyle: const TextStyle(color: Colors.black),
+            hintStyle: TextStyle(
+                color: context.watch<UiProvider>().isDark
+                    ? Colors.white
+                    : Colors.black),
             suffixIcon: suffixIcon,
           ),
         ),
