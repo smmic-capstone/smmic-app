@@ -124,8 +124,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                       size: 20,
                     ),
                     color: context.watch<UiProvider>().isDark
-                        ? Colors.white
-                        : Colors.black,
+                        ? Colors.white.withOpacity(0.30)
+                        : Colors.black.withOpacity(0.30),
                     onPressed: () {
                       _skDeviceDialog.renameSNDialog();
                     },
@@ -139,8 +139,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                     CupertinoIcons.arrow_down_left_circle,
                     size: 20,
                     color: context.watch<UiProvider>().isDark
-                        ? Colors.white
-                        : Colors.black,
+                        ? Colors.white.withOpacity(0.30)
+                        : Colors.black.withOpacity(0.30),
                   ),
                 ),
               ],
