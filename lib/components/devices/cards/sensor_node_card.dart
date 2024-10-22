@@ -109,7 +109,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                         ],
                       )),
                 ],
-              )),
+              )), 
           Container(
             padding: const EdgeInsets.only(right: 37, top: 12),
             alignment: Alignment.topRight,
