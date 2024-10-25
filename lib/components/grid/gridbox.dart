@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:smmic/components/grid/gridItem.dart';
 import 'package:smmic/pages/devices.dart';
@@ -11,12 +12,12 @@ class MyGridBox extends StatefulWidget {
   State<MyGridBox> createState() => _MyGridBoxState();
 }
 
-class _MyGridBoxState extends State<MyGridBox> {
+class _MyGridBoxState extends State<MyGridBox> with AutomaticKeepAliveClientMixin {
   final Color _color = const Color.fromARGB(255, 254, 255, 255);
   final List<String> _text = ['NOTIFICATION', 'DEVICE', ' IRRIGATION'];
   final List<Widget> _pages = [
     const NotifPage(),
-    const Devices(),
+    const Devices(key: PageStorageKey<String>('devicesPage')),
     const Irrigation()
   ];
   final List<String> _imagePaths = [
@@ -24,6 +25,7 @@ class _MyGridBoxState extends State<MyGridBox> {
     'assets/device.png',
     'assets/irrigation.png',
   ];
+  final PageStorageBucket bucket = PageStorageBucket();
 
   int _seleectedPageInder = 0;
 
@@ -39,24 +41,32 @@ class _MyGridBoxState extends State<MyGridBox> {
   }
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 270,
-      child: GridView.count(
-        crossAxisCount: 2,
-        childAspectRatio: 1.5,
-        children: List.generate(
-            _text.length,
-            (index) => GestureDetector(
-                onTap: () {
-                  _selectPage(index);
-                },
-                child: GridItem(
-                  imagePath: _imagePaths[index],
-                  text: _text[index],
-                  color: _color,
-                ))),
-      ),
+    super.build(context);
+    return PageStorage(
+      key: const PageStorageKey('devices'),
+      bucket: bucket,
+      child: Container(
+            height: 270,
+            child: GridView.count(
+              crossAxisCount: 2,
+              childAspectRatio: 1.5,
+              children: List.generate(
+                  _text.length,
+                  (index) => GestureDetector(
+                      onTap: () {
+                        _selectPage(index);
+                      },
+                      child: GridItem(
+                        imagePath: _imagePaths[index],
+                        text: _text[index],
+                        color: _color,
+                      ))),
+            ),
+          ),
     );
   }
 }

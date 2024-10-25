@@ -46,8 +46,8 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    BatteryLevel(
-                        batteryLevel: widget.snapshot == null ? 0 : widget.snapshot!.batteryLevel.toInt(),
+                    const BatteryLevel(
+                        batteryLevel: 11.0,
                         alignmentAdjust: 1,
                         shrinkPercentSign: false
                     ),

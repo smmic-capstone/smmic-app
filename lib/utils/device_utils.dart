@@ -59,4 +59,12 @@ class DeviceUtils {
     return sinkNodeMap;
   }
 
+ /* Map<String,dynamic> mapSNReadings(String message){
+     message.replaceAll('{', '');
+     message.replaceAll('}', '');
+     for(int i = 0; i < message.allMatches("{").toList().length; i++){
+       message.replaceAll(from, replace)
+     }
+  }*/
+
 }

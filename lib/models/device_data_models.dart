@@ -90,6 +90,14 @@ class SensorNodeSnapshot {
       batteryLevel: data['batteryLevel'],
     );
   }
+
+  Map<String,dynamic> toJson() => {
+    'deviceID' : deviceID,
+    'timestamp' : timestamp,
+    'soil_moisture' : soilMoisture,
+    'temperature' : temperature,
+    'humidity' : humidity
+  };
 }
 
 //TODO: Add other data fields

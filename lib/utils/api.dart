@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:smmic/utils/logs.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ApiRequest {
   final Logs _logs = Logs(tag: 'ApiRequest()', disable: true);
@@ -76,7 +77,7 @@ class ApiRequest {
     } catch(e) {
       throw Exception(e);
     }
-    return {'error' : 'unhandled unexpected get() error'};
+    return {'error' : 'unhandled unexpected put() error'};
   }
 
   Future<Map<String, dynamic>> patch({required String route, Map<String, String>? headers, Object? body}) async {
@@ -100,7 +101,18 @@ class ApiRequest {
     } catch(e) {
       throw Exception(e);
     }
-    return {'error' : 'unhandled unexpected get() error'};
+    return {'error' : 'unhandled unexpected patch() error'};
+  }
+
+    Stream<dynamic>? channelConnect({required String route, Map<String,String>? headers, Object? body}) {
+    try{
+      final response = WebSocketChannel.connect(Uri.parse(route));
+      return response.stream;
+    } catch(e) {
+      _logs.error(message: 'Failed to connect to websocket');
+      throw Exception(e);
+    }
+    return null;
   }
 
 

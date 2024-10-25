@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
+import 'package:smmic/pages/devices.dart';
+import 'package:smmic/preload/preloaddevices.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/pages/login.dart';
 import 'package:smmic/providers/devices_provider.dart';
@@ -106,7 +108,12 @@ class _AuthGateState extends State<AuthGate> {
             context.read<AuthProvider>().init();
 
             // TODO: fix this hack
-            return const MyBottomNav(indexPage: 0);
+            return const Stack(
+              children: [
+                MyBottomNav(indexPage: 0),
+                PreloadDevices()
+              ],
+            );
           }
           return const Center(
             child: Text('AuthPage._authCheck has returned a null value'),

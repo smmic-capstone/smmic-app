@@ -13,6 +13,10 @@ class ApiRoutes {
   final String _updateSKDeviceName = '/updateuserSKdevicesname/';
   final String _updateSNDeviceName = '/updateuserSNdevicesname/';
 
+  ///Django Channels/Websocket URL Connections
+  final String _wsBaseURL = 'ws://127.0.0.1:8000/ws';
+  final String _getSNreadings = '/SNreadings/';
+
   /// Base url for the api
   //String get baseURL => _baseURL;
 
@@ -45,4 +49,7 @@ class ApiRoutes {
 
   ///Update SN Name
   String get updateSNName => '$_baseURL$_updateSNDeviceName';
+
+  ///Get SN Readings
+  String get getSNReadings => '$_wsBaseURL$_getSNreadings';
 }
