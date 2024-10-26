@@ -82,21 +82,22 @@ class SensorNodeSnapshot {
 
   factory SensorNodeSnapshot.fromJSON(Map<String, dynamic> data) {
     return SensorNodeSnapshot._internal(
-      deviceID: data['deviceID'],
-      timestamp: data['timestamp'],
-      soilMoisture: data['soilMoisture'],
-      temperature: data['temperature'],
-      humidity: data['humidity'],
-      batteryLevel: data['batteryLevel'],
+      deviceID: data['device_id'],
+      timestamp: DateTime.parse(data['timestamp']),
+      soilMoisture: double.parse(data['soil_moisture']),
+      temperature: double.parse(data['temperature']),
+      humidity: double.parse(data['humidity']),
+      batteryLevel: double.parse(data['battery_level']),
     );
   }
 
   Map<String,dynamic> toJson() => {
     'deviceID' : deviceID,
-    'timestamp' : timestamp,
+    'timestamp' : timestamp.toIso8601String(),
     'soil_moisture' : soilMoisture,
     'temperature' : temperature,
-    'humidity' : humidity
+    'humidity' : humidity,
+    'batteryLevel': batteryLevel
   };
 }
 

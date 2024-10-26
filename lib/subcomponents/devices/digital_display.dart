@@ -23,8 +23,8 @@ class _DigitalDisplayState extends State<DigitalDisplay> {
             borderRadius: BorderRadius.all(Radius.circular(8)),
             border: Border.all(
                 color: context.watch<UiProvider>().isDark
-                    ? Colors.white
-                    : Colors.black)),
+                    ? Colors.white.withOpacity(0.15)
+                    : Colors.black.withOpacity(0.15))),
         height: 53,
         width: 73,
         child: Column(

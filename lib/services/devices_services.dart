@@ -49,7 +49,7 @@ class DevicesServices {
       throw Exception('unhandled error on DevicesServices().getDevices()');
     }
 
-    _logs.warning(message: data['data'].toString());
+    _logs.info(message: data['data'].toString());
 
     List<dynamic> sinkNodesUnparsed = data['data'];
 
@@ -61,15 +61,15 @@ class DevicesServices {
       List<Map<String, dynamic>> sensorNodesParsed = [];
       for (int x = 0; x < sensorNodesUnparsed.length; x++) {
         sensorNodesParsed.add({
-          'SNID': sensorNodesUnparsed[x]['SNID'],
-          'SensorNode_Name': sensorNodesUnparsed[x]['SensorNode_Name'],
+          'device_id': sensorNodesUnparsed[x]['device_id'],
+          'name': sensorNodesUnparsed[x]['name'],
           'latitude' : sensorNodesUnparsed[x]['latitude'],
           'longitude' : sensorNodesUnparsed[x]['longitude'],
         });
       }
       sinkNodesParsed.add({
-        'SKID': sinkNodesUnparsed[i]['SKID'],
-        'SK_Name': sinkNodesUnparsed[i]['SK_Name'],
+        'device_id': sinkNodesUnparsed[i]['device_id'],
+        'name': sinkNodesUnparsed[i]['name'],
         'latitude' : sinkNodesUnparsed[i]['latitude'],
         'longitude' : sinkNodesUnparsed[i]['longitude'],
         'sensor_nodes': sensorNodesParsed

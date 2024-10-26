@@ -30,8 +30,8 @@ class _RadialGaugeState extends State<RadialGauge> {
         RadialAxis(
           axisLineStyle: AxisLineStyle(
             color: context.watch<UiProvider>().isDark
-                ? Colors.white
-                : Colors.black,
+                ? Colors.white.withOpacity(0.15)
+                : Colors.black.withOpacity(0.15),
             cornerStyle: CornerStyle.bothCurve,
             thickness: 8,
           ),

@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class BatteryLevel extends StatefulWidget {
-  final double batteryLevel;
+  final double? batteryLevel;
   /// Vertical alignment of battery level value relative to the battery icon. Default value is 5.5
   final double alignmentAdjust;
   final bool shrinkPercentSign;

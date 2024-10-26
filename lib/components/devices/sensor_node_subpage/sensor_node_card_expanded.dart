@@ -16,7 +16,7 @@ class SensorNodeCardExpanded extends StatefulWidget {
 }
 
 class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
-  DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
+  final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
 
   @override
   Widget build(BuildContext context) {

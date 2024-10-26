@@ -1,11 +1,17 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'package:smmic/models/device_data_models.dart';
+import 'package:smmic/providers/devices_provider.dart';
+import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ApiRequest {
-  final Logs _logs = Logs(tag: 'ApiRequest()', disable: true);
+  final Logs _logs = Logs(tag: 'ApiRequest()');
 
   /// Get request for api, returns a the response status code and the body if available
   Future<dynamic> get({required String route, Map<String, String>? headers}) async {
@@ -33,9 +39,10 @@ class ApiRequest {
   }
 
   Future<Map<String, dynamic>> post({required String route, Map<String, String>? headers, Object? body}) async {
+    _logs.info(message: 'post() -> route: $route, headers: $headers, body: $body');
+    http.Response? response;
     try{
-      _logs.info(message: 'post() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
-      final response = await http.post(Uri.parse(route), headers: headers, body: body);
+      response = await http.post(Uri.parse(route), headers: headers, body: body);
       if(response.statusCode == 500){
         _logs.error(message: 'post() $route, returned with error ${response.statusCode}');
         return {'error' : response.statusCode, 'data' : {'err':'internal server error (code 500)'}};
@@ -53,7 +60,8 @@ class ApiRequest {
     } catch(e) {
       throw Exception(e);
     }
-    return {'error' : 'unhandled unexpected get() error'};
+    _logs.warning(message: 'post() unhandled unexpected post() error (statusCode: ${response.statusCode}, body: ${response.body})');
+    return {'error' : 'unhandled unexpected post() error', 'status_code' : response.statusCode, 'body': response.body};
   }
 
   Future<Map<String, dynamic>> put({required String route, Map<String, String>? headers, Object? body}) async {
@@ -104,17 +112,31 @@ class ApiRequest {
     return {'error' : 'unhandled unexpected patch() error'};
   }
 
-    Stream<dynamic>? channelConnect({required String route, Map<String,String>? headers, Object? body}) {
+  void channelConnect({required String route, Map<String,String>? headers, Object? body, required StreamController controller}) {
+
     try{
-      final response = WebSocketChannel.connect(Uri.parse(route));
-      return response.stream;
+      _logs.info(message: "channelConnect initializing");
+      final channel =  WebSocketChannel.connect(Uri.parse(route));
+      _logs.info(message: 'stream response: ${channel.stream}');
+      channel.stream.listen((data) async {
+        _logs.info(message: 'stream data type: ${data.runtimeType}');
+        final Map<String,dynamic> decodedData = jsonDecode(data);
+        _logs.info(message: 'decoded data: $decodedData');
+        final Map<String,dynamic> messageData = decodedData['message'];
+        _logs.info(message: 'message data: $messageData');
+        final SensorNodeSnapshot mappedData = SensorNodeSnapshot.fromJSON(messageData);
+        _logs.info(message: 'Mapped Data: $mappedData');
+        _logs.info(message: 'Adding Mapped Data to SQFLITE');
+        DatabaseHelper.addReadings(mappedData);
+        controller.add(mappedData);
+        await Future<void>.delayed(const Duration(seconds:4));
+      });
     } catch(e) {
       _logs.error(message: 'Failed to connect to websocket');
+      _logs.error(message: '$e');
       throw Exception(e);
     }
-    return null;
+    return;
   }
-
-
 
 }

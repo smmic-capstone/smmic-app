@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/services/devices_services.dart';
-import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/device_utils.dart';
 import 'package:smmic/utils/logs.dart';
@@ -45,11 +43,12 @@ class DevicesProvider extends ChangeNotifier {
       return;
     }
 
+    // retrieve user devices from the api
     _logs.info(message: 'init() executing');
     List<Map<String, dynamic>>? devices = await _devicesServices.getDevices(userID: userData['UID'], token: tokens['access']);
 
     // map sink nodes and append items into _sinkNodeList
-    _logs.info(message: 'devices init: $devices');
+    //_logs.info(message: 'devices init: $devices');
     for (int i = 0; i < devices.length; i++){
       SinkNode sink = _deviceUtils.sinkNodeMapToObject(devices[i]);
       if (_sinkNodeList.isNotEmpty && _sinkNodeList.any((item) => item.deviceID == sink.deviceID)){
@@ -66,38 +65,39 @@ class DevicesProvider extends ChangeNotifier {
         break;
       }
       for(int x = 0; x < sensorNodeList.length; x++){
-        SensorNode sensor = _deviceUtils.sensorNodeMapToObject(sensorMap: sensorNodeList[x], sinkNodeID: devices[i]['SKID']);
+        SensorNode sensor = _deviceUtils.sensorNodeMapToObject(sensorMap: sensorNodeList[x], sinkNodeID: devices[i]['device_id']);
         if (_sensorNodeList.isNotEmpty && _sensorNodeList.any((item) => item.deviceID == sensor.deviceID)) {
           continue;
         }
         _sensorNodeList.add(sensor);
       }
     }
-    _logs.info(message: "devices : $devices");
+    //_logs.info(message: "devices : $devices");
 
-   /* _sharedPrefsUtils.setSKList(sinkList: devices);*/
-    List <Map<String,dynamic>> sinkNodeSharedPrefs = [];
-    List<Map<String,dynamic>> sensorNodeSharedPrefs = [];
+    /* _sharedPrefsUtils.setSKList(sinkList: devices);*/
+    // store list of devices in the shared prefs
+    List <Map<String,dynamic>> sinkNodeSharedPrefs = []; // list of sink nodes to shared prefs
+    List<Map<String,dynamic>> sensorNodeSharedPrefs = []; // list of sensor nodes to shared prefs
+    // the outer part of this loop iterates over the sink nodes
     for (int i = 0; i < devices.length; i++){
       Map<String,dynamic> sink = _deviceUtils.mapSinkNode(devices[i]);
-
       sinkNodeSharedPrefs.add(sink);
+      // this inner part iterates over the sensor nodes of each sink node
       for(int j =0; j < devices[i]["sensor_nodes"].length; j++){
         Map<String,dynamic> sensor = _deviceUtils.mapSensorNode(devices[i]['sensor_nodes'][j], sink['deviceID']);
 
         sensorNodeSharedPrefs.add(sensor);
       }
     }
+    // helper functions that finally stores the SK and SN list in the shared prefs for fast access
     _sharedPrefsUtils.setSKList(sinkList: sinkNodeSharedPrefs);
-    _logs.info(message: "deviceSharedPrefs data type: ${sinkNodeSharedPrefs.runtimeType}");
     _sharedPrefsUtils.setSNList(sensorList: sensorNodeSharedPrefs);
+    //_logs.info(message: "deviceSharedPrefs data type: ${sinkNodeSharedPrefs.runtimeType}");
     /*extractSensorNodes(sensorNodeList: devices);*/
-
     _logs.success(message: 'init() done');
-    _logs.info(message: 'devices shared prefs init: $sinkNodeSharedPrefs');
+    //_logs.info(message: 'devices shared prefs init: $sinkNodeSharedPrefs');
+    /*listenToStream();*/
     notifyListeners();
-
-    listenToStream();
   }
 
   Future<void> sinkNameChange(Map<String,dynamic> updatedSinkData) async {
@@ -198,21 +198,20 @@ class DevicesProvider extends ChangeNotifier {
     }
   }
 
-
-  
-  void listenToStream() {
+  /*void listenToStream() {
     _logs.info(message: 'Connecting to Websocket');
     _apiRequest.channelConnect(route: _apiRoutes.getSNReadings);
-    _streamSubscription = _sensorReadingsController.stream.listen((SensorNodeSnapshot data) async {
-      await DatabaseHelper.addReadings(data);
+    *//*_logs.info(message: '$_sensorReadingsController');
+    _streamSubscription = _sensorReadingsController.stream.listen((data) async {
       _logs.info(message: 'Stream Data: $data');
+      await DatabaseHelper.addReadings(data);
       _logs.info(message: 'Stream Data Type: ${data.runtimeType}');
       notifyListeners();
     }, onError: (error){
       _logs.error(message: '$error');
-    });
+    });*//*
 
-  }
+  }*/
 
 
 

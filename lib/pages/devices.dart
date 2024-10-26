@@ -69,6 +69,7 @@ class _Devices extends State<Devices> with AutomaticKeepAliveClientMixin {
                   ..._buildCards(
                       sinkNodeList: context.watch<DevicesProvider>().sinkNodeList,
                       sensorNodeList: context.watch<DevicesProvider>().sensorNodeList,
+
                       options: context
                           .watch<DeviceListOptionsNotifier>()
                           .enabledConditions),

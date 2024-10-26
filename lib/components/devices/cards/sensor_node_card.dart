@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -31,11 +31,81 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
   final ApiRequest _apiRequest = ApiRequest();
   final ApiRoutes _apiRoutes = ApiRoutes();
   final Logs _logs = Logs(tag: 'Sensor Node Card()');
+  final StreamController<SensorNodeSnapshot> streamController = StreamController<SensorNodeSnapshot>();
+  late Stream<SensorNodeSnapshot> readingsStream;
+  SensorNodeSnapshot? cardReadings;
+
+  @override
+  void initState(){
+    super.initState();
+    readingsStream = streamController.stream.asBroadcastStream();
+    _apiRequest.channelConnect(route: _apiRoutes.getSNReadings, controller: streamController);
+  }
+
+  Widget _buildCard({required SensorNodeSnapshot? latestReadings}){
+    return Row(
+      children: [
+        Expanded(
+          flex: 4,
+          child: Column(
+            children: [
+              Expanded(
+                  flex: 3,
+                  child: DeviceName(
+                      deviceName: widget.deviceInfo
+                          .deviceName)),
+              Expanded(
+                flex: 1,
+                //TODO: add snapshot data here
+                child: BatteryLevel(batteryLevel: latestReadings?.batteryLevel ?? 00),
+              )
+            ],
+          ),
+        ),
+        Expanded(
+            flex: 10,
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment
+                        .spaceAround,
+                    children: [
+                      DigitalDisplay(
+                        //TODO: add snapshot data here
+                        value: latestReadings?.temperature ?? 00,
+                        valueType: 'temperature',
+                      ),
+                      DigitalDisplay(
+                        //TODO: add snapshot data here
+                        value: latestReadings?.humidity ?? 00,
+                        valueType: 'humidity',
+                      )
+                    ],
+                  ),
+                ),
+                Expanded(
+                  flex: 4,
+                  child: Container(
+                      alignment: Alignment.center,
+                      child: RadialGauge(
+                          valueType: 'soilMoisture',
+                          //TODO: add snapshot data here
+                          value:  latestReadings?.soilMoisture ?? 00,
+                          limit: 100)),
+                )
+              ],
+            )),
+      ],
+    );
+  }
 
 
 
   @override
   Widget build(BuildContext context) {
+
     super.build(context);
     final _devicesProvider = context.read<DevicesProvider>();
     final SKDeviceDialog _skDeviceDialog = SKDeviceDialog(
@@ -43,17 +113,6 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
         deviceID: widget.deviceInfo.deviceID,
         latitude: widget.deviceInfo.latitude,
         longitude: widget.deviceInfo.longitude);
-    /*_logs.info(message: '${widget.sensorReadings}');
-    _logs.info(message: 'sensor readings datatype: ${widget.sensorReadings.runtimeType}');
-    final Map<String,dynamic>? mappedData2 = widget.sensorReadings?["message"];
-    _logs.info(message: 'mapped data type 2: $mappedData2');
-    final String sensorNodeID = mappedData2?["Sensor_Node"];
-    _logs.info(message: 'sent sensor node id:  $sensorNodeID');*/
-    /*final Map<String,dynamic>? mappedData = jsonDecode(widget.sensorReadings.toString())['message'];
-    _logs.info(message: 'mappedData data type: ${mappedData.runtimeType}');
-    _logs.info(message: mappedData.toString());*/
-    /*final Map<String,dynamic> mappedData = jsonDecode(widget.sensorReadings.toString());
-    _logs.info(message: 'mappedData data type: ${mappedData.runtimeType}');*/
 
     return GestureDetector(
       onTap: () =>
@@ -82,68 +141,86 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                         offset: const Offset(0, 4))
                   ]),
               height: 160,
-              child: FutureBuilder<List<SensorNodeSnapshot>?>(
-                       future: DatabaseHelper.getAllReadings(widget.deviceInfo.deviceID),
-                       builder: (context, AsyncSnapshot<List<SensorNodeSnapshot>?> snapshot) {
-                         final latestReadings = snapshot.data!.last;
-                         return Row(
-                          children: [
-                            Expanded(
-                              flex: 4,
-                              child: Column(
+              child: FutureBuilder(
+                future: DatabaseHelper.getAllReadings(widget.deviceInfo.deviceID),
+                builder: (context, futureSnapshot) {
+                  _logs.info(message: "Got Data from SQFLITE: $futureSnapshot");
+                  return StreamBuilder<SensorNodeSnapshot>(
+                    stream: readingsStream,
+                    initialData: futureSnapshot.data,
+                    builder: (context, snapshot){
+                      if(snapshot.hasData){
+                        if(snapshot.data?.deviceID == widget.deviceInfo.deviceID){
+                          cardReadings = snapshot.data;
+                        }
+                      }
+                      return Row(
+                        children: [
+                          Expanded(
+                            flex: 4,
+                            child: Column(
+                              children: [
+                                Expanded(
+                                    flex: 3,
+                                    child: DeviceName(
+                                        deviceName: widget.deviceInfo
+                                            .deviceName)),
+                                Expanded(
+                                  flex: 1,
+                                  //TODO: add snapshot data here
+                                  child: BatteryLevel(batteryLevel: cardReadings?.batteryLevel ?? futureSnapshot.data?.batteryLevel ?? 00),
+                                )
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                              flex: 10,
+                              child: Row(
                                 children: [
                                   Expanded(
-                                      flex: 3,
-                                      child: DeviceName(
-                                          deviceName: widget.deviceInfo
-                                              .deviceName)),
+                                    flex: 3,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment
+                                          .spaceAround,
+                                      children: [
+                                        DigitalDisplay(
+                                          //TODO: add snapshot data here
+                                          value: cardReadings?.temperature ?? futureSnapshot.data?.temperature ?? 00,
+                                          valueType: 'temperature',
+                                        ),
+                                        DigitalDisplay(
+                                          //TODO: add snapshot data here
+                                          value: cardReadings?.humidity ?? futureSnapshot.data?.humidity ?? 00,
+                                          valueType: 'humidity',
+                                        )
+                                      ],
+                                    ),
+                                  ),
                                   Expanded(
-                                    flex: 1,
-                                    //TODO: add snapshot data here
-                                    child: BatteryLevel(batteryLevel: latestReadings.batteryLevel),
+                                    flex: 4,
+                                    child: Container(
+                                        alignment: Alignment.center,
+                                        child: RadialGauge(
+                                            valueType: 'soilMoisture',
+                                            //TODO: add snapshot data here
+                                            value:  cardReadings?.soilMoisture ?? futureSnapshot.data?.soilMoisture ?? 00,
+                                            limit: 100)),
                                   )
                                 ],
-                              ),
-                            ),
-                            Expanded(
-                                flex: 10,
-                                child: Row(
-                                  children: [
-                                     Expanded(
-                                      flex: 3,
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment
-                                            .spaceAround,
-                                        children: [
-                                          DigitalDisplay(
-                                            //TODO: add snapshot data here
-                                            value: latestReadings.temperature ?? 00,
-                                            valueType: 'temperature',
-                                          ),
-                                          DigitalDisplay(
-                                            //TODO: add snapshot data here
-                                            value: latestReadings.humidity ?? 00,
-                                            valueType: 'humidity',
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 4,
-                                      child: Container(
-                                          alignment: Alignment.center,
-                                          child: RadialGauge(
-                                              valueType: 'soilMoisture',
-                                              //TODO: add snapshot data here
-                                              value:  latestReadings.soilMoisture ?? 00,
-                                              limit: 100)),
-                                    )
-                                  ],
-                                )),
-                          ],
-                         );
+                              )),
+                        ],
+                      );
+                    }
+                  );
+                }
+              )
+            /*FutureBuilder<List<SensorNodeSnapshot>?>(
+                       future: DatabaseHelper.getAllReadings(widget.deviceInfo.deviceID),
+                       builder: (context, AsyncSnapshot<List<SensorNodeSnapshot>?> snapshot) {
+                         final SensorNodeSnapshot? latestReadings = snapshot.data?.last;
+                         return _buildCard(latestReadings);
                        }
-                     ),
+                     ),*/
                 ),
           Container(
             padding: const EdgeInsets.only(right: 37, top: 12),
@@ -159,8 +236,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                       size: 20,
                     ),
                     color: context.watch<UiProvider>().isDark
-                        ? Colors.white
-                        : Colors.black,
+                        ? Colors.white.withOpacity(0.30)
+                        : Colors.black.withOpacity(0.30),
                     onPressed: () {
                       _skDeviceDialog.renameSNDialog();
                     },

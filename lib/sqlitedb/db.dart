@@ -12,7 +12,7 @@ class DatabaseHelper{
     return openDatabase(join(await getDatabasesPath(),dbName),
       onCreate: (db, version) async {
         await db.execute(
-          "CREATE TABLE SMSensorReadings(deviceID TEXT NOT NULL, timestamp DATETIME, soil_moisture DECIMAL(10,7), temperature DECIMAL(10,7), humidity DECIMAL(10,7);"
+          "CREATE TABLE SMSensorReadings(deviceID TEXT NOT NULL, timestamp DATETIME, soil_moisture DECIMAL(10,7), temperature DECIMAL(10,7), humidity DECIMAL(10,7), batteryLevel DECIMAL(10,7))"
         );
         ///TODO: Add more tables if necessary
       }, version: _version
@@ -20,37 +20,30 @@ class DatabaseHelper{
   }
 
   static Future<int> addReadings(SensorNodeSnapshot readings) async {
+    print("Adding Mapped Data from Stream to SQFLITE: $readings");
     final db = await _getDB();
+    print("Added Mapped Data from Stream to SQFLITE");
     return await db.insert("SMSensorReadings", readings.toJson(),
     conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
 
-  static Future <List<SensorNodeSnapshot>?> getAllReadings(String? deviceID) async {
+  static Future<SensorNodeSnapshot?> getAllReadings(String? deviceID) async {
     print('Readings for deviceID: $deviceID');
     final db = await _getDB();
+    final List<Map<String,dynamic>> maps = await db.query("SMSensorReadings",
+        where: 'deviceID = ?',
+        whereArgs: [deviceID],
+        orderBy: 'timestamp DESC',
+        limit: 1
+    );
 
-    final List<Map<String,dynamic>> maps = await db.query("SMSensorReadings");
-
-    if (deviceID == null) {
-      if (maps.isEmpty){
-        print('maps is empty');
-        return null;
-      }
-
-      print("Readings for deviceID:$deviceID");
-      return List.generate(maps.length, (index) => SensorNodeSnapshot.fromJSON(maps[index]));
-    }else{
-      final List<Map<String,dynamic>> maps = await db.query("SMSensorReadings",
-          where: 'deviceID = ?',
-          whereArgs: [deviceID]
-      );
-
-      if(maps.isEmpty){
-        print("maps is empty");
-        return null;
-      }
-      return List.generate(maps.length, (index) => SensorNodeSnapshot.fromJSON(maps[index]));
+    if(maps.isEmpty){
+      print("maps is empty");
+      return null;
     }
+    print("${SensorNodeSnapshot.fromJSON(maps.first)}");
+    return SensorNodeSnapshot.fromJSON(maps.first);
+
   }
 }
