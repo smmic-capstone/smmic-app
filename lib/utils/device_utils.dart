@@ -1,6 +1,9 @@
 import 'package:smmic/models/device_data_models.dart';
 
+import 'logs.dart';
+
 class DeviceUtils {
+  final Logs _logs = Logs(tag: 'Device_Utils');
 
   /// Helper function to map a sink node map into an object
   SinkNode sinkNodeMapToObject(Map<String, dynamic> sinkMap){
@@ -48,15 +51,28 @@ class DeviceUtils {
   }
 
   Map<String,dynamic> mapSensorNode(Map<String, dynamic> sensorMap, String sinkNodeID){
+    Map<String,dynamic> sinkNodeMap = {};
+    try{
+      sinkNodeMap = {
+        'deviceID': sensorMap['device_id'],
+        'deviceName': sensorMap['name'],
+        'latitude': sensorMap['latitude'],
+        'longitude': sensorMap['longitude'],
+        'sinkNodeID': sinkNodeID
 
-    Map<String, dynamic> sinkNodeMap = {
-      'deviceID': sensorMap['device_id'],
-      'deviceName': sensorMap['name'],
-      'latitude' : sensorMap['latitude'],
-      'longitude' : sensorMap['longitude'],
-      'sinkNodeID': sinkNodeID
-    };
+      };
+    }catch(e){
+      _logs.info(message: e.toString());
+    }
     return sinkNodeMap;
   }
+
+ /* Map<String,dynamic> mapSNReadings(String message){
+     message.replaceAll('{', '');
+     message.replaceAll('}', '');
+     for(int i = 0; i < message.allMatches("{").toList().length; i++){
+       message.replaceAll(from, replace)
+     }
+  }*/
 
 }

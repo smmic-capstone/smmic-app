@@ -1,7 +1,14 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'package:smmic/models/device_data_models.dart';
+import 'package:smmic/providers/devices_provider.dart';
+import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/logs.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ApiRequest {
   final Logs _logs = Logs(tag: 'ApiRequest()');
@@ -78,7 +85,7 @@ class ApiRequest {
     } catch(e) {
       throw Exception(e);
     }
-    return {'error' : 'unhandled unexpected get() error'};
+    return {'error' : 'unhandled unexpected put() error'};
   }
 
   Future<Map<String, dynamic>> patch({required String route, Map<String, String>? headers, Object? body}) async {
@@ -102,6 +109,34 @@ class ApiRequest {
     } catch(e) {
       throw Exception(e);
     }
-    return {'error' : 'unhandled unexpected get() error'};
+    return {'error' : 'unhandled unexpected patch() error'};
   }
+
+  void channelConnect({required String route, Map<String,String>? headers, Object? body, required StreamController controller}) {
+
+    try{
+      _logs.info(message: "channelConnect initializing");
+      final channel =  WebSocketChannel.connect(Uri.parse(route));
+      _logs.info(message: 'stream response: ${channel.stream}');
+      channel.stream.listen((data) async {
+        _logs.info(message: 'stream data type: ${data.runtimeType}');
+        final Map<String,dynamic> decodedData = jsonDecode(data);
+        _logs.info(message: 'decoded data: $decodedData');
+        final Map<String,dynamic> messageData = decodedData['message'];
+        _logs.info(message: 'message data: $messageData');
+        final SensorNodeSnapshot mappedData = SensorNodeSnapshot.fromJSON(messageData);
+        _logs.info(message: 'Mapped Data: $mappedData');
+        _logs.info(message: 'Adding Mapped Data to SQFLITE');
+        DatabaseHelper.addReadings(mappedData);
+        controller.add(mappedData);
+        await Future<void>.delayed(const Duration(seconds:4));
+      });
+    } catch(e) {
+      _logs.error(message: 'Failed to connect to websocket');
+      _logs.error(message: '$e');
+      throw Exception(e);
+    }
+    return;
+  }
+
 }

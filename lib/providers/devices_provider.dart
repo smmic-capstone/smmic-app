@@ -1,6 +1,11 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/services/devices_services.dart';
+import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/device_utils.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
@@ -11,12 +16,24 @@ class DevicesProvider extends ChangeNotifier {
   final DevicesServices _devicesServices = DevicesServices();
   final DeviceUtils _deviceUtils = DeviceUtils();
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
+  final ApiRequest _apiRequest = ApiRequest();
+  final ApiRoutes _apiRoutes = ApiRoutes();
 
   List<SinkNode> _sinkNodeList = [];
   List<SinkNode> get sinkNodeList => _sinkNodeList;
 
   List<SensorNode> _sensorNodeList = [];
   List<SensorNode> get sensorNodeList => _sensorNodeList;
+
+  ///Websocket Connections
+  final StreamController<SensorNodeSnapshot> _sensorReadingsController = StreamController.broadcast();
+  Stream<SensorNodeSnapshot> get sensorReadingsStream => _sensorReadingsController.stream;
+  StreamSubscription<SensorNodeSnapshot>? _streamSubscription;
+
+
+  Map<String,Map<String,dynamic>> _sensorReadings = {};
+  Map<String,Map<String,dynamic>> get sensorReadings => _sensorReadings;
+
 
   Future<void> init() async {
     Map<String, dynamic>? userData = await _sharedPrefsUtils.getUserData();
@@ -67,7 +84,8 @@ class DevicesProvider extends ChangeNotifier {
       sinkNodeSharedPrefs.add(sink);
       // this inner part iterates over the sensor nodes of each sink node
       for(int j =0; j < devices[i]["sensor_nodes"].length; j++){
-        Map<String,dynamic> sensor = _deviceUtils.mapSensorNode(devices[i]['sensor_nodes'][j], sink['device_id']);
+        Map<String,dynamic> sensor = _deviceUtils.mapSensorNode(devices[i]['sensor_nodes'][j], sink['deviceID']);
+
         sensorNodeSharedPrefs.add(sensor);
       }
     }
@@ -76,9 +94,9 @@ class DevicesProvider extends ChangeNotifier {
     _sharedPrefsUtils.setSNList(sensorList: sensorNodeSharedPrefs);
     //_logs.info(message: "deviceSharedPrefs data type: ${sinkNodeSharedPrefs.runtimeType}");
     /*extractSensorNodes(sensorNodeList: devices);*/
-
     _logs.success(message: 'init() done');
     //_logs.info(message: 'devices shared prefs init: $sinkNodeSharedPrefs');
+    /*listenToStream();*/
     notifyListeners();
   }
 
@@ -157,6 +175,61 @@ class DevicesProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  void setSNReadings ({required Map<String,dynamic> sensorReadings }) async {
+    _logs.info(message: "setSNreadings running : $sensorReadings");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('last_reading',jsonEncode(sensorReadings));
+    _logs.info(message: 'prefs running');
+    notifyListeners();
+
+    /* final String sensorID = sensorReadings['message']['Sensor_Node'];
+    _sensorReadings[sensorID] = sensorReadings['message'];*/
+  }
+
+  Future <Map<String,dynamic>> getLastReadings() async {
+    _logs.info(message: "getSNreadings running");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? reading = prefs.getString('last_reading');
+    if (reading != null){
+      return jsonDecode(reading);
+    }else{
+      return {};
+    }
+  }
+
+  /*void listenToStream() {
+    _logs.info(message: 'Connecting to Websocket');
+    _apiRequest.channelConnect(route: _apiRoutes.getSNReadings);
+    *//*_logs.info(message: '$_sensorReadingsController');
+    _streamSubscription = _sensorReadingsController.stream.listen((data) async {
+      _logs.info(message: 'Stream Data: $data');
+      await DatabaseHelper.addReadings(data);
+      _logs.info(message: 'Stream Data Type: ${data.runtimeType}');
+      notifyListeners();
+    }, onError: (error){
+      _logs.error(message: '$error');
+    });*//*
+
+  }*/
+
+
+
+  void disconnectToWebSocket(){
+    _sensorReadingsController.close();
+  }
+
+  /*void connectToWebSocket(){
+    _logs.info(message: "websocket connecting");
+    _apiRequest.channelConnect(route: _apiRoutes.getSNReadings)?.listen((data){
+      final mappedData = jsonDecode(data.toString());
+      _sensorReadingsController.add(mappedData);
+      setSNReadings(sensorReadings: mappedData);
+      _logs.info(message: 'mappedData type: $mappedData');
+    });
+  }*/
+
+  ///WebSocket Connections in Background
 
   ///Extract Sensor Node
   /*void extractSensorNodes({required List <Map<String, dynamic>> sensorNodeList}) {

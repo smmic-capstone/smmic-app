@@ -49,7 +49,7 @@ class DevicesServices {
       throw Exception('unhandled error on DevicesServices().getDevices()');
     }
 
-    _logs.warning(message: data['data'].toString());
+    _logs.info(message: data['data'].toString());
 
     List<dynamic> sinkNodesUnparsed = data['data'];
 
