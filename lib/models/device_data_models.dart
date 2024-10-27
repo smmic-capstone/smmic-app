@@ -84,21 +84,27 @@ class SensorNodeSnapshot {
     return SensorNodeSnapshot._internal(
       deviceID: data['device_id'],
       timestamp: DateTime.parse(data['timestamp']),
-      soilMoisture: double.parse(data['soil_moisture']),
-      temperature: double.parse(data['temperature']),
-      humidity: double.parse(data['humidity']),
-      batteryLevel: double.parse(data['battery_level']),
+      soilMoisture: double.parse(data['soil_moisture'].toString()),
+      temperature: double.parse(data['temperature'].toString()),
+      humidity: double.parse(data['humidity'].toString()),
+      batteryLevel: double.parse(data['battery_level'].toString()),
     );
   }
 
   Map<String,dynamic> toJson() => {
-    'deviceID' : deviceID,
+    'device_id' : deviceID,
     'timestamp' : timestamp.toIso8601String(),
     'soil_moisture' : soilMoisture,
     'temperature' : temperature,
     'humidity' : humidity,
-    'batteryLevel': batteryLevel
+    'battery_level': batteryLevel
   };
+
+  @override
+  String toString(){
+    return 'SensorNodeSnapshot(deviceID: $deviceID, timestamp: $timestamp, soilMoisture: $soilMoisture, '
+        'temperature: $temperature, humidity: $humidity, batteryLevel: $batteryLevel)';
+  }
 }
 
 //TODO: Add other data fields

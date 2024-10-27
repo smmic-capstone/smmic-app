@@ -34,6 +34,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
   final StreamController<SensorNodeSnapshot> streamController = StreamController<SensorNodeSnapshot>();
   late Stream<SensorNodeSnapshot> readingsStream;
   SensorNodeSnapshot? cardReadings;
+  SensorNodeSnapshot? sqlCardReadings;
 
   @override
   void initState(){
@@ -105,9 +106,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
 
   @override
   Widget build(BuildContext context) {
-
     super.build(context);
-    final _devicesProvider = context.read<DevicesProvider>();
+
     final SKDeviceDialog _skDeviceDialog = SKDeviceDialog(
         context: context,
         deviceID: widget.deviceInfo.deviceID,
@@ -145,6 +145,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                 future: DatabaseHelper.getAllReadings(widget.deviceInfo.deviceID),
                 builder: (context, futureSnapshot) {
                   _logs.info(message: "Got Data from SQFLITE: $futureSnapshot");
+                  sqlCardReadings = futureSnapshot.data;
                   return StreamBuilder<SensorNodeSnapshot>(
                     stream: readingsStream,
                     initialData: futureSnapshot.data,
@@ -168,7 +169,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                                 Expanded(
                                   flex: 1,
                                   //TODO: add snapshot data here
-                                  child: BatteryLevel(batteryLevel: cardReadings?.batteryLevel ?? futureSnapshot.data?.batteryLevel ?? 00),
+                                  child: BatteryLevel(batteryLevel: cardReadings?.batteryLevel ?? sqlCardReadings?.batteryLevel ?? 00),
                                 )
                               ],
                             ),
@@ -185,12 +186,12 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                                       children: [
                                         DigitalDisplay(
                                           //TODO: add snapshot data here
-                                          value: cardReadings?.temperature ?? futureSnapshot.data?.temperature ?? 00,
+                                          value: cardReadings?.temperature ?? sqlCardReadings?.temperature ?? 00,
                                           valueType: 'temperature',
                                         ),
                                         DigitalDisplay(
                                           //TODO: add snapshot data here
-                                          value: cardReadings?.humidity ?? futureSnapshot.data?.humidity ?? 00,
+                                          value: cardReadings?.humidity ?? sqlCardReadings?.humidity ?? 00,
                                           valueType: 'humidity',
                                         )
                                       ],
@@ -203,7 +204,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                                         child: RadialGauge(
                                             valueType: 'soilMoisture',
                                             //TODO: add snapshot data here
-                                            value:  cardReadings?.soilMoisture ?? futureSnapshot.data?.soilMoisture ?? 00,
+                                            value:  cardReadings?.soilMoisture ?? sqlCardReadings?.soilMoisture ?? 00,
                                             limit: 100)),
                                   )
                                 ],
