@@ -4,7 +4,6 @@ import 'package:path/path.dart';
 import 'package:smmic/models/device_data_models.dart';
 
 class DatabaseHelper{
-  final Logs _logs = Logs(tag: "SQLITE Database");
   static const int _version = 1;
   static const String dbName = "Readings.db";
 
@@ -12,7 +11,7 @@ class DatabaseHelper{
     return openDatabase(join(await getDatabasesPath(),dbName),
       onCreate: (db, version) async {
         await db.execute(
-          "CREATE TABLE SMSensorReadings(deviceID TEXT NOT NULL, timestamp DATETIME, soil_moisture DECIMAL(10,7), temperature DECIMAL(10,7), humidity DECIMAL(10,7), batteryLevel DECIMAL(10,7))"
+          "CREATE TABLE SMSensorReadings(device_id TEXT NOT NULL, timestamp DATETIME, soil_moisture DECIMAL(10,7), temperature DECIMAL(10,7), humidity DECIMAL(10,7), battery_level DECIMAL(10,7))"
         );
         ///TODO: Add more tables if necessary
       }, version: _version
@@ -28,22 +27,30 @@ class DatabaseHelper{
   }
 
 
-  static Future<SensorNodeSnapshot?> getAllReadings(String? deviceID) async {
+  static Future<SensorNodeSnapshot?> getAllReadings(String deviceID) async {
     print('Readings for deviceID: $deviceID');
     final db = await _getDB();
     final List<Map<String,dynamic>> maps = await db.query("SMSensorReadings",
-        where: 'deviceID = ?',
+        where: 'device_id = ?',
         whereArgs: [deviceID],
         orderBy: 'timestamp DESC',
         limit: 1
     );
 
+    print("Raw Data from SQLITe: $maps");
+
     if(maps.isEmpty){
       print("maps is empty");
       return null;
     }
-    print("${SensorNodeSnapshot.fromJSON(maps.first)}");
-    return SensorNodeSnapshot.fromJSON(maps.first);
+    try {
+      final snapshot = SensorNodeSnapshot.fromJSON(maps.first);
+      print("Mapped SensorNodeSnapshot: $snapshot");
+      return snapshot;
+    } catch (e) {
+      print("Error mapping data: $e");
+      return null;
+    }
 
   }
 }
