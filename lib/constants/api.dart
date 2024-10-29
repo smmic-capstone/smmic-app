@@ -1,7 +1,7 @@
 /// Defines API constants (routes, configs if any)
 class ApiRoutes {
   //10.0.2.2
-  final String _baseURL = 'http://192.168.1.6:8000/api';
+  final String _baseURL = 'http://localhost:8000/api';
   final String _loginURL = '/auth/jwt/create/';
   final String _logoutURL = '/blacklist';
   final String _registerURL = '/djoser/users/';
@@ -14,7 +14,7 @@ class ApiRoutes {
   final String _updateSNDeviceName = '/updateuserSNdevicesname/';
 
   ///Django Channels/Websocket URL Connections
-  final String _wsBaseURL = 'ws://192.168.1.6:8000/ws';
+  final String _wsBaseURL = 'ws://localhost:8000/ws';
   final String _getSNreadings = '/SNreadings/';
 
   /// Base url for the api
