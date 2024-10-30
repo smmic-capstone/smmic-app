@@ -1,13 +1,17 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:smmic/components/devices/sensor_node_subpage/stacked_line.dart';
 import 'package:smmic/components/devices/sensor_node_subpage/sensor_node_card_expanded.dart';
+import '../../models/device_data_models.dart';
 
 class SensorNodePage extends StatefulWidget {
-  const SensorNodePage({super.key, required this.deviceID, required this.deviceName});
+  const SensorNodePage({super.key, required this.deviceID, required this.deviceName, required this.streamController});
 
   final String deviceID;
   final String deviceName;
+  final StreamController<SensorNodeSnapshot> streamController;
+
 
   @override
   State<StatefulWidget> createState() => _SensorNodePageState();
@@ -39,7 +43,7 @@ class _SensorNodePageState extends State<SensorNodePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // TODO:
-              SensorNodeCardExpanded(deviceID: widget.deviceID, snapshot: null),
+              SensorNodeCardExpanded(deviceID: widget.deviceID, snapshot: null, streamController: widget.streamController.stream,),
               Container(
                 margin: EdgeInsets.only(bottom: 25),
                 decoration: BoxDecoration(

@@ -31,78 +31,19 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
   final ApiRequest _apiRequest = ApiRequest();
   final ApiRoutes _apiRoutes = ApiRoutes();
   final Logs _logs = Logs(tag: 'Sensor Node Card()');
-  final StreamController<SensorNodeSnapshot> streamController = StreamController<SensorNodeSnapshot>();
-  late Stream<SensorNodeSnapshot> readingsStream;
+  final StreamController<SensorNodeSnapshot> _streamController = StreamController<SensorNodeSnapshot>.broadcast();
+  StreamController<SensorNodeSnapshot> get streamController => _streamController;
+  Stream<SensorNodeSnapshot> get readingsStream => _streamController.stream;
+ /* late Stream<SensorNodeSnapshot> readingsStream;*/
   SensorNodeSnapshot? cardReadings;
   SensorNodeSnapshot? sqlCardReadings;
 
   @override
   void initState(){
     super.initState();
-    readingsStream = streamController.stream.asBroadcastStream();
-    _apiRequest.channelConnect(route: _apiRoutes.getSNReadings, controller: streamController);
+    /*readingsStream = streamController.stream.asBroadcastStream();*/
+    _apiRequest.channelConnect(route: _apiRoutes.getSNReadings, controller: streamController, deviceID: widget.deviceInfo.deviceID);
   }
-
-  Widget _buildCard({required SensorNodeSnapshot? latestReadings}){
-    return Row(
-      children: [
-        Expanded(
-          flex: 4,
-          child: Column(
-            children: [
-              Expanded(
-                  flex: 3,
-                  child: DeviceName(
-                      deviceName: widget.deviceInfo
-                          .deviceName)),
-              Expanded(
-                flex: 1,
-                //TODO: add snapshot data here
-                child: BatteryLevel(batteryLevel: latestReadings?.batteryLevel ?? 00),
-              )
-            ],
-          ),
-        ),
-        Expanded(
-            flex: 10,
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment
-                        .spaceAround,
-                    children: [
-                      DigitalDisplay(
-                        //TODO: add snapshot data here
-                        value: latestReadings?.temperature ?? 00,
-                        valueType: 'temperature',
-                      ),
-                      DigitalDisplay(
-                        //TODO: add snapshot data here
-                        value: latestReadings?.humidity ?? 00,
-                        valueType: 'humidity',
-                      )
-                    ],
-                  ),
-                ),
-                Expanded(
-                  flex: 4,
-                  child: Container(
-                      alignment: Alignment.center,
-                      child: RadialGauge(
-                          valueType: 'soilMoisture',
-                          //TODO: add snapshot data here
-                          value:  latestReadings?.soilMoisture ?? 00,
-                          limit: 100)),
-                )
-              ],
-            )),
-      ],
-    );
-  }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +60,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
           Navigator.push(context, MaterialPageRoute(builder: (context) {
         return SensorNodePage(
             deviceID: widget.deviceInfo.deviceID,
-            deviceName: widget.deviceInfo.deviceName);
+            deviceName: widget.deviceInfo.deviceName,
+          streamController: streamController,);
       })),
       child: Stack(
         children: [
@@ -150,11 +92,13 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                     stream: readingsStream,
                     initialData: futureSnapshot.data,
                     builder: (context, snapshot){
-                      if(snapshot.hasData){
-                        if(snapshot.data?.deviceID == widget.deviceInfo.deviceID){
-                          cardReadings = snapshot.data;
-                        }
+                      if(snapshot.hasData && snapshot.data?.deviceID == widget.deviceInfo.deviceID){
+                        cardReadings = snapshot.data;
                       }
+                      final batteryLevel = cardReadings?.batteryLevel ?? sqlCardReadings?.batteryLevel ?? 00;
+                      final humidity = cardReadings?.humidity ?? sqlCardReadings?.humidity ?? 00;
+                      final temperature = cardReadings?.temperature ?? sqlCardReadings?.temperature ?? 00;
+                      final soilMoisture = cardReadings?.soilMoisture ?? sqlCardReadings?.soilMoisture ?? 00;
                       return Row(
                         children: [
                           Expanded(
@@ -169,7 +113,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                                 Expanded(
                                   flex: 1,
                                   //TODO: add snapshot data here
-                                  child: BatteryLevel(batteryLevel: cardReadings?.batteryLevel ?? sqlCardReadings?.batteryLevel ?? 00),
+                                  child: BatteryLevel(batteryLevel: batteryLevel),
                                 )
                               ],
                             ),
@@ -186,12 +130,12 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                                       children: [
                                         DigitalDisplay(
                                           //TODO: add snapshot data here
-                                          value: cardReadings?.temperature ?? sqlCardReadings?.temperature ?? 00,
+                                          value: temperature,
                                           valueType: 'temperature',
                                         ),
                                         DigitalDisplay(
                                           //TODO: add snapshot data here
-                                          value: cardReadings?.humidity ?? sqlCardReadings?.humidity ?? 00,
+                                          value: humidity,
                                           valueType: 'humidity',
                                         )
                                       ],
@@ -204,7 +148,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                                         child: RadialGauge(
                                             valueType: 'soilMoisture',
                                             //TODO: add snapshot data here
-                                            value:  cardReadings?.soilMoisture ?? sqlCardReadings?.soilMoisture ?? 00,
+                                            value:  soilMoisture,
                                             limit: 100)),
                                   )
                                 ],
