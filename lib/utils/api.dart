@@ -212,11 +212,7 @@ class ApiRequest {
     return {'error': 'unhandled unexpected patch() error'};
   }
 
-  void channelConnect(
-      {required String route,
-      Map<String, String>? headers,
-      Object? body,
-      required StreamController controller}) {
+  void channelConnect({required String route, Map<String, String>? headers, Object? body, required StreamController controller, required String deviceID}) {
     try {
       _logs.info(message: "channelConnect initializing");
       final channel = WebSocketChannel.connect(Uri.parse(route));
@@ -225,19 +221,23 @@ class ApiRequest {
         _logs.info(message: 'stream data type: ${data.runtimeType}');
         final Map<String, dynamic> decodedData = jsonDecode(data);
         _logs.info(message: 'decoded data: $decodedData');
-        final Map<String, dynamic> messageData = decodedData['message'];
-        _logs.info(message: 'message data: $messageData');
-        final SensorNodeSnapshot mappedData =
-            SensorNodeSnapshot.fromJSON(messageData);
-        _logs.info(message: 'Mapped Data: $mappedData');
-        _logs.info(message: 'Adding Mapped Data to SQFLITE');
-        /*DatabaseHelper.addReadings(mappedData);*/
-        _logs.info(
-            message:
-                'Checking if ${mappedData.deviceID} sqlite readings record reached limit');
-        /*DatabaseHelper.readingsLimit(mappedData.deviceID);*/
-        controller.add(mappedData);
-        await Future<void>.delayed(const Duration(seconds: 4));
+        
+        if (decodedData['message']['device_id'] == deviceID) {
+          _logs.info(message: 'if statement for device_id == deviceID $deviceID');
+          final Map<String, dynamic> messageData = decodedData['message'];
+          _logs.info(message: 'message data: $messageData');
+          final SensorNodeSnapshot mappedData =
+              SensorNodeSnapshot.fromJSON(messageData);
+          _logs.info(message: 'Mapped Data: $mappedData');
+          _logs.info(message: 'Adding Mapped Data to SQFLITE');
+          DatabaseHelper.addReadings(mappedData);
+          _logs.info(message: 'Checking if $deviceID sqlite readings record reached limit');
+          DatabaseHelper.readingsLimit(deviceID);
+          controller.add(mappedData);
+          await Future<void>.delayed(const Duration(seconds: 4));
+        }else{
+          _logs.info(message: "device ID not matched skipping");
+        }
       });
     } catch (e) {
       _logs.error(message: 'Failed to connect to websocket');

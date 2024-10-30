@@ -73,4 +73,20 @@ class DatabaseHelper {
     }
     print("Limit did not exceed, go on about your usual day");
   }
+  
+  
+  static Future<List<SensorNodeSnapshot>?>chartReadings(String deviceID) async {
+    print('chartReadings Initialized');
+    final db = await _getDB();
+    
+    final List<Map<String,dynamic>> chartReadings = await db.query(
+      "SMSensorReadings",
+      where: 'device_id = ?',
+      whereArgs: [deviceID],
+      orderBy: 'timestamp ASC',
+      limit: 100,
+    );
+    print(chartReadings.map((data) => SensorNodeSnapshot.fromJSON(data)).toList());
+    return chartReadings.map((data) => SensorNodeSnapshot.fromJSON(data)).toList();
+  }
 }
