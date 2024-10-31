@@ -9,8 +9,8 @@ import '../../utils/global_navigator.dart';
 
 // TODO: add longitude and latitude
 
-class SKDeviceDialog{
-  SKDeviceDialog ({required this.context,required this.deviceID,required this.latitude,required this.longitude});
+class DeviceDialog{
+  DeviceDialog ({required this.context,required this.deviceID,required this.latitude,required this.longitude});
 
   final String deviceID;
   final String? latitude;
