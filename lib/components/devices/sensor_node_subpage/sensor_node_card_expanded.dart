@@ -3,12 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/services/devices_services.dart';
 import 'package:smmic/sqlitedb/db.dart';
+import 'package:smmic/subcomponents/devices/device_dialog.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
 import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/gauge.dart';
 
 class SensorNodeCardExpanded extends StatefulWidget {
-  const SensorNodeCardExpanded({super.key, required this.deviceID, required this.snapshot, required this.streamController});
+  const SensorNodeCardExpanded({
+    super.key,
+    required this.deviceID,
+    this.snapshot,
+    required this.streamController
+  });
 
   final SensorNodeSnapshot? snapshot;
   final String deviceID;
@@ -21,12 +27,14 @@ class SensorNodeCardExpanded extends StatefulWidget {
 
 class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
   final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
+
   SensorNodeSnapshot? cardReadings;
   SensorNodeSnapshot? sqlCardReadings;
 
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.sizeOf(context).height;
+
     return Container(
       margin: EdgeInsets.symmetric(vertical: 15),
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 15),

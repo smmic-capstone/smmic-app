@@ -49,7 +49,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
   Widget build(BuildContext context) {
     super.build(context);
 
-    final SKDeviceDialog _skDeviceDialog = SKDeviceDialog(
+    final DeviceDialog _skDeviceDialog = DeviceDialog(
         context: context,
         deviceID: widget.deviceInfo.deviceID,
         latitude: widget.deviceInfo.latitude,
@@ -60,6 +60,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
           Navigator.push(context, MaterialPageRoute(builder: (context) {
         return SensorNodePage(
             deviceID: widget.deviceInfo.deviceID,
+            latitude: widget.deviceInfo.latitude,
+            longitude: widget.deviceInfo.longitude,
             deviceName: widget.deviceInfo.deviceName,
           streamController: streamController,);
       })),
@@ -159,14 +161,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                   );
                 }
               )
-            /*FutureBuilder<List<SensorNodeSnapshot>?>(
-                       future: DatabaseHelper.getAllReadings(widget.deviceInfo.deviceID),
-                       builder: (context, AsyncSnapshot<List<SensorNodeSnapshot>?> snapshot) {
-                         final SensorNodeSnapshot? latestReadings = snapshot.data?.last;
-                         return _buildCard(latestReadings);
-                       }
-                     ),*/
-                ),
+          ),
           Container(
             padding: const EdgeInsets.only(right: 37, top: 12),
             alignment: Alignment.topRight,

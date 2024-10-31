@@ -20,7 +20,7 @@ class SinkNodeCard extends StatefulWidget {
 class _SinkNodeCardState extends State<SinkNodeCard> {
   @override
   Widget build(BuildContext context) {
-    final SKDeviceDialog _skDeviceDialog = SKDeviceDialog(
+    final DeviceDialog _skDeviceDialog = DeviceDialog(
         context: context,
         deviceID: widget.deviceInfo.deviceID,
         latitude: widget.deviceInfo.latitude,

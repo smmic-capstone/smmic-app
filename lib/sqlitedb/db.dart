@@ -83,10 +83,14 @@ class DatabaseHelper {
       "SMSensorReadings",
       where: 'device_id = ?',
       whereArgs: [deviceID],
-      orderBy: 'timestamp ASC',
-      limit: 100,
+      orderBy: 'timestamp DESC',
+      limit: 6,
     );
-    print(chartReadings.map((data) => SensorNodeSnapshot.fromJSON(data)).toList());
-    return chartReadings.map((data) => SensorNodeSnapshot.fromJSON(data)).toList();
+
+    final readings = chartReadings.map((data) => SensorNodeSnapshot.fromJSON(data)).toList().reversed.toList();
+
+
+    print(readings.reversed);
+    return readings;
   }
 }

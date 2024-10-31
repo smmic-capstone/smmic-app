@@ -4,11 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:smmic/components/devices/sensor_node_subpage/stacked_line.dart';
 import 'package:smmic/components/devices/sensor_node_subpage/sensor_node_card_expanded.dart';
 import '../../models/device_data_models.dart';
+import '../../subcomponents/devices/device_dialog.dart';
 
 class SensorNodePage extends StatefulWidget {
-  const SensorNodePage({super.key, required this.deviceID, required this.deviceName, required this.streamController});
+  const SensorNodePage({
+    super.key,
+    required this.deviceID,
+    this.latitude,
+    this.longitude,
+    required this.deviceName,
+    required this.streamController
+  });
 
   final String deviceID;
+  final String? latitude;
+  final String? longitude;
   final String deviceName;
   final StreamController<SensorNodeSnapshot> streamController;
 
@@ -21,6 +31,12 @@ class _SensorNodePageState extends State<SensorNodePage> {
 
   @override
   Widget build(BuildContext context) {
+    final DeviceDialog _deviceDialog = DeviceDialog(
+        context: context,
+        deviceID: widget.deviceID,
+        latitude: widget.latitude,
+        longitude: widget.longitude);
+
     Color? bgColor = Color.fromRGBO(239, 239, 239, 1.0);
     return Scaffold(
       backgroundColor: bgColor,
@@ -31,8 +47,10 @@ class _SensorNodePageState extends State<SensorNodePage> {
         actions: [
           IconButton(
             padding: EdgeInsets.all(19),
-            onPressed: () => {},
-            icon: Icon(Icons.edit_outlined, size: 21, color: Colors.black),
+            onPressed: () => {
+              _deviceDialog.renameSNDialog()
+            },
+            icon: const Icon(Icons.edit_outlined, size: 21, color: Colors.black),
           ),
         ],
       ),
