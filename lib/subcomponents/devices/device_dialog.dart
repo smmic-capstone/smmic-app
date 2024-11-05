@@ -116,8 +116,8 @@ class DeviceDialog{
                     };
                     print("device Dialog $snDataProvider");
                     Map<String,dynamic> snUpdatedData = {
-                      'SNID' : deviceID,
-                      'SensorNode_Name' : sensorNameController.text,
+                      'deviceID' : deviceID,
+                      'name' : sensorNameController.text,
                       'latitude' : latitude,
                       'longitude' : longitude
                     };
@@ -125,6 +125,7 @@ class DeviceDialog{
                     await _devicesServices.updateSNDeviceName(token: userAccess.token, deviceID: deviceID, sensorName: snUpdatedData, sinkNodeID: registerSinkNodeID);
 
                     if(context.mounted){
+                      print("snDataProvider: $snDataProvider");
                       context.read<DevicesProvider>().sensorNameChange(snDataProvider);
                     }
                   }

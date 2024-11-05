@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:smmic/components/devices/sensor_node_subpage/stacked_line.dart';
 import 'package:smmic/components/devices/sensor_node_subpage/sensor_node_card_expanded.dart';
+import 'package:smmic/providers/devices_provider.dart';
 import '../../models/device_data_models.dart';
 import '../../subcomponents/devices/device_dialog.dart';
 
@@ -13,13 +15,15 @@ class SensorNodePage extends StatefulWidget {
     this.latitude,
     this.longitude,
     required this.deviceName,
-    required this.streamController
+    required this.streamController,
+    required this.deviceInfo
   });
 
   final String deviceID;
   final String? latitude;
   final String? longitude;
   final String deviceName;
+  final SensorNode deviceInfo;
   final StreamController<SensorNodeSnapshot> streamController;
 
 
@@ -33,16 +37,16 @@ class _SensorNodePageState extends State<SensorNodePage> {
   Widget build(BuildContext context) {
     final DeviceDialog _deviceDialog = DeviceDialog(
         context: context,
-        deviceID: widget.deviceID,
-        latitude: widget.latitude,
-        longitude: widget.longitude);
+        deviceID: widget.deviceInfo.deviceID,
+        latitude: widget.deviceInfo.latitude,
+        longitude: widget.deviceInfo.longitude);
 
     Color? bgColor = Color.fromRGBO(239, 239, 239, 1.0);
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: bgColor,
-        title: Text(widget.deviceName),
+        title: Text(widget.deviceInfo.deviceName),
         centerTitle: true,
         actions: [
           IconButton(

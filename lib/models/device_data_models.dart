@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Device {
   final String deviceID;
   String deviceName;
@@ -104,6 +106,29 @@ class SensorNodeSnapshot {
   String toString(){
     return 'SensorNodeSnapshot(deviceID: $deviceID, timestamp: $timestamp, soilMoisture: $soilMoisture, '
         'temperature: $temperature, humidity: $humidity, batteryLevel: $batteryLevel)';
+  }
+}
+
+class SMAlerts {
+  final String deviceID;
+  final DateTime timestamp;
+  final int alerts;
+  final Map<String,dynamic> data;
+
+  SMAlerts._internal({
+    required this.deviceID,
+    required this.timestamp,
+    required this.alerts,
+    required this.data
+  });
+
+  factory SMAlerts.fromJSON(Map<String,dynamic> data){
+    return SMAlerts._internal(
+        deviceID: data['device_id'],
+        timestamp: DateTime.parse(data['timestamp']),
+        alerts: data['alert_code'],
+        data: data['data']
+    );
   }
 }
 
