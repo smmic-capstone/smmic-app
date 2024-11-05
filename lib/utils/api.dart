@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:smmic/models/device_data_models.dart';
@@ -226,8 +227,7 @@ class ApiRequest {
           _logs.info(message: 'if statement for device_id == deviceID $deviceID');
           final Map<String, dynamic> messageData = decodedData['message'];
           _logs.info(message: 'message data: $messageData');
-          final SensorNodeSnapshot mappedData =
-              SensorNodeSnapshot.fromJSON(messageData);
+          final SensorNodeSnapshot mappedData = SensorNodeSnapshot.fromJSON(messageData);
           _logs.info(message: 'Mapped Data: $mappedData');
           _logs.info(message: 'Adding Mapped Data to SQFLITE');
           DatabaseHelper.addReadings(mappedData);
@@ -242,6 +242,31 @@ class ApiRequest {
     } catch (e) {
       _logs.error(message: 'Failed to connect to websocket');
       _logs.error(message: '$e');
+      throw Exception(e);
+    }
+    return;
+  }
+
+  void channelReadings({required String route, required StreamController controller, required String deviceId, required BuildContext context}){
+    try{
+      final channel = WebSocketChannel.connect(Uri.parse(route));
+      channel.stream.listen((data){
+        final Map<String,dynamic> decodedData = jsonDecode(data);
+        _logs.info(message: 'alerts decoded: $decodedData');
+        if(decodedData['message']['device_id'] == deviceId){
+          final Map<String,dynamic> messageData = decodedData['message'];
+          _logs.info(message: 'alerts message data: $messageData');
+
+          _logs.info(message: 'alerts data jsonfield: ${messageData['soil_moisture']}');
+          final SMAlerts mappedData = SMAlerts.fromJSON(messageData);
+          context.read<DevicesProvider>().sensorNodeAlerts(alertMessage: mappedData);
+          _logs.info(message: 'alerts mapped data: ${mappedData.data['soil_moisture']}');
+          controller.add(mappedData);
+        }else{
+          _logs.info(message: 'deviceID not matching');
+        }
+      });
+    }catch(e){
       throw Exception(e);
     }
     return;

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/services/devices_services.dart';
+import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/device_utils.dart';
 import 'package:smmic/utils/logs.dart';
@@ -16,8 +17,7 @@ class DevicesProvider extends ChangeNotifier {
   final DevicesServices _devicesServices = DevicesServices();
   final DeviceUtils _deviceUtils = DeviceUtils();
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
-  final ApiRequest _apiRequest = ApiRequest();
-  final ApiRoutes _apiRoutes = ApiRoutes();
+
 
   List<SinkNode> _sinkNodeList = [];
   List<SinkNode> get sinkNodeList => _sinkNodeList;
@@ -25,14 +25,14 @@ class DevicesProvider extends ChangeNotifier {
   List<SensorNode> _sensorNodeList = [];
   List<SensorNode> get sensorNodeList => _sensorNodeList;
 
-  ///Websocket Connections
-  final StreamController<SensorNodeSnapshot> _sensorReadingsController = StreamController.broadcast();
-  Stream<SensorNodeSnapshot> get sensorReadingsStream => _sensorReadingsController.stream;
-  StreamSubscription<SensorNodeSnapshot>? _streamSubscription;
+  List<SensorNodeSnapshot?> _sensorNodeSnapshotList = [];
+  List<SensorNodeSnapshot?> get sensorNodeSnapshotList => _sensorNodeSnapshotList;
 
+  SMAlerts? _alertCode;
+  SMAlerts? get alertCode => _alertCode;
 
-  Map<String,Map<String,dynamic>> _sensorReadings = {};
-  Map<String,Map<String,dynamic>> get sensorReadings => _sensorReadings;
+  Map <String, Map<String,int>> _deviceAlerts = {};
+
 
 
   Future<void> init() async {
@@ -94,9 +94,36 @@ class DevicesProvider extends ChangeNotifier {
     _sharedPrefsUtils.setSNList(sensorList: sensorNodeSharedPrefs);
     //_logs.info(message: "deviceSharedPrefs data type: ${sinkNodeSharedPrefs.runtimeType}");
     /*extractSensorNodes(sensorNodeList: devices);*/
+
+
+   /* for(int i=0; i < _sensorNodeList.length; i++) {
+      SensorNodeSnapshot? snSnapshot = await DatabaseHelper.getAllReadings(_sensorNodeList[i].deviceID);
+      _sensorNodeSnapshotList.add(snSnapshot);
+      _logs.info(message: 'snSnapshot :${snSnapshot?.deviceID}');
+    }*/
+
     _logs.success(message: 'init() done');
     //_logs.info(message: 'devices shared prefs init: $sinkNodeSharedPrefs');
     /*listenToStream();*/
+    notifyListeners();
+  }
+
+  Future<void> deviceReadings(String deviceID) async {
+    _logs.info(message: 'deviceReadings running');
+
+    final latestReading = await DatabaseHelper.getAllReadings(deviceID);
+
+    _sensorNodeSnapshotList.removeWhere((sensorNode) => sensorNode?.deviceID == deviceID);
+
+
+    _sensorNodeSnapshotList.add(latestReading);
+
+    notifyListeners();
+  }
+
+  Future<void> sensorNodeAlerts ({required SMAlerts alertMessage}) async {
+    _logs.info(message: "sensorNodeAlerts Running");
+    _alertCode = alertMessage;
     notifyListeners();
   }
 
@@ -155,6 +182,7 @@ class DevicesProvider extends ChangeNotifier {
       _logs.error(message: "getSNList is empty");
       return;
     }else{
+      _logs.info(message: "sensorNameChange else statement running");
       for(int i = 0; i < getSNList.length; i++){
         if(getSNList[i]['deviceID'] == updatedData['deviceID']){
           getSNList.removeAt(i);
@@ -176,60 +204,18 @@ class DevicesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setSNReadings ({required Map<String,dynamic> sensorReadings }) async {
-    _logs.info(message: "setSNreadings running : $sensorReadings");
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('last_reading',jsonEncode(sensorReadings));
-    _logs.info(message: 'prefs running');
+
+  void updateAlertCodes(String deviceID, String alertType, int alertCode) {
+    _deviceAlerts[deviceID] ??= {};
+    _deviceAlerts[deviceID]!['alertType'] = alertCode;
     notifyListeners();
-
-    /* final String sensorID = sensorReadings['message']['Sensor_Node'];
-    _sensorReadings[sensorID] = sensorReadings['message'];*/
   }
 
-  Future <Map<String,dynamic>> getLastReadings() async {
-    _logs.info(message: "getSNreadings running");
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? reading = prefs.getString('last_reading');
-    if (reading != null){
-      return jsonDecode(reading);
-    }else{
-      return {};
-    }
+  int? getAlertCodes(String deviceID, String alertType){
+    return _deviceAlerts[deviceID]?[alertType];
   }
 
-  /*void listenToStream() {
-    _logs.info(message: 'Connecting to Websocket');
-    _apiRequest.channelConnect(route: _apiRoutes.getSNReadings);
-    *//*_logs.info(message: '$_sensorReadingsController');
-    _streamSubscription = _sensorReadingsController.stream.listen((data) async {
-      _logs.info(message: 'Stream Data: $data');
-      await DatabaseHelper.addReadings(data);
-      _logs.info(message: 'Stream Data Type: ${data.runtimeType}');
-      notifyListeners();
-    }, onError: (error){
-      _logs.error(message: '$error');
-    });*//*
 
-  }*/
-
-
-
-  void disconnectToWebSocket(){
-    _sensorReadingsController.close();
-  }
-
-  /*void connectToWebSocket(){
-    _logs.info(message: "websocket connecting");
-    _apiRequest.channelConnect(route: _apiRoutes.getSNReadings)?.listen((data){
-      final mappedData = jsonDecode(data.toString());
-      _sensorReadingsController.add(mappedData);
-      setSNReadings(sensorReadings: mappedData);
-      _logs.info(message: 'mappedData type: $mappedData');
-    });
-  }*/
-
-  ///WebSocket Connections in Background
 
   ///Extract Sensor Node
   /*void extractSensorNodes({required List <Map<String, dynamic>> sensorNodeList}) {
