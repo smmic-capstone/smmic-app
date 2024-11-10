@@ -34,7 +34,6 @@ class _Devices extends State<Devices> with AutomaticKeepAliveClientMixin {
   final ApiRequest _apiRequest = ApiRequest();
   final ApiRoutes _apiRoutes = ApiRoutes();
 
-
 /*  @override
   void initState(){
     super.initState();
@@ -47,36 +46,32 @@ class _Devices extends State<Devices> with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    Color bgColor =
-        context.watch<UiProvider>().isDark ? Colors.black : Colors.white;
-          return Scaffold(
-            backgroundColor: bgColor,
-            appBar: AppBar(
-                backgroundColor: bgColor,
-                title: const Text('Devices'),
-                centerTitle: true,
-                actions: const [
-                  Padding(
-                    padding: EdgeInsets.only(right: 10),
-                    child: BottomDrawerButton(),
-                  )
-                ]),
-            body: SingleChildScrollView(
-              child: ListView(
-                shrinkWrap: true,
-                addAutomaticKeepAlives: true,
-                children: [
-                  ..._buildCards(
-                      sinkNodeList: context.watch<DevicesProvider>().sinkNodeList,
-                      sensorNodeList: context.watch<DevicesProvider>().sensorNodeList,
-
-                      options: context
-                          .watch<DeviceListOptionsNotifier>()
-                          .enabledConditions),
-                ],
-              ),
-            ),
-          );
+    Color bgColor = context.watch<UiProvider>().isDark ? Colors.black : Colors.white;
+    return Scaffold(
+      backgroundColor: bgColor,
+      appBar: AppBar(
+          backgroundColor: bgColor,
+          title: const Text('Devices'),
+          centerTitle: true,
+          actions: const [
+            Padding(
+              padding: EdgeInsets.only(right: 10),
+              child: BottomDrawerButton(),
+            )
+          ]
+      ),
+      body: ListView(
+        shrinkWrap: true,
+        addAutomaticKeepAlives: true,
+        children: [
+          ..._buildCards(
+              sinkNodeList: context.watch<DevicesProvider>().sinkNodeList,
+              sensorNodeList: context.watch<DevicesProvider>().sensorNodeList,
+              options: context.watch<DeviceListOptionsNotifier>().enabledConditions
+          ),
+        ],
+      ),
+    );
   }
 
   List<Widget> _buildCards(

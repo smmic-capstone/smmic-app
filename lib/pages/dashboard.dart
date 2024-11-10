@@ -7,9 +7,6 @@ import 'package:smmic/subcomponents/weatherComponents/weatherWidgets.dart';
 import 'package:smmic/pages/forcastpage.dart';
 import 'package:smmic/providers/theme_provider.dart';
 
-import 'package:smmic/subcomponents/weatherComponents/weatherWidgets.dart';
-import 'package:smmic/utils/global_navigator.dart';
-
 class DashBoard extends StatefulWidget {
   const DashBoard({super.key});
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smmic/pages/accountinfo.dart';
+import 'package:smmic/pages/mqtt.dart';
 import 'package:smmic/pages/settings.dart';
 
 class ComponentDrawer extends StatefulWidget {
@@ -46,13 +47,20 @@ class ComponentDrawerState extends State<ComponentDrawer> {
                 leading: Icon(Icons.settings_sharp), title: Text('Settings')),
           ),
           GestureDetector(
-            onTap: () {},
             child: ListTile(
                 leading: const Icon(Icons.person), title: Text('Manage Account'),
             onTap: (){
                   Navigator.push(context, MaterialPageRoute(builder: (context) => const ManageAccount()
                   ));
               },
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const LocalConnect()));
+            },
+            child: const ListTile(
+              leading: Icon(Icons.signal_wifi_connected_no_internet_4), title: Text('Connect Locally'),
             ),
           )
         ],
