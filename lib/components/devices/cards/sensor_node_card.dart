@@ -50,7 +50,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
   void initState(){
     super.initState();
     context.read<DevicesProvider>().deviceReadings(widget.deviceInfo.deviceID);
-    _apiRequest.channelReadings(route: _apiRoutes.getSMAlerts, controller: smStreamController, deviceId: widget.deviceInfo.deviceID, context: context);
+    _apiRequest.channelReadings(route: _apiRoutes.getSMAlerts, controller: smStreamController, deviceID: widget.deviceInfo.deviceID, context: context);
     _apiRequest.channelConnect(route: _apiRoutes.getSNReadings, controller: streamController, deviceID: widget.deviceInfo.deviceID);
   }
 

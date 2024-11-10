@@ -13,7 +13,7 @@ class DateTimeFormatting {
     if(DateFormat('HH:mm').format(dateTime)[0] == '0'){
       return DateFormat('HH:mm').format(dateTime).substring(1, DateFormat('HH:mm').format(dateTime).length);
     }
-    return DateFormat('HH:mm').format(dateTime);
+    return DateFormat('HH:mm:ss.SSS').format(dateTime);
   }
 
   String formatDate(DateTime dateTime) {

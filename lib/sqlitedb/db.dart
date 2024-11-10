@@ -18,6 +18,7 @@ class DatabaseHelper {
   }
 
   static Future<int> addReadings(SensorNodeSnapshot readings) async {
+    print("Add Readings Initialized");
     print("Adding Mapped Data from Stream to SQFLITE: $readings");
     final db = await _getDB();
     print("Added Mapped Data from Stream to SQFLITE");
@@ -84,7 +85,7 @@ class DatabaseHelper {
       where: 'device_id = ?',
       whereArgs: [deviceID],
       orderBy: 'timestamp DESC',
-      limit: 6,
+      limit: 4,
     );
 
     final readings = chartReadings.map((data) => SensorNodeSnapshot.fromJSON(data)).toList().reversed.toList();

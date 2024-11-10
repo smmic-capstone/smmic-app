@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/services/devices_services.dart';
@@ -54,7 +55,7 @@ class _StackedLineChartState extends State<StackedLineChart> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(
-                  height: 225,
+                  height: 220,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: _buildYAxisLabels(marks: [0, 25, 50, 75, 100], reversed: true, type: 'percentage'),
@@ -65,6 +66,7 @@ class _StackedLineChartState extends State<StackedLineChart> {
                   height: 230,
                   child: SfCartesianChart(
                       primaryXAxis: const CategoryAxis(
+                        rangePadding: ChartRangePadding.none,
                         axisLine: AxisLine(
                             color: Colors.transparent
                         ),
@@ -74,10 +76,13 @@ class _StackedLineChartState extends State<StackedLineChart> {
                         labelPlacement: LabelPlacement.onTicks,
                       ),
                       primaryYAxis: const NumericAxis(
+                        maximum: 100,
+                        minimum: 0,
                         isVisible: false,
                       ),
                       series: <CartesianSeries>[
                         StackedLineSeries<SensorNodeSnapshot, String>(
+                          animationDuration: 500,
                           color: _generateColor('soil moisture'),
                             groupName: 'Group A',
                             dataSource: chartData,
@@ -85,6 +90,7 @@ class _StackedLineChartState extends State<StackedLineChart> {
                             yValueMapper: (SensorNodeSnapshot chartData, _) => chartData.soilMoisture
                         ),
                         StackedLineSeries<SensorNodeSnapshot, String>(
+                          animationDuration: 500,
                           color: _generateColor('humidity'),
                             groupName: 'Group B',
                             dataSource: chartData,
@@ -92,6 +98,7 @@ class _StackedLineChartState extends State<StackedLineChart> {
                             yValueMapper: (SensorNodeSnapshot chartData, _) => chartData.humidity
                         ),
                         StackedLineSeries<SensorNodeSnapshot, String>(
+                          animationDuration: 500,
                           color: _generateColor('temperature'),
                             groupName: 'Group C',
                             dataSource: chartData,
@@ -159,13 +166,20 @@ class _StackedLineChartState extends State<StackedLineChart> {
   List<Text> _buildXAxisLabels({required List<String> marks}){
     int interval = 10;
     TextStyle style = const TextStyle(fontSize: 10);
+    List<String> finalMarks = [];
+
+    for(String mark in marks){
+      List<String>buffer = mark.split(":");
+      String f = "${buffer[0]}:${buffer[1]}";
+      finalMarks.add(f);
+    }
 
     /*return[
       for (int i = 0; i++ < marks.length; i++)
         if(i % interval == 0 ) Text(marks[i],style: style,)
       else const Text("")
     ];*/
-    return marks.map((mark) => Text(mark, style: style)).toList();
+    return finalMarks.map((mark) => Text(mark, style: style)).toList();
   }
 
   List<Text> _buildYAxisLabels({required List<num> marks, required bool reversed, required String type}) {
