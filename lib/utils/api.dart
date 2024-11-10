@@ -247,16 +247,19 @@ class ApiRequest {
     return;
   }
 
-  void channelReadings({required String route, required StreamController controller, required String deviceId, required BuildContext context}){
+  void channelReadings({required String route, required StreamController controller, required String deviceID, required BuildContext context}){
     try{
       final channel = WebSocketChannel.connect(Uri.parse(route));
       channel.stream.listen((data){
         final Map<String,dynamic> decodedData = jsonDecode(data);
         _logs.info(message: 'alerts decoded: $decodedData');
-        if(decodedData['message']['device_id'] == deviceId){
+        if(decodedData['message']['device_id'] == deviceID){
           final Map<String,dynamic> messageData = decodedData['message'];
           _logs.info(message: 'alerts message data: $messageData');
           _logs.info(message: 'alerts data jsonfield: ${messageData['data']['soil_moisture']}');
+          DatabaseHelper.addReadings(SensorNodeSnapshot.fromJSON(messageData));
+          _logs.info(message: 'Checking if $deviceID sqlite readings record reached limit');
+          DatabaseHelper.readingsLimit(deviceID);
           final SMAlerts mappedData = SMAlerts.fromJSON(messageData);
           context.read<DevicesProvider>().sensorNodeAlerts(alertMessage: mappedData);
           _logs.info(message: 'alerts mapped data: ${mappedData.data['soil_moisture']}');
