@@ -40,11 +40,15 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
 
   SensorNodeSnapshot? cardReadings;
   SensorNodeSnapshot? sqlCardReadings;
-  SMAlerts? alertsData;
+  SMAlerts? alertsStreamData;
 
   Color? tempColor;
   Color? moistureColor;
   Color? humidityColor;
+
+  int? tempAlert;
+  int? humidityAlert;
+  int? moistureAlert;
 
   @override
   void initState(){
@@ -52,6 +56,13 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
     context.read<DevicesProvider>().deviceReadings(widget.deviceInfo.deviceID);
     _apiRequest.channelReadings(route: _apiRoutes.getSMAlerts, controller: smStreamController, deviceID: widget.deviceInfo.deviceID, context: context);
     _apiRequest.channelConnect(route: _apiRoutes.getSNReadings, controller: streamController, deviceID: widget.deviceInfo.deviceID);
+  }
+
+  @override
+  void dispose() {
+    _snapshotStreamController.close();
+    _alertsStreamController.close();
+    super.dispose();
   }
 
 
@@ -63,23 +74,12 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
   Widget build(BuildContext context) {
     super.build(context);
 
-    final colorMapping = {
-      20: Colors.red,
-      21: Colors.green,
-      22: Colors.lightBlue,
-      30: Colors.red,
-      31: Colors.green,
-      32: Colors.lightBlue,
-      40: Colors.red,
-      41: Colors.green,
-      42: Colors.lightBlue
-    };
-
     final DeviceDialog _skDeviceDialog = DeviceDialog(
         context: context,
         deviceID: widget.deviceInfo.deviceID,
         latitude: widget.deviceInfo.latitude,
-        longitude: widget.deviceInfo.longitude);
+        longitude: widget.deviceInfo.longitude
+    );
 
     return GestureDetector(
       onTap: () =>
@@ -98,15 +98,11 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
               margin: const EdgeInsets.only(left: 25, right: 25, bottom: 15),
               padding: const EdgeInsets.symmetric(horizontal: 19, vertical: 18),
               decoration: BoxDecoration(
-                  color: context.watch<UiProvider>().isDark
-                      ? Colors.black
-                      : Colors.white,
+                  color: context.watch<UiProvider>().isDark ? Colors.black : Colors.white,
                   borderRadius: const BorderRadius.all(Radius.circular(15)),
                   boxShadow: [
                     BoxShadow(
-                        color: context.watch<UiProvider>().isDark
-                            ? Colors.white.withOpacity(0.09)
-                            : Colors.black.withOpacity(0.09),
+                        color: context.watch<UiProvider>().isDark ? Colors.white.withOpacity(0.09) : Colors.black.withOpacity(0.09),
                         spreadRadius: 0,
                         blurRadius: 4,
                         offset: const Offset(0, 4))
@@ -124,28 +120,46 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                             'humidity' : 00,
                             'battery_level' : 00
                           }));
+
                       if(snapshot.hasData && snapshot.data?.deviceID == widget.deviceInfo.deviceID){
                         cardReadings = snapshot.data;
                       }
+
                       return StreamBuilder<SMAlerts>(
                         stream: _alertsStreamController.stream,
                         builder: (context, alertsSnapshot) {
-                          _logs.info(message: 'alertsSnapshotData: ${alertsSnapshot.data?.data['soil_moisture']}');
-
-                          final alertData = context.watch<DevicesProvider>().alertCode;
-                          final int? alertCode = alertData?.alerts;
+                          _logs.info(message: "alertSnapshot deviceID = ${alertsSnapshot.data?.deviceID} == widget Device ID = ${widget.deviceInfo.deviceID}");
 
                           if(alertsSnapshot.hasData && alertsSnapshot.data?.deviceID == widget.deviceInfo.deviceID){
-                            alertsData = alertsSnapshot.data;
-                            tempColor = _getColor(alertCode, {30: Colors.red, 31: Colors.green, 32: Colors.blue,});
-                            moistureColor = _getColor(alertCode, {40: Colors.red, 41: Colors.green, 42: Colors.blue});
-                            humidityColor = _getColor(alertCode, {20: Colors.red, 21: Colors.green, 22: Colors.blue});
+
+                            alertsStreamData = alertsSnapshot.data;
+
+                            _logs.info(message: "alertsStreamData message : ${alertsStreamData?.alerts}");
+
+                            /*if(alertsStreamData!.alerts >= 20 && alertsStreamData!.alerts < 30){
+                              humidityAlert =  alertsStreamData!.alerts;
+                            }else if(alertsStreamData!.alerts >= 30 && alertsStreamData!.alerts < 40){
+                              tempAlert =  alertsStreamData!.alerts;
+                            }else if(alertsStreamData!.alerts >= 40 && alertsStreamData!.alerts < 50){
+                              moistureAlert =  alertsStreamData!.alerts;
+                            }*/
+                            String? deviceID = context.watch<DevicesProvider>().alertCode?.deviceID;
+
+                            if (deviceID == widget.deviceInfo.deviceID) {
+                              tempAlert = context.watch<DevicesProvider>().tempAlert?.alerts;
+                              moistureAlert = context.watch<DevicesProvider>().moistureAlert?.alerts;
+                              humidityAlert = context.watch<DevicesProvider>().humidityAlert?.alerts;
+                              
+                              tempColor = _getColor(tempAlert, {30: Colors.red, 31: Colors.green, 32: Colors.blue,});
+                              moistureColor = _getColor(moistureAlert, {40: Colors.red, 41: Colors.green, 42: Colors.blue});
+                              humidityColor = _getColor(humidityAlert, {20: Colors.red, 21: Colors.green, 22: Colors.blue});
+                            }
                           }
 
                           final batteryLevel = cardReadings?.batteryLevel ?? sqlCardReadings?.batteryLevel ?? 00;
-                          final humidity = alertsData?.data['humidity'] ?? cardReadings?.humidity ?? sqlCardReadings?.humidity ?? 00;
-                          final temperature = alertsData?.data['temperature'] ?? cardReadings?.temperature ?? sqlCardReadings?.temperature ?? 00;
-                          final soilMoisture = alertsData?.data['soil_moisture'] ?? cardReadings?.soilMoisture ?? sqlCardReadings?.soilMoisture ?? 00;
+                          final humidity = alertsStreamData?.data['humidity'] ?? cardReadings?.humidity ?? sqlCardReadings?.humidity ?? 00;
+                          final temperature = alertsStreamData?.data['temperature'] ?? cardReadings?.temperature ?? sqlCardReadings?.temperature ?? 00;
+                          final soilMoisture = alertsStreamData?.data['soil_moisture'] ?? cardReadings?.soilMoisture ?? sqlCardReadings?.soilMoisture ?? 00;
 
                           return Row(
                             children: [
