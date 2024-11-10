@@ -256,8 +256,7 @@ class ApiRequest {
         if(decodedData['message']['device_id'] == deviceId){
           final Map<String,dynamic> messageData = decodedData['message'];
           _logs.info(message: 'alerts message data: $messageData');
-
-          _logs.info(message: 'alerts data jsonfield: ${messageData['soil_moisture']}');
+          _logs.info(message: 'alerts data jsonfield: ${messageData['data']['soil_moisture']}');
           final SMAlerts mappedData = SMAlerts.fromJSON(messageData);
           context.read<DevicesProvider>().sensorNodeAlerts(alertMessage: mappedData);
           _logs.info(message: 'alerts mapped data: ${mappedData.data['soil_moisture']}');
