@@ -31,6 +31,14 @@ class DevicesProvider extends ChangeNotifier {
   SMAlerts? _alertCode;
   SMAlerts? get alertCode => _alertCode;
 
+  SMAlerts? _humidityAlert;
+  SMAlerts? _tempAlert;
+  SMAlerts? _moistureAlert;
+
+  SMAlerts? get humidityAlert => _humidityAlert;
+  SMAlerts? get tempAlert => _tempAlert;
+  SMAlerts? get moistureAlert => _moistureAlert;
+
   Map <String, Map<String,int>> _deviceAlerts = {};
 
 
@@ -135,10 +143,6 @@ class DevicesProvider extends ChangeNotifier {
           (int.parse(alert['alerts']) ~/ 10) == (alertMessage.alerts ~/ 10);
     });
 
-    /*.removeWhere((alert) => alert['device_id'] == alertMessage.deviceID &&
-        int.parse(alert['alerts']) ~/ 10 == alertMessage.alerts ~/ 10 && int.parse(alert['alerts']) % 10 == alertMessage.alerts % 10);*/
-
-
     alertDataSharedPrefs.add(alertMessage.toJson());
 
     _logs.info(message: "alertMessage : ${alertMessage.deviceID}");
@@ -149,6 +153,14 @@ class DevicesProvider extends ChangeNotifier {
     _logs.info(message: "sensorNodeAlerts Running");
 
     _alertCode = alertMessage;
+
+    if(alertMessage.alerts >= 20 && alertMessage.alerts < 30){
+      _humidityAlert =  alertMessage;
+    }else if(alertMessage.alerts >= 30 && alertMessage.alerts < 40){
+      _tempAlert = alertCode;
+    }else if(alertMessage.alerts >= 40 && alertMessage.alerts < 50){
+      _moistureAlert = alertCode;
+    }
 
     notifyListeners();
   }
