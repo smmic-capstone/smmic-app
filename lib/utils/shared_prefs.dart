@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/models/auth_models.dart';
@@ -248,4 +250,48 @@ class SharedPrefsUtils {
     }
     return sensorNodeListMap;
   }
+
+  Future<bool> setAlertsData({required List<Map<String, dynamic>> alertsList}) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+
+
+    _logs.info(message:"setAlertsData alertsList: ${alertsList.toString()}");
+
+    List<String> alertsData = alertsList.map((alert){
+      return alert.keys.map((key){
+        var value = alert[key];
+        return value is List<String> ? value.join(",") : value.toString();
+      }).toList().join(";");
+    }).toList();
+
+    _logs.info(message: "alertsData instance: $alertsData");
+
+    bool success = await sharedPreferences.setStringList("alerts_data", alertsData);
+
+    return success;
+  }
+
+
+
+  Future<List<Map<String,dynamic>>?> getAlertsData() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+
+    List<String>? alertsList = sharedPreferences.getStringList('alerts_data');
+    List<String> keys = ['device_id','timestamp','alerts','data'];
+
+    List<Map<String,dynamic>> alertsList_map = alertsList == null ? [] : alertsList.map((alert){
+      Map<String,dynamic> map = {};
+      List<String> values = alert.split(";");
+
+      for(int i =0; i < keys.length; i ++){
+        map[keys[i]] = values[i];
+      }
+      return map;
+    }).toList();
+
+    _logs.info(message: "alertsListMap : $alertsList_map");
+
+    return alertsList_map;
+  }
+
 }

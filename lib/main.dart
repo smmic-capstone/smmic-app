@@ -110,7 +110,7 @@ class _AuthGateState extends State<AuthGate> {
             return const Stack(
               children: [
                 MyBottomNav(indexPage: 0),
-                PreloadDevices()
+                /*PreloadDevices()*/
               ],
             );
           }

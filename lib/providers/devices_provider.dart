@@ -89,6 +89,7 @@ class DevicesProvider extends ChangeNotifier {
         sensorNodeSharedPrefs.add(sensor);
       }
     }
+
     // helper functions that finally stores the SK and SN list in the shared prefs for fast access
     _sharedPrefsUtils.setSKList(sinkList: sinkNodeSharedPrefs);
     _sharedPrefsUtils.setSNList(sensorList: sensorNodeSharedPrefs);
@@ -122,8 +123,33 @@ class DevicesProvider extends ChangeNotifier {
   }
 
   Future<void> sensorNodeAlerts ({required SMAlerts alertMessage}) async {
+    _logs.info(message: "sensorNodeAlerts running");
+
+    List<Map<String, dynamic>>? alertDataSharedPrefs = await _sharedPrefsUtils.getAlertsData();
+
+
+    alertDataSharedPrefs ??= [];
+
+    alertDataSharedPrefs.removeWhere((alert) {
+      return alert['device_id'] == alertMessage.deviceID &&
+          (int.parse(alert['alerts']) ~/ 10) == (alertMessage.alerts ~/ 10);
+    });
+
+    /*.removeWhere((alert) => alert['device_id'] == alertMessage.deviceID &&
+        int.parse(alert['alerts']) ~/ 10 == alertMessage.alerts ~/ 10 && int.parse(alert['alerts']) % 10 == alertMessage.alerts % 10);*/
+
+
+    alertDataSharedPrefs.add(alertMessage.toJson());
+
+    _logs.info(message: "alertMessage : ${alertMessage.deviceID}");
+    _logs.info(message: "alertDataSharedPrefs : $alertDataSharedPrefs");
+
+    _sharedPrefsUtils.setAlertsData(alertsList: alertDataSharedPrefs);
+
     _logs.info(message: "sensorNodeAlerts Running");
+
     _alertCode = alertMessage;
+
     notifyListeners();
   }
 
@@ -203,19 +229,6 @@ class DevicesProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
-
-
-  void updateAlertCodes(String deviceID, String alertType, int alertCode) {
-    _deviceAlerts[deviceID] ??= {};
-    _deviceAlerts[deviceID]!['alertType'] = alertCode;
-    notifyListeners();
-  }
-
-  int? getAlertCodes(String deviceID, String alertType){
-    return _deviceAlerts[deviceID]?[alertType];
-  }
-
-
 
   ///Extract Sensor Node
   /*void extractSensorNodes({required List <Map<String, dynamic>> sensorNodeList}) {

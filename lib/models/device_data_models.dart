@@ -130,6 +130,13 @@ class SMAlerts {
         data: data['data']
     );
   }
+
+  Map<String,dynamic> toJson() => {
+    "device_id" : deviceID,
+    "timestamp" : timestamp.toIso8601String(),
+    "alerts" : alerts,
+    "data" : data,
+  };
 }
 
 //TODO: Add other data fields
