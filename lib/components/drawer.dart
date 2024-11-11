@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smmic/pages/QRcode.dart';
 import 'package:smmic/pages/accountinfo.dart';
 import 'package:smmic/pages/mqtt.dart';
 import 'package:smmic/pages/settings.dart';
@@ -48,21 +49,37 @@ class ComponentDrawerState extends State<ComponentDrawer> {
           ),
           GestureDetector(
             child: ListTile(
-                leading: const Icon(Icons.person), title: Text('Manage Account'),
-            onTap: (){
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const ManageAccount()
-                  ));
+              leading: const Icon(Icons.person),
+              title: Text('Manage Account'),
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ManageAccount()));
               },
             ),
           ),
           GestureDetector(
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const LocalConnect()));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const LocalConnect()));
             },
             child: const ListTile(
-              leading: Icon(Icons.signal_wifi_connected_no_internet_4), title: Text('Connect Locally'),
+              leading: Icon(Icons.signal_wifi_connected_no_internet_4),
+              title: Text('Connect Locally'),
             ),
-          )
+          ),
+          GestureDetector(
+              onTap: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => const QRcode()));
+              },
+              child: const ListTile(
+                leading: Icon(Icons.qr_code),
+                title: Text('QR'),
+              ))
         ],
       ),
     );
