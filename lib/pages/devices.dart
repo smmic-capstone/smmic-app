@@ -1,5 +1,6 @@
-import 'dart:convert';
+import 'dart:async';
 
+import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/components/devices/cards/sensor_node_card.dart';
@@ -24,7 +25,7 @@ class Devices extends StatefulWidget {
   State<Devices> createState() => _Devices();
 }
 
-class _Devices extends State<Devices> with AutomaticKeepAliveClientMixin {
+class _Devices extends State<Devices> {
   //TODO: assign theme
 
   final Logs _logs = Logs(tag: 'devices.dart');
@@ -33,19 +34,36 @@ class _Devices extends State<Devices> with AutomaticKeepAliveClientMixin {
   final DevicesServices _devicesServices = DevicesServices();
   final ApiRequest _apiRequest = ApiRequest();
   final ApiRoutes _apiRoutes = ApiRoutes();
+  final DevicesProvider _devicesProvider = DevicesProvider();
 
-/*  @override
-  void initState(){
-    super.initState();
-    context.read<DevicesProvider>().connectToWebSocket();
-  }*/
+  // merged stream group
+  // TODO: wrap `mergedStream` inside a provider
+  late final Stream _mergedStream;
 
   @override
-  bool get wantKeepAlive => true;
+  void initState() {
+    super.initState();
+
+    // Initialize merged stream with consistent references
+    _mergedStream = StreamGroup.merge([
+      _devicesProvider.sensorStreamController.stream,
+      _devicesProvider.alertsStreamController.stream,
+      // TODO: add mqtt stream here when available
+    ]);
+
+    // Use the same stream controllers for API requests
+    _apiRequest.alertsChannel(
+      route: _apiRoutes.getSMAlerts,
+      streamController: _devicesProvider.alertsStreamController,
+    );
+    _apiRequest.snReadingsChannel(
+      route: _apiRoutes.getSNReadings,
+      streamController: _devicesProvider.sensorStreamController,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     Color bgColor = context.watch<UiProvider>().isDark ? Colors.black : Colors.white;
     return Scaffold(
       backgroundColor: bgColor,
@@ -60,26 +78,67 @@ class _Devices extends State<Devices> with AutomaticKeepAliveClientMixin {
             )
           ]
       ),
-      body: ListView(
-        shrinkWrap: true,
-        addAutomaticKeepAlives: true,
-        children: [
-          ..._buildCards(
-              sinkNodeList: context.watch<DevicesProvider>().sinkNodeList,
-              sensorNodeList: context.watch<DevicesProvider>().sensorNodeList,
-              options: context.watch<DeviceListOptionsNotifier>().enabledConditions
-          ),
-        ],
-      ),
+      body: StreamBuilder(
+          stream: _mergedStream,
+          builder: (context, snapshot) {
+
+            // check for data from streams
+            if (snapshot.hasData) {
+              _updateProviders(
+                  context: context,
+                  data: snapshot.data
+              );
+            } else if (snapshot.hasError) {
+              // TODO: show err message
+            }
+
+            return _buildList(
+                sinkNodeList: context.watch<DevicesProvider>().sinkNodeList,
+                sensorNodeList: context.watch<DevicesProvider>().sensorNodeList,
+                options: context.watch<DeviceListOptionsNotifier>().enabledConditions
+            );
+          }
+      )
     );
   }
 
-  List<Widget> _buildCards(
-      {required List<SinkNode> sinkNodeList,
-      required List<SensorNode> sensorNodeList,
-      required Map<String, bool Function(Widget)> options}){
-    List<Widget> cards = [];
+  void _updateProviders({required BuildContext context, required var data}) {
+    WidgetsFlutterBinding.ensureInitialized();
+    if (data is SensorNodeSnapshot) {
+      context.read<DevicesProvider>().setNewSensorSnapshot(data);
+    } else if (data is SMAlerts) {
+      // TODO: handle from alerts
+    } else if (data is String) {
+      // TODO: handle from mqtt
+    }
 
+    return;
+  }
+
+  Widget _buildList({
+    required List<SinkNode> sinkNodeList,
+    required List<SensorNode> sensorNodeList,
+    required Map<String, bool Function(Widget)> options}){
+
+    return ListView(
+      shrinkWrap: true,
+      addAutomaticKeepAlives: true,
+      children: [
+        ..._buildCards(
+          sinkNodeList: sinkNodeList,
+          sensorNodeList: sensorNodeList,
+          options: options
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildCards({
+    required List<SinkNode> sinkNodeList,
+    required List<SensorNode> sensorNodeList,
+    required Map<String, bool Function(Widget)> options}){
+
+    List<Widget> cards = [];
     for (int i = 0; i < sinkNodeList.length; i++) {
       cards.add(SinkNodeCard(deviceInfo: sinkNodeList[i]));
       //List<SensorNode> sensorGroup = sensorNodeList.where((item) => item.registeredSinkNode == sinkNodeList[i].deviceID).toList();
@@ -90,41 +149,10 @@ class _Devices extends State<Devices> with AutomaticKeepAliveClientMixin {
         }
       }
     }
-
     return cards.where((card) {
       return options.keys
           .map((optionKey) => options[optionKey]!(card))
           .any((result) => result);
     }).toList();
   }
-
-
-
-  /*List<Widget> _buildCards(List<SinkNode> sinkNodesList, Map<String, bool Function(Device)> options) {
-    return _devices(sinkNodesList, options).map((device) {
-      if (device is SinkNode) {
-        return SinkNodeCard(deviceInfo: device, deviceData: _devicesServices.getSinkSnapshot(id: device.deviceID));
-      }
-      if (device is SensorNode) {
-        return SensorNodeCard(deviceInfo: device, deviceData: _devicesServices.getSensorSnapshot(id: device.deviceID));
-      }
-      throw Exception('Type mismatch: ${device.runtimeType.toString()}');
-    }).toList();
-  }
-
-  List<Device> _devices(List<SinkNode> sinkNodeList, Map<String, bool Function(Device)> options) {
-    List<Device> devices = sinkNodeList.expand((sinkNode) {
-      List<String> sensorNodesList = sinkNode.registeredSensorNodes;
-      List<Device> sensorNodes = [
-        sinkNode,
-        ...sensorNodesList.map((sensorNodeID) {
-          return _devicesServices.getSensorInfo(id: sensorNode);
-        })
-      ];
-      return sensorNodes;
-      // returns a list of all items that match the option condition
-      // TODO: use flutter isolates for this process
-    }).where((device) => options.keys.map((option) => options[option]!(device)).any((result) => result)).toList();
-    return devices;
-  }*/
 }

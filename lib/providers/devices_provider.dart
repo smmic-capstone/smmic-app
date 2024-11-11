@@ -18,15 +18,29 @@ class DevicesProvider extends ChangeNotifier {
   final DeviceUtils _deviceUtils = DeviceUtils();
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
 
+  // stream controllers
+  final StreamController<SensorNodeSnapshot> _sensorStreamController = StreamController<SensorNodeSnapshot>.broadcast();
+  final StreamController<SMAlerts> _alertsStreamController = StreamController<SMAlerts>.broadcast();
 
-  List<SinkNode> _sinkNodeList = [];
+  // getters
+  StreamController<SensorNodeSnapshot> get sensorStreamController => _sensorStreamController;
+  StreamController<SMAlerts> get alertsStreamController => _alertsStreamController;
+
+  // sink node device list
+  List<SinkNode> _sinkNodeList = []; // ignore: prefer_final_fields
   List<SinkNode> get sinkNodeList => _sinkNodeList;
 
-  List<SensorNode> _sensorNodeList = [];
+  // sensor node devices
+  List<SensorNode> _sensorNodeList = [];// ignore: prefer_final_fields
   List<SensorNode> get sensorNodeList => _sensorNodeList;
 
-  List<SensorNodeSnapshot?> _sensorNodeSnapshotList = [];
+  // sensor node readings
+  List<SensorNodeSnapshot?> _sensorNodeSnapshotList = []; // ignore: prefer_final_fields
   List<SensorNodeSnapshot?> get sensorNodeSnapshotList => _sensorNodeSnapshotList;
+
+  // sm alerts
+  List<SMAlerts?> _smAlertsList = []; // ignore: prefer_final_fields
+  List<SMAlerts?> get smAlertsList => _smAlertsList;
 
   SMAlerts? _alertCode;
   SMAlerts? get alertCode => _alertCode;
@@ -40,8 +54,6 @@ class DevicesProvider extends ChangeNotifier {
   SMAlerts? get moistureAlert => _moistureAlert;
 
   Map <String, Map<String,int>> _deviceAlerts = {};
-
-
 
   Future<void> init() async {
     Map<String, dynamic>? userData = await _sharedPrefsUtils.getUserData();
@@ -64,7 +76,6 @@ class DevicesProvider extends ChangeNotifier {
       }
       _sinkNodeList.add(sink);
     }
-
 
     // map sensor nodes and append items into _sensorNodeList
     for (int i = 0; i < devices.length; i++){
@@ -117,6 +128,67 @@ class DevicesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // maps the payload from sensor devices
+  // assuming that the shape of the payload (as a string) is:
+  // ...
+  // sensor_type;
+  // device_id;
+  // timestamp;
+  // reading:value&
+  // reading:value&
+  // reading:value&
+  // reading:value&
+  // ...
+  //
+  void setNewSensorSnapshot(var reading) {
+    SensorNodeSnapshot? finalSnapshot;
+
+    if (reading is Map<String, dynamic>) {
+      // TODO: verify keys first
+      finalSnapshot = SensorNodeSnapshot.fromJSON(reading);
+    } else if (reading is String) {
+      // assuming that if the reading variable is a string, it is an mqtt payload
+      Map<String, dynamic> fromStringMap = {};
+      List<String> outerSplit = reading.split(';');
+
+      fromStringMap.addAll({
+        'device_id': outerSplit[1],
+        'timestamp': outerSplit[2],
+      });
+
+      List<String> dataSplit = outerSplit[3].split('&');
+
+      for (String keyValue in dataSplit) {
+        try {
+          List<String> x = keyValue.split(':');
+          fromStringMap.addAll({x[0]: x[1]});
+        } on FormatException catch (e) {
+          _logs.error(message: 'setNewSensorReadings() raised FormatException error -> $e}');
+          break;
+        }
+      }
+
+      // create a new sensor node snapshot object from the new string map
+      finalSnapshot = SensorNodeSnapshot.fromJSON(fromStringMap);
+    } else if (reading is SensorNodeSnapshot) {
+      finalSnapshot = reading;
+    }
+
+    if (finalSnapshot == null) {
+      return;
+    }
+
+    if (_sensorNodeSnapshotList.isNotEmpty) {
+      List<String> snapShotListIdBuffer = _sensorNodeSnapshotList.map((item) => item!.deviceID).toList();
+      if (snapShotListIdBuffer.contains(finalSnapshot.deviceID)) {
+        _sensorNodeSnapshotList.removeWhere((item) => item!.deviceID == finalSnapshot!.deviceID);
+      }
+    }
+    _sensorNodeSnapshotList.add(finalSnapshot);
+    notifyListeners();
+    return;
+  }
+
   Future<void> deviceReadings(String deviceID) async {
     _logs.info(message: 'deviceReadings running');
 
@@ -124,9 +196,11 @@ class DevicesProvider extends ChangeNotifier {
 
     _sensorNodeSnapshotList.removeWhere((sensorNode) => sensorNode?.deviceID == deviceID);
 
+    if (latestReading == null) {
+      return;
+    }
 
     _sensorNodeSnapshotList.add(latestReading);
-
     notifyListeners();
   }
 

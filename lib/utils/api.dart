@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/sqlitedb/db.dart';
@@ -13,6 +16,9 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ApiRequest {
   final Logs _logs = Logs(tag: 'ApiRequest()');
+
+  // dependencies / helpers
+  final ApiRoutes _apiRoutes = ApiRoutes();
 
   /// Get request for api, returns a the response status code and the body if available
   Future<dynamic> get(
@@ -247,6 +253,25 @@ class ApiRequest {
     return;
   }
 
+  WebSocketChannel snReadingsChannel({
+    required String route,
+    required StreamController streamController}) {
+    // initialize channel
+    final WebSocketChannel channel = WebSocketChannel.connect(Uri.parse(route));
+    // add listener
+    channel.stream.listen((data) {
+      final Map<String, dynamic> decodedData = jsonDecode(data);
+      final SensorNodeSnapshot snapshotObj = SensorNodeSnapshot.fromJSON(decodedData['message']);
+      DatabaseHelper.addReadings(snapshotObj);
+      DatabaseHelper.readingsLimit(snapshotObj.deviceID);
+      // pass to stream controller
+      streamController.add(snapshotObj);
+      _logs.info(message: 'snapshotObj sent added to snReadingsStreamController -> ${snapshotObj.toString()}');
+    });
+    // return channel instance
+    return channel;
+  }
+
   void channelReadings({required String route, required StreamController controller, required String deviceID, required BuildContext context}){
     try{
       final channel = WebSocketChannel.connect(Uri.parse(route));
@@ -272,5 +297,23 @@ class ApiRequest {
       throw Exception(e);
     }
     return;
+  }
+
+  WebSocketChannel alertsChannel ({
+    required String route,
+    required StreamController streamController}) {
+    // initialize channel
+    final WebSocketChannel channel = WebSocketChannel.connect(Uri.parse(route));
+    // add listener
+    channel.stream.listen((data){
+      final Map<String,dynamic> decodedData = jsonDecode(data);
+      DatabaseHelper.addReadings(SensorNodeSnapshot.fromJSON(decodedData['message']));
+      // alert object
+      final SMAlerts alertObj = SMAlerts.fromJSON(decodedData['message']);
+      streamController.add(alertObj);
+      _logs.info(message: 'alertObject sent added to alertStreamController -> ${alertObj.toString()}');
+    });
+    // return channel instance
+    return channel;
   }
 }
