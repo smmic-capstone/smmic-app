@@ -94,6 +94,17 @@ class SensorNodeSnapshot {
     );
   }
 
+  factory SensorNodeSnapshot.placeHolder({required String deviceId}) {
+    return SensorNodeSnapshot._internal(
+        deviceID: deviceId,
+        timestamp: DateTime.now(),
+        soilMoisture: 0,
+        temperature: 0,
+        humidity: 0,
+        batteryLevel: 0
+    );
+  }
+
   Map<String,dynamic> toJson() => {
     'device_id' : deviceID,
     'timestamp' : timestamp.toIso8601String(),
