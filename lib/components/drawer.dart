@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smmic/pages/QRcode.dart';
 import 'package:smmic/pages/accountinfo.dart';
+import 'package:smmic/pages/lab.dart';
 import 'package:smmic/pages/mqtt.dart';
 import 'package:smmic/pages/settings.dart';
 
@@ -72,14 +73,23 @@ class ComponentDrawerState extends State<ComponentDrawer> {
             ),
           ),
           GestureDetector(
-              onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => const QRcode()));
-              },
-              child: const ListTile(
-                leading: Icon(Icons.qr_code),
-                title: Text('QR'),
-              ))
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => MergedStreamExample()));
+            },
+            child: const ListTile(
+              leading: Icon(Icons.science_outlined), title: Text('Lab'),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const QRcode()));
+            },
+            child: const ListTile(
+              leading: Icon(Icons.qr_code),
+              title: Text('QR'),
+            ),
+          )
         ],
       ),
     );

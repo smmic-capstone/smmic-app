@@ -52,8 +52,8 @@ class ApiRoutes {
   String get updateSNName => '$_baseURL$_updateSNDeviceName';
 
   ///Get SN Readings
-  String get getSNReadings => '$_wsBaseURL$_getSNreadings';
+  String get seReadingsWs => '$_wsBaseURL$_getSNreadings';
 
   ///Get SMAlerts
-  String get getSMAlerts => '$_wsBaseURL$_getSMAlerts';
+  String get seAlertsWs => '$_wsBaseURL$_getSMAlerts';
 }

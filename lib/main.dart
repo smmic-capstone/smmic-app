@@ -5,6 +5,7 @@ import 'package:smmic/preload/preloaddevices.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/pages/login.dart';
 import 'package:smmic/providers/devices_provider.dart';
+import 'package:smmic/providers/mqtt_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/providers/user_data_provider.dart';
@@ -25,7 +26,8 @@ void main() {
       ChangeNotifierProvider<UserDataProvider>(
           create: (_) => UserDataProvider()),
       ChangeNotifierProvider<UiProvider>(create: (_) => UiProvider()),
-      ChangeNotifierProvider<DevicesProvider>(create: (_) => DevicesProvider())
+      ChangeNotifierProvider<DevicesProvider>(create: (_) => DevicesProvider()),
+      ChangeNotifierProvider<MqttProvider>(create: (_) => MqttProvider())
     ],
     child: const MyApp(),
   ));
