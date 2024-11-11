@@ -78,7 +78,31 @@ class DevicesProvider extends ChangeNotifier {
     Map<String, dynamic>? userData = await _sharedPrefsUtils.getUserData();
     Map<String, dynamic> tokens = await _sharedPrefsUtils.getTokens(access: true);
 
+    StreamController<SensorNodeSnapshot> seSController = StreamController<SensorNodeSnapshot>.broadcast();
+    StreamController<SMAlerts> alSController = StreamController<SMAlerts>.broadcast();
+    StreamController<String> mqttSController = StreamController<String>.broadcast();
+
+    WebSocketChannel seReadingsChannel = _apiRequest.snReadingsChannel(
+        route: _apiRoutes.seReadingsWs,
+        streamController: seSController
+    );
+    WebSocketChannel alertsChannel = _apiRequest.alertsChannel(
+        route: _apiRoutes.seAlertsWs,
+        streamController: alSController
+    );
+
+    _setStreamControllers(
+        seSnapshotStreamController: seSController,
+        alertsStreamController: alSController,
+        mqttStreamController: mqttSController
+    );
+    _setWebSocketChannels(
+        seReadingsChannel: seReadingsChannel,
+        alertsChannel: alertsChannel
+    );
+
     if(userData == null){
+      notifyListeners();
       return;
     }
 
@@ -143,29 +167,6 @@ class DevicesProvider extends ChangeNotifier {
     //_logs.info(message: 'devices shared prefs init: $sinkNodeSharedPrefs');
     /*listenToStream();*/
 
-    StreamController<SensorNodeSnapshot> seSController = StreamController<SensorNodeSnapshot>.broadcast();
-    StreamController<SMAlerts> alSController = StreamController<SMAlerts>.broadcast();
-    StreamController<String> mqttSController = StreamController<String>.broadcast();
-
-    WebSocketChannel seReadingsChannel = _apiRequest.snReadingsChannel(
-        route: _apiRoutes.seReadingsWs,
-        streamController: seSController
-    );
-    WebSocketChannel alertsChannel = _apiRequest.alertsChannel(
-        route: _apiRoutes.seAlertsWs,
-        streamController: alSController
-    );
-
-    _setStreamControllers(
-        seSnapshotStreamController: seSController,
-        alertsStreamController: alSController,
-        mqttStreamController: mqttSController
-    );
-    _setWebSocketChannels(
-        seReadingsChannel: seReadingsChannel,
-        alertsChannel: alertsChannel
-    );
-
     notifyListeners();
     _logs.success(message: 'init() done');
   }
@@ -178,7 +179,7 @@ class DevicesProvider extends ChangeNotifier {
     _seSnapshotStreamController = seSnapshotStreamController;
     _alertsStreamController = alertsStreamController;
     _mqttStreamController = mqttStreamController;
-}
+  }
   
   void _setWebSocketChannels({
     required WebSocketChannel seReadingsChannel,

@@ -71,7 +71,6 @@ class _Devices extends State<Devices> {
       body: StreamBuilder(
           stream: mergedStream,
           builder: (context, snapshot) {
-
             // check for data from streams
             if (snapshot.hasData) {
               _updateProviders(
@@ -81,6 +80,7 @@ class _Devices extends State<Devices> {
             } else if (snapshot.hasError) {
               // TODO: show err message
             }
+
             return _buildList(
                 sinkNodeList: context.watch<DevicesProvider>().sinkNodeList,
                 sensorNodeList: context.watch<DevicesProvider>().sensorNodeList,
@@ -108,16 +108,17 @@ class _Devices extends State<Devices> {
     required List<SensorNode> sensorNodeList,
     required Map<String, bool Function(Widget)> options}){
 
-    return ListView(
-      shrinkWrap: true,
-      addAutomaticKeepAlives: true,
-      children: [
-        ..._buildCards(
-          sinkNodeList: sinkNodeList,
-          sensorNodeList: sensorNodeList,
-          options: options
-        ),
-      ],
+    return SingleChildScrollView(
+
+      child: Column(
+        children: [
+          ..._buildCards(
+              sinkNodeList: sinkNodeList,
+              sensorNodeList: sensorNodeList,
+              options: options
+          ),
+        ],
+      ),
     );
   }
 

@@ -78,7 +78,6 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
     );
 
     List<SensorNodeSnapshot?> senSnapshotList = context.watch<DevicesProvider>().sensorNodeSnapshotList;
-    _logs.error(message: senSnapshotList.toString());
     SensorNodeSnapshot? sensorNodeSnapshot;
 
     if (senSnapshotList.isNotEmpty) {

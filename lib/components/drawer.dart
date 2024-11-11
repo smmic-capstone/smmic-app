@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smmic/pages/QRcode.dart';
 import 'package:smmic/pages/accountinfo.dart';
 import 'package:smmic/pages/lab.dart';
-import 'package:smmic/pages/mqtt.dart';
+import 'package:smmic/pages/local_connect.dart';
 import 'package:smmic/pages/settings.dart';
 
 class ComponentDrawer extends StatefulWidget {
