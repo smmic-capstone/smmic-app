@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smmic/pages/accountinfo.dart';
+import 'package:smmic/pages/lab.dart';
 import 'package:smmic/pages/local_connect.dart';
 import 'package:smmic/pages/settings.dart';
 
@@ -61,6 +62,14 @@ class ComponentDrawerState extends State<ComponentDrawer> {
             },
             child: const ListTile(
               leading: Icon(Icons.signal_wifi_connected_no_internet_4), title: Text('Connect Locally'),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => MergedStreamExample()));
+            },
+            child: const ListTile(
+              leading: Icon(Icons.science_outlined), title: Text('Lab'),
             ),
           )
         ],

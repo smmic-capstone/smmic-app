@@ -57,11 +57,11 @@ class MqttServices {
       attempt += 1;
       try {
         await client.connect();
+        break;
       } on SocketException catch (e) {
         await Future.delayed(const Duration(seconds: 3));
         exception = e;
-      }
-      on Exception catch (e) {
+      } on Exception catch (e) {
         _logs.error(message: 'unhandled unexpected exception $e raised while attempting to connect to broker}');
         exception = e;
         break;
