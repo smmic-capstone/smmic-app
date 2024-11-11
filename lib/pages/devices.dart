@@ -38,33 +38,23 @@ class _Devices extends State<Devices> {
 
   // merged stream group
   // TODO: wrap `mergedStream` inside a provider
-  late final Stream _mergedStream;
 
   @override
   void initState() {
     super.initState();
-
-    // Initialize merged stream with consistent references
-    _mergedStream = StreamGroup.merge([
-      _devicesProvider.sensorStreamController.stream,
-      _devicesProvider.alertsStreamController.stream,
-      // TODO: add mqtt stream here when available
-    ]);
-
-    // Use the same stream controllers for API requests
-    _apiRequest.alertsChannel(
-      route: _apiRoutes.getSMAlerts,
-      streamController: _devicesProvider.alertsStreamController,
-    );
-    _apiRequest.snReadingsChannel(
-      route: _apiRoutes.getSNReadings,
-      streamController: _devicesProvider.sensorStreamController,
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     Color bgColor = context.watch<UiProvider>().isDark ? Colors.black : Colors.white;
+    late final Stream mergedStream;
+
+    mergedStream = StreamGroup.merge([
+      context.watch<DevicesProvider>().seSnapshotStreamController!.stream,
+      context.watch<DevicesProvider>().alertsStreamController!.stream,
+      context.watch<DevicesProvider>().mqttStreamController!.stream,
+    ]);
+
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
@@ -79,7 +69,7 @@ class _Devices extends State<Devices> {
           ]
       ),
       body: StreamBuilder(
-          stream: _mergedStream,
+          stream: mergedStream,
           builder: (context, snapshot) {
 
             // check for data from streams
@@ -91,7 +81,6 @@ class _Devices extends State<Devices> {
             } else if (snapshot.hasError) {
               // TODO: show err message
             }
-
             return _buildList(
                 sinkNodeList: context.watch<DevicesProvider>().sinkNodeList,
                 sensorNodeList: context.watch<DevicesProvider>().sensorNodeList,
@@ -111,7 +100,6 @@ class _Devices extends State<Devices> {
     } else if (data is String) {
       // TODO: handle from mqtt
     }
-
     return;
   }
 

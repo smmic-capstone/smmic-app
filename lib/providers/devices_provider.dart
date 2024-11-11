@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/constants/api.dart';
@@ -10,27 +11,45 @@ import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/device_utils.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class DevicesProvider extends ChangeNotifier {
+  
   // dependencies
   final Logs _logs = Logs(tag: 'DevicesProvider()');
   final DevicesServices _devicesServices = DevicesServices();
   final DeviceUtils _deviceUtils = DeviceUtils();
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
+  
+  // api helpers, dependencies
+  final ApiRoutes _apiRoutes = ApiRoutes();
+  final ApiRequest _apiRequest = ApiRequest();
 
   // stream controllers
-  final StreamController<SensorNodeSnapshot> _sensorStreamController = StreamController<SensorNodeSnapshot>.broadcast();
-  final StreamController<SMAlerts> _alertsStreamController = StreamController<SMAlerts>.broadcast();
+  // se snapshot stream
+  StreamController<SensorNodeSnapshot>? _seSnapshotStreamController;
+  StreamController<SensorNodeSnapshot>? get seSnapshotStreamController => _seSnapshotStreamController;
+  // alerts stream
+  StreamController<SMAlerts>? _alertsStreamController;
+  StreamController<SMAlerts>? get alertsStreamController => _alertsStreamController;
+  // mqtt stream
+  StreamController<String>? _mqttStreamController;
+  StreamController<String>? get mqttStreamController => _mqttStreamController;
+  
+  // ws channels
+  // sensor readings ws
+  WebSocketChannel? _seReadingsChannel;
+  WebSocketChannel? get seReadingsChannel => _seReadingsChannel;
+  // alerts ws
+  WebSocketChannel? _alertsChannel;
+  WebSocketChannel? get alertsChannel => _alertsChannel;
+  // mqtt updates channel
 
-  // getters
-  StreamController<SensorNodeSnapshot> get sensorStreamController => _sensorStreamController;
-  StreamController<SMAlerts> get alertsStreamController => _alertsStreamController;
-
-  // sink node device list
+  // devices list
+  // sink node list
   List<SinkNode> _sinkNodeList = []; // ignore: prefer_final_fields
   List<SinkNode> get sinkNodeList => _sinkNodeList;
-
-  // sensor node devices
+  // sensor node list
   List<SensorNode> _sensorNodeList = [];// ignore: prefer_final_fields
   List<SensorNode> get sensorNodeList => _sensorNodeList;
 
@@ -121,11 +140,52 @@ class DevicesProvider extends ChangeNotifier {
       _sensorNodeSnapshotList.add(snSnapshot);
       _logs.info(message: 'snSnapshot :${snSnapshot?.deviceID}');
     }*/
-
-    _logs.success(message: 'init() done');
     //_logs.info(message: 'devices shared prefs init: $sinkNodeSharedPrefs');
     /*listenToStream();*/
+
+    StreamController<SensorNodeSnapshot> seSController = StreamController<SensorNodeSnapshot>.broadcast();
+    StreamController<SMAlerts> alSController = StreamController<SMAlerts>.broadcast();
+    StreamController<String> mqttSController = StreamController<String>.broadcast();
+
+    WebSocketChannel seReadingsChannel = _apiRequest.snReadingsChannel(
+        route: _apiRoutes.seReadingsWs,
+        streamController: seSController
+    );
+    WebSocketChannel alertsChannel = _apiRequest.alertsChannel(
+        route: _apiRoutes.seAlertsWs,
+        streamController: alSController
+    );
+
+    _setStreamControllers(
+        seSnapshotStreamController: seSController,
+        alertsStreamController: alSController,
+        mqttStreamController: mqttSController
+    );
+    _setWebSocketChannels(
+        seReadingsChannel: seReadingsChannel,
+        alertsChannel: alertsChannel
+    );
+
     notifyListeners();
+    _logs.success(message: 'init() done');
+  }
+  
+  void _setStreamControllers({
+    required seSnapshotStreamController,
+    required alertsStreamController,
+    required mqttStreamController}) {
+    
+    _seSnapshotStreamController = seSnapshotStreamController;
+    _alertsStreamController = alertsStreamController;
+    _mqttStreamController = mqttStreamController;
+}
+  
+  void _setWebSocketChannels({
+    required WebSocketChannel seReadingsChannel,
+    required WebSocketChannel alertsChannel}) {
+    
+    _seReadingsChannel = seReadingsChannel;
+    _alertsChannel = alertsChannel;
   }
 
   // maps the payload from sensor devices
