@@ -51,6 +51,10 @@ class DevicesProvider extends ChangeNotifier {
   Map<String, SensorNodeSnapshot> _sensorNodeSnapshotMap = {}; // ignore: prefer_final_fields
   Map<String, SensorNodeSnapshot> get sensorNodeSnapshotMap => _sensorNodeSnapshotMap;
 
+  // sensor node chart data map
+  Map<String, List<SensorNodeSnapshot>> _sensorNodeChartDataMap = {}; // ignore: prefer_final_fields
+  Map<String, List<SensorNodeSnapshot>> get sensorNodeChartDataMap => _sensorNodeChartDataMap;
+
   // sm alerts
   List<SMAlerts?> _smAlertsList = []; // ignore: prefer_final_fields
   List<SMAlerts?> get smAlertsList => _smAlertsList;
@@ -125,8 +129,12 @@ class DevicesProvider extends ChangeNotifier {
 
         // load from db snapshot
         SensorNodeSnapshot? fromDbSnapshot = await DatabaseHelper.getAllReadings(sensor.deviceID);
+        List<SensorNodeSnapshot>? fromDbChartData = await DatabaseHelper.chartReadings(sensor.deviceID);
         if (fromDbSnapshot != null) {
           _sensorNodeSnapshotMap[sensor.deviceID] = fromDbSnapshot;
+        }
+        if (fromDbChartData != null) {
+          _sensorNodeChartDataMap[sensor.deviceID] = fromDbChartData;
         }
       }
     }
@@ -146,6 +154,7 @@ class DevicesProvider extends ChangeNotifier {
         sensorNodeSharedPrefs.add(sensor);
       }
     }
+
 
     // helper functions that finally stores the SK and SN list in the shared prefs for fast access
     _sharedPrefsUtils.setSKList(sinkList: sinkNodeSharedPrefs);
@@ -227,7 +236,19 @@ class DevicesProvider extends ChangeNotifier {
       return;
     }
 
+    // set snapshot
     _sensorNodeSnapshotMap[finalSnapshot.deviceID] = finalSnapshot;
+    // set chartdata
+    List<SensorNodeSnapshot>? chartDataBuffer = _sensorNodeChartDataMap[finalSnapshot.deviceID];
+    if (chartDataBuffer == null) {
+      chartDataBuffer = [finalSnapshot];
+    } else if (chartDataBuffer.length == 6){
+      chartDataBuffer.removeAt(0);
+      chartDataBuffer.add(finalSnapshot);
+    } else {
+      chartDataBuffer.add(finalSnapshot);
+    }
+    _sensorNodeChartDataMap[finalSnapshot.deviceID] = chartDataBuffer;
     notifyListeners();
     return;
   }

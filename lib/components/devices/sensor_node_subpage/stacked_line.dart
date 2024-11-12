@@ -1,6 +1,8 @@
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:smmic/models/device_data_models.dart';
+import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/services/devices_services.dart';
 import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
@@ -31,109 +33,99 @@ class _StackedLineChartState extends State<StackedLineChart> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: DatabaseHelper.chartReadings(widget.deviceID),
-      builder: (context, futureSnapshot) {
-        final List<SensorNodeSnapshot>? chartData = futureSnapshot.data;
-
-        if(futureSnapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(),);
-        }
-
-        return Column(
+    List<SensorNodeSnapshot> chartData = context.watch<DevicesProvider>().sensorNodeChartDataMap[widget.deviceID] ?? [];
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 275,
+          height: 25,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              ...data.map((item) => _buildLegendItems(item['name'], item['legendTitle']))
+            ],
+          ),
+        ),
+        Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
-              width: 275,
-              height: 25,
-              child: Row(
+              height: 220,
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ...data.map((item) => _buildLegendItems(item['name'], item['legendTitle']))
-                ],
+                children: _buildYAxisLabels(marks: [0, 25, 50, 75, 100], reversed: true, type: 'percentage'),
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  height: 220,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: _buildYAxisLabels(marks: [0, 25, 50, 75, 100], reversed: true, type: 'percentage'),
+            SizedBox(
+              width: 270,
+              height: 230,
+              child: SfCartesianChart(
+                  primaryXAxis: const CategoryAxis(
+                    rangePadding: ChartRangePadding.none,
+                    axisLine: AxisLine(
+                        color: Colors.transparent
+                    ),
+                    labelStyle: TextStyle(fontSize: 0, color: Colors.transparent),
+                    tickPosition: TickPosition.inside,
+                    isVisible: true,
+                    labelPlacement: LabelPlacement.onTicks,
                   ),
-                ),
-                SizedBox(
-                  width: 270,
-                  height: 230,
-                  child: SfCartesianChart(
-                      primaryXAxis: const CategoryAxis(
-                        rangePadding: ChartRangePadding.none,
-                        axisLine: AxisLine(
-                            color: Colors.transparent
-                        ),
-                        labelStyle: TextStyle(fontSize: 0, color: Colors.transparent),
-                        tickPosition: TickPosition.inside,
-                        isVisible: true,
-                        labelPlacement: LabelPlacement.onTicks,
-                      ),
-                      primaryYAxis: const NumericAxis(
-                        maximum: 100,
-                        minimum: 0,
-                        isVisible: false,
-                      ),
-                      series: <CartesianSeries>[
-                        StackedLineSeries<SensorNodeSnapshot, String>(
-                          animationDuration: 500,
-                          color: _generateColor('soil moisture'),
-                            groupName: 'Group A',
-                            dataSource: chartData,
-                            xValueMapper: (SensorNodeSnapshot chartData, _) => _dateTimeFormatting.formatTimeClearZero(chartData.timestamp),
-                            yValueMapper: (SensorNodeSnapshot chartData, _) => chartData.soilMoisture
-                        ),
-                        StackedLineSeries<SensorNodeSnapshot, String>(
-                          animationDuration: 500,
-                          color: _generateColor('humidity'),
-                            groupName: 'Group B',
-                            dataSource: chartData,
-                            xValueMapper: (SensorNodeSnapshot chartData, _) => _dateTimeFormatting.formatTimeClearZero(chartData.timestamp),
-                            yValueMapper: (SensorNodeSnapshot chartData, _) => chartData.humidity
-                        ),
-                        StackedLineSeries<SensorNodeSnapshot, String>(
-                          animationDuration: 500,
-                          color: _generateColor('temperature'),
-                            groupName: 'Group C',
-                            dataSource: chartData,
-                            xValueMapper: (SensorNodeSnapshot chartData, _) => _dateTimeFormatting.formatTimeClearZero(chartData.timestamp),
-                            yValueMapper: (SensorNodeSnapshot chartData, _) => _scaleTemp(chartData.temperature.toInt())
-                        ),
-                      ]
+                  primaryYAxis: const NumericAxis(
+                    maximum: 100,
+                    minimum: 0,
+                    isVisible: false,
                   ),
-                ),
-                SizedBox(
-                  height: 225,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: _buildYAxisLabels(marks: [15, 20, 25, 30, 35], reversed: true, type: 'celcius'),
-                  ),
-                )
-              ],
+                  series: <CartesianSeries>[
+                    StackedLineSeries<SensorNodeSnapshot, String>(
+                        animationDuration: 500,
+                        color: _generateColor('soil moisture'),
+                        groupName: 'Group A',
+                        dataSource: chartData,
+                        xValueMapper: (SensorNodeSnapshot chartData, _) => _dateTimeFormatting.formatTimeClearZero(chartData.timestamp),
+                        yValueMapper: (SensorNodeSnapshot chartData, _) => chartData.soilMoisture
+                    ),
+                    StackedLineSeries<SensorNodeSnapshot, String>(
+                        animationDuration: 500,
+                        color: _generateColor('humidity'),
+                        groupName: 'Group B',
+                        dataSource: chartData,
+                        xValueMapper: (SensorNodeSnapshot chartData, _) => _dateTimeFormatting.formatTimeClearZero(chartData.timestamp),
+                        yValueMapper: (SensorNodeSnapshot chartData, _) => chartData.humidity
+                    ),
+                    StackedLineSeries<SensorNodeSnapshot, String>(
+                        animationDuration: 500,
+                        color: _generateColor('temperature'),
+                        groupName: 'Group C',
+                        dataSource: chartData,
+                        xValueMapper: (SensorNodeSnapshot chartData, _) => _dateTimeFormatting.formatTimeClearZero(chartData.timestamp),
+                        yValueMapper: (SensorNodeSnapshot chartData, _) => _scaleTemp(chartData.temperature.toInt())
+                    ),
+                  ]
+              ),
             ),
             SizedBox(
-              height: 25,
-              width: 325,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ..._buildXAxisLabels(marks: chartData!.map((snapshot){
-                    return _dateTimeFormatting.formatTimeClearZero(snapshot.timestamp);
-                  }).toList())
-                ],
+              height: 225,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: _buildYAxisLabels(marks: [15, 20, 25, 30, 35], reversed: true, type: 'celcius'),
               ),
             )
           ],
-        );
-      }
+        ),
+        SizedBox(
+          height: 25,
+          width: 325,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ..._buildXAxisLabels(marks: chartData!.map((snapshot){
+                return _dateTimeFormatting.formatTimeClearZero(snapshot.timestamp);
+              }).toList())
+            ],
+          ),
+        )
+      ],
     );
   }
 
@@ -170,7 +162,6 @@ class _StackedLineChartState extends State<StackedLineChart> {
     List<String> finalMarks = [];
 
     for(String mark in marks){
-      print(mark);
       List<String>buffer = mark.split(":");
       String f = "${buffer[0]}:${buffer[1]}";
       finalMarks.add(f);

@@ -67,10 +67,6 @@ class _AuthGateState extends State<AuthGate> {
   final ApiRequest _apiRequest = ApiRequest();
   final ApiRoutes _apiRoutes = ApiRoutes();
 
-  // providers
-  final AuthProvider _authProvider = AuthProvider();
-  final UserDataProvider _userDataProvider = UserDataProvider();
-
   Future<bool> _authCheck() async {
     _logs.info2(message: 'executing _authCheck()');
 
