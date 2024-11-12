@@ -1,9 +1,12 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
+import 'package:provider/provider.dart';
 import 'package:smmic/models/device_data_models.dart';
+import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/services/mqtt_services.dart';
 import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/logs.dart';
@@ -21,6 +24,14 @@ class MqttProvider extends ChangeNotifier {
 
   MqttServerClient get mqttClient => _mqttServerClient;
   MqttConnectionState get connectionState => _mqttConnectionState;
+
+  // internal context object for mqtt
+  BuildContext? _context;
+
+  void registerContext({required BuildContext context}){
+    _context = context;
+    notifyListeners();
+  }
 
   /// Initializes and connects the MqttClient
   ///
@@ -63,8 +74,11 @@ class MqttProvider extends ChangeNotifier {
         SensorNodeSnapshot snapshot = SensorNodeSnapshot.fromJSON(mappedPayload);
         DatabaseHelper.addReadings(snapshot);
         DatabaseHelper.readingsLimit(snapshot.deviceID);
+
+        if (_context != null && _context!.mounted){
+          _context!.read<DevicesProvider>().setNewSensorSnapshot(snapshot);
+        }
       }
-      streamController.add(payload);
     });
 
     notifyListeners();

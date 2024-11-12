@@ -109,6 +109,7 @@ class _AuthGateState extends State<AuthGate> {
             context.read<UserDataProvider>().init();
             context.read<DevicesProvider>().init(context);
             context.read<AuthProvider>().init();
+            context.read<MqttProvider>().registerContext(context: context);
 
             _apiRequest.connectSeReadingsChannel(
                 route: _apiRoutes.seReadingsWs,
@@ -125,7 +126,6 @@ class _AuthGateState extends State<AuthGate> {
             return const Stack(
               children: [
                 MyBottomNav(indexPage: 0),
-                /*PreloadDevices()*/
               ],
             );
           }
