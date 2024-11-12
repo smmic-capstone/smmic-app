@@ -152,14 +152,13 @@ class ApiRequest {
     return result;
   }
 
-  WebSocketChannel? connectSeReadingsChannel({
+  WebSocketChannel? _channelConnect({
     required String route,
     required StreamController streamController}) {
 
     WebSocketChannel? channel;
     // initialize channel
     channel = WebSocketChannel.connect(Uri.parse(route));
-    // add listener
     try{
       channel = WebSocketChannel.connect(Uri.parse(route));
       channel.stream.listen(
@@ -170,16 +169,24 @@ class ApiRequest {
           DatabaseHelper.readingsLimit(snapshotObj.deviceID);
           // pass to stream controller
           streamController.add(snapshotObj);
-          _logs.info(message: 'snapshotObj sent added to snReadingsStreamController -> ${snapshotObj.toString()}');
         }, onError: (err) {
-          _logs.warning(message: 'connectSeReadingsChannel() error in stream.listen -> $err');
-        }
-      );
+          _logs.warning(message: '_channelConnect() error in stream.listen : $route -> $err');
+        });
     } on WebSocketChannelException catch (e) {
-      _logs.warning(message: 'connectSeReadingsChannel() called WebSocketChannelException -> $e');
+      _logs.warning(message: '_channelConnect() called WebSocketChannelException : $route -> $e');
     } on Exception catch (e) {
-      _logs.warning(message: 'connectSeReadingsChannel() unhandled unexpected exception raised -> $e');
+      _logs.warning(message: '_channelConnect() unhandled unexpected exception raised : $route -> $e');
     }
+
+    return channel;
+  }
+
+  WebSocketChannel? connectSeReadingsChannel({
+    required String route,
+    required StreamController streamController}) {
+
+    WebSocketChannel? channel;
+    channel = _channelConnect(route: route, streamController: streamController);
 
     // return channel instance
     return channel;
@@ -188,30 +195,9 @@ class ApiRequest {
   WebSocketChannel? connectAlertsChannel ({
     required String route,
     required StreamController streamController}) {
-    
+
     WebSocketChannel? channel;
-    // initialize channel
-    try {
-      channel = WebSocketChannel.connect(Uri.parse(route));
-      channel.stream.listen(
-        (data){
-          final Map<String,dynamic> decodedData = jsonDecode(data);
-          final SensorNodeSnapshot snapshotObj = SensorNodeSnapshot.fromJSON(decodedData['message']);
-          DatabaseHelper.addReadings(snapshotObj);
-          DatabaseHelper.readingsLimit(snapshotObj.deviceID);
-          // alert object
-          final SMAlerts alertObj = SMAlerts.fromJSON(decodedData['message']);
-          streamController.add(alertObj);
-          _logs.info(message: 'alertObject sent added to alertStreamController -> ${alertObj.toString()}');
-        }, onError: (err) {
-          _logs.warning(message: 'connectAlertsChannel() error in stream.listen -> $err');
-        }
-      );
-    } on WebSocketChannelException catch (e) {
-      _logs.warning(message: 'connectAlertsChannel() called WebSocketChannelException -> $e');
-    } on Exception catch (e) {
-      _logs.warning(message: 'connectAlertsChannel() unhandled unexpected exception raised -> $e');
-    }
+    channel = _channelConnect(route: route, streamController: streamController);
 
     // return channel instance
     return channel;

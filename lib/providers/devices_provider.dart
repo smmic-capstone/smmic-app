@@ -34,7 +34,7 @@ class DevicesProvider extends ChangeNotifier {
   // mqtt stream
   StreamController<String>? _mqttStreamController;
   StreamController<String>? get mqttStreamController => _mqttStreamController;
-  
+
   // ws channels
   // sensor readings ws
   WebSocketChannel? _seReadingsChannel;
@@ -203,6 +203,8 @@ class DevicesProvider extends ChangeNotifier {
   void setNewSensorSnapshot(var reading) {
     SensorNodeSnapshot? finalSnapshot;
 
+    print(reading.toString());
+
     if (reading is Map<String, dynamic>) {
       // TODO: verify keys first
       finalSnapshot = SensorNodeSnapshot.fromJSON(reading);
@@ -230,6 +232,7 @@ class DevicesProvider extends ChangeNotifier {
 
       // create a new sensor node snapshot object from the new string map
       finalSnapshot = SensorNodeSnapshot.fromJSON(fromStringMap);
+
     } else if (reading is SensorNodeSnapshot) {
       finalSnapshot = reading;
     }

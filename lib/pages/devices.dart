@@ -98,7 +98,7 @@ class _Devices extends State<Devices> {
     } else if (data is SMAlerts) {
       // TODO: handle from alerts
     } else if (data is String) {
-      // TODO: handle from mqtt
+      context.read<DevicesProvider>().setNewSensorSnapshot(data);
     }
     return;
   }
