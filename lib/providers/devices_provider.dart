@@ -35,15 +35,6 @@ class DevicesProvider extends ChangeNotifier {
   StreamController<String>? _mqttStreamController;
   StreamController<String>? get mqttStreamController => _mqttStreamController;
 
-  // ws channels
-  // sensor readings ws
-  WebSocketChannel? _seReadingsChannel;
-  WebSocketChannel? get seReadingsChannel => _seReadingsChannel;
-  // alerts ws
-  WebSocketChannel? _alertsChannel;
-  WebSocketChannel? get alertsChannel => _alertsChannel;
-  // mqtt updates channel
-
   // devices list
   // sink node list
   List<SinkNode> _sinkNodeList = []; // ignore: prefer_final_fields
@@ -53,8 +44,12 @@ class DevicesProvider extends ChangeNotifier {
   List<SensorNode> get sensorNodeList => _sensorNodeList;
 
   // sensor node readings
-  List<SensorNodeSnapshot?> _sensorNodeSnapshotList = []; // ignore: prefer_final_fields
-  List<SensorNodeSnapshot?> get sensorNodeSnapshotList => _sensorNodeSnapshotList;
+  // List<SensorNodeSnapshot?> _sensorNodeSnapshotList = []; // ignore: prefer_final_fields
+  // List<SensorNodeSnapshot?> get sensorNodeSnapshotList => _sensorNodeSnapshotList;
+
+  // sensor node readings map
+  Map<String, SensorNodeSnapshot> _sensorNodeSnapshotMap = {}; // ignore: prefer_final_fields
+  Map<String, SensorNodeSnapshot> get sensorNodeSnapshotMap => _sensorNodeSnapshotMap;
 
   // sm alerts
   List<SMAlerts?> _smAlertsList = []; // ignore: prefer_final_fields
@@ -73,7 +68,7 @@ class DevicesProvider extends ChangeNotifier {
 
   Map <String, Map<String,int>> _deviceAlerts = {};
 
-  Future<void> init() async {
+  Future<void> init(BuildContext context) async {
     Map<String, dynamic>? userData = await _sharedPrefsUtils.getUserData();
     Map<String, dynamic> tokens = await _sharedPrefsUtils.getTokens(access: true);
 
@@ -81,24 +76,20 @@ class DevicesProvider extends ChangeNotifier {
     StreamController<SMAlerts> alSController = StreamController<SMAlerts>.broadcast();
     StreamController<String> mqttSController = StreamController<String>.broadcast();
 
-    WebSocketChannel? seReadingsChannel = _apiRequest.connectSeReadingsChannel(
-        route: _apiRoutes.seReadingsWs,
-        streamController: seSController
-    );
-    WebSocketChannel? alertsChannel = _apiRequest.connectAlertsChannel(
-        route: _apiRoutes.seAlertsWs,
-        streamController: alSController
-    );
+    if (!context.mounted) {
+      return;
+    }
 
     _setStreamControllers(
         seSnapshotStreamController: seSController,
         alertsStreamController: alSController,
         mqttStreamController: mqttSController
     );
-    _setWebSocketChannels(
-        seReadingsChannel: seReadingsChannel,
-        alertsChannel: alertsChannel
-    );
+
+    // _setWebSocketChannels(
+    //     seReadingsChannel: seReadingsChannel,
+    //     alertsChannel: alertsChannel
+    // );
 
     if(userData == null){
       notifyListeners();
@@ -131,6 +122,12 @@ class DevicesProvider extends ChangeNotifier {
           continue;
         }
         _sensorNodeList.add(sensor);
+
+        // load from db snapshot
+        SensorNodeSnapshot? fromDbSnapshot = await DatabaseHelper.getAllReadings(sensor.deviceID);
+        if (fromDbSnapshot != null) {
+          _sensorNodeSnapshotMap[sensor.deviceID] = fromDbSnapshot;
+        }
       }
     }
     //_logs.info(message: "devices : $devices");
@@ -146,7 +143,6 @@ class DevicesProvider extends ChangeNotifier {
       // this inner part iterates over the sensor nodes of each sink node
       for(int j =0; j < devices[i]["sensor_nodes"].length; j++){
         Map<String,dynamic> sensor = _deviceUtils.mapSensorNode(devices[i]['sensor_nodes'][j], sink['deviceID']);
-
         sensorNodeSharedPrefs.add(sensor);
       }
     }
@@ -179,14 +175,6 @@ class DevicesProvider extends ChangeNotifier {
     _alertsStreamController = alertsStreamController;
     _mqttStreamController = mqttStreamController;
   }
-  
-  void _setWebSocketChannels({
-    required WebSocketChannel? seReadingsChannel,
-    required WebSocketChannel? alertsChannel}) {
-    
-    _seReadingsChannel = seReadingsChannel;
-    _alertsChannel = alertsChannel;
-  }
 
   // maps the payload from sensor devices
   // assuming that the shape of the payload (as a string) is:
@@ -202,8 +190,6 @@ class DevicesProvider extends ChangeNotifier {
   //
   void setNewSensorSnapshot(var reading) {
     SensorNodeSnapshot? finalSnapshot;
-
-    print(reading.toString());
 
     if (reading is Map<String, dynamic>) {
       // TODO: verify keys first
@@ -241,13 +227,7 @@ class DevicesProvider extends ChangeNotifier {
       return;
     }
 
-    if (_sensorNodeSnapshotList.isNotEmpty) {
-      List<String> snapShotListIdBuffer = _sensorNodeSnapshotList.map((item) => item!.deviceID).toList();
-      if (snapShotListIdBuffer.contains(finalSnapshot.deviceID)) {
-        _sensorNodeSnapshotList.removeWhere((item) => item!.deviceID == finalSnapshot!.deviceID);
-      }
-    }
-    _sensorNodeSnapshotList.add(finalSnapshot);
+    _sensorNodeSnapshotMap[finalSnapshot.deviceID] = finalSnapshot;
     notifyListeners();
     return;
   }
@@ -257,13 +237,11 @@ class DevicesProvider extends ChangeNotifier {
 
     final latestReading = await DatabaseHelper.getAllReadings(deviceID);
 
-    _sensorNodeSnapshotList.removeWhere((sensorNode) => sensorNode?.deviceID == deviceID);
-
     if (latestReading == null) {
       return;
     }
 
-    _sensorNodeSnapshotList.add(latestReading);
+    _sensorNodeSnapshotMap[latestReading.deviceID] = latestReading;
     notifyListeners();
   }
 

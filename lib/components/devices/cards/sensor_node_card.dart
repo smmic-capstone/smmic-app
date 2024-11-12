@@ -18,15 +18,16 @@ import '../../../subcomponents/devices/device_dialog.dart';
 import 'package:smmic/utils/logs.dart';
 
 class SensorNodeCard extends StatefulWidget {
-  const SensorNodeCard({super.key, required this.deviceInfo});
+  const SensorNodeCard({super.key, required this.deviceInfo, required this.deviceSnapshot});
 
   final SensorNode deviceInfo;
+  final SensorNodeSnapshot? deviceSnapshot;
 
   @override
   State<SensorNodeCard> createState() => _SensorNodeCardState();
 }
 
-class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAliveClientMixin {
+class _SensorNodeCardState extends State<SensorNodeCard> {
 
   final ApiRequest _apiRequest = ApiRequest();
   final ApiRoutes _apiRoutes = ApiRoutes();
@@ -53,7 +54,6 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
   @override
   void initState(){
     super.initState();
-    context.read<DevicesProvider>().deviceReadings(widget.deviceInfo.deviceID);
   }
 
   @override
@@ -68,7 +68,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
+    final SensorNodeSnapshot deviceSnapshot = widget.deviceSnapshot ?? SensorNodeSnapshot.placeHolder(deviceId: widget.deviceInfo.deviceID);
 
     final DeviceDialog _skDeviceDialog = DeviceDialog(
         context: context,
@@ -76,17 +76,6 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
         latitude: widget.deviceInfo.latitude,
         longitude: widget.deviceInfo.longitude
     );
-
-    List<SensorNodeSnapshot?> senSnapshotList = context.watch<DevicesProvider>().sensorNodeSnapshotList;
-    SensorNodeSnapshot? sensorNodeSnapshot;
-
-    if (senSnapshotList.isNotEmpty) {
-      List<SensorNodeSnapshot?> itemSearchResult = senSnapshotList.where((item) => item?.deviceID == widget.deviceInfo.deviceID).toList();
-      if (itemSearchResult.isNotEmpty) {
-        sensorNodeSnapshot = itemSearchResult.first;
-      }
-    }
-    sensorNodeSnapshot = sensorNodeSnapshot ?? SensorNodeSnapshot.placeHolder(deviceId: widget.deviceInfo.deviceID);
 
     return GestureDetector(
       onTap: () =>
@@ -147,13 +136,11 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 DigitalDisplay(
-                                  //TODO: add snapshot data here
-                                  value: sensorNodeSnapshot.temperature,
+                                  value: deviceSnapshot.temperature,
                                   valueType: 'temperature',
                                 ),
                                 DigitalDisplay(
-                                  //TODO: add snapshot data here
-                                  value: sensorNodeSnapshot.humidity,
+                                  value: deviceSnapshot.humidity,
                                   valueType: 'humidity',
                                 )
                               ],
@@ -165,8 +152,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                                 alignment: Alignment.center,
                                 child: RadialGauge(
                                     valueType: 'soilMoisture',
-                                    //TODO: add snapshot data here
-                                    value:  sensorNodeSnapshot.soilMoisture,
+                                    value:  deviceSnapshot.soilMoisture,
                                     limit: 100)),
                           )
                         ],
@@ -214,8 +200,4 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
       ),
     );
   }
-
-  @override
-  // TODO: implement wantKeepAlive
-  bool get wantKeepAlive => true;
 }

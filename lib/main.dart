@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
+import 'package:smmic/constants/api.dart';
 import 'package:smmic/preload/preloaddevices.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/pages/login.dart';
@@ -9,6 +10,7 @@ import 'package:smmic/providers/mqtt_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/providers/user_data_provider.dart';
+import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/global_navigator.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
@@ -60,8 +62,10 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-  // utils
+  // utils, dependencies
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
+  final ApiRequest _apiRequest = ApiRequest();
+  final ApiRoutes _apiRoutes = ApiRoutes();
 
   // providers
   final AuthProvider _authProvider = AuthProvider();
@@ -103,8 +107,19 @@ class _AuthGateState extends State<AuthGate> {
             }
             // initiate user data when logged in
             context.read<UserDataProvider>().init();
-            context.read<DevicesProvider>().init();
+            context.read<DevicesProvider>().init(context);
             context.read<AuthProvider>().init();
+
+            _apiRequest.connectSeReadingsChannel(
+                route: _apiRoutes.seReadingsWs,
+                streamController: context.read<DevicesProvider>().seSnapshotStreamController,
+                context: context
+            );
+            _apiRequest.connectAlertsChannel(
+                route: _apiRoutes.seAlertsWs,
+                streamController: context.read<DevicesProvider>().alertsStreamController,
+                context: context
+            );
 
             // TODO: fix this hack
             return const Stack(

@@ -35,9 +35,11 @@ class _StackedLineChartState extends State<StackedLineChart> {
       future: DatabaseHelper.chartReadings(widget.deviceID),
       builder: (context, futureSnapshot) {
         final List<SensorNodeSnapshot>? chartData = futureSnapshot.data;
+
         if(futureSnapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(),);
         }
+
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -164,11 +166,11 @@ class _StackedLineChartState extends State<StackedLineChart> {
   }
 
   List<Text> _buildXAxisLabels({required List<String> marks}){
-    int interval = 10;
     TextStyle style = const TextStyle(fontSize: 10);
     List<String> finalMarks = [];
 
     for(String mark in marks){
+      print(mark);
       List<String>buffer = mark.split(":");
       String f = "${buffer[0]}:${buffer[1]}";
       finalMarks.add(f);

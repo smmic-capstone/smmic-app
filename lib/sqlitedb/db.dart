@@ -4,6 +4,9 @@ import 'package:path/path.dart';
 import 'package:smmic/models/device_data_models.dart';
 
 class DatabaseHelper {
+  // dependencies
+  final Logs _logs = Logs(tag: 'DatabaseHelper');
+
   static const int _version = 1;
   static const String dbName = "Readings.db";
 
@@ -77,21 +80,19 @@ class DatabaseHelper {
   
   
   static Future<List<SensorNodeSnapshot>?>chartReadings(String deviceID) async {
-    print('chartReadings Initialized');
     final db = await _getDB();
     
-    final List<Map<String,dynamic>> chartReadings = await db.query(
+    final List<Map<String,dynamic>> queryResult = await db.query(
       "SMSensorReadings",
       where: 'device_id = ?',
       whereArgs: [deviceID],
       orderBy: 'timestamp DESC',
-      limit: 4,
+      limit: 6,
     );
 
-    final readings = chartReadings.map((data) => SensorNodeSnapshot.fromJSON(data)).toList().reversed.toList();
+    final readings = queryResult.map((data) => SensorNodeSnapshot.fromJSON(data)).toList().reversed.toList();
 
-
-    print(readings.reversed);
+    Logs(tag: 'DatabaseHelper.chartReadings()').info(message: '$readings');
     return readings;
   }
 }

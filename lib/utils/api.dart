@@ -152,54 +152,79 @@ class ApiRequest {
     return result;
   }
 
-  WebSocketChannel? _channelConnect({
+  void connectSeReadingsChannel({
     required String route,
-    required StreamController streamController}) {
+    required StreamController? streamController,
+    required BuildContext context}) {
 
     WebSocketChannel? channel;
-    // initialize channel
-    channel = WebSocketChannel.connect(Uri.parse(route));
     try{
       channel = WebSocketChannel.connect(Uri.parse(route));
-      channel.stream.listen(
-        (data) {
-          final Map<String, dynamic> decodedData = jsonDecode(data);
-          final SensorNodeSnapshot snapshotObj = SensorNodeSnapshot.fromJSON(decodedData['message']);
-          DatabaseHelper.addReadings(snapshotObj);
-          DatabaseHelper.readingsLimit(snapshotObj.deviceID);
-          // pass to stream controller
-          streamController.add(snapshotObj);
-        }, onError: (err) {
-          _logs.warning(message: '_channelConnect() error in stream.listen : $route -> $err');
-        });
     } on WebSocketChannelException catch (e) {
-      _logs.warning(message: '_channelConnect() called WebSocketChannelException : $route -> $e');
+      _logs.warning(message: 'connectAlertsChannel() called WebSocketChannelException : $route -> $e');
     } on Exception catch (e) {
-      _logs.warning(message: '_channelConnect() unhandled unexpected exception raised : $route -> $e');
+      _logs.warning(message: 'connectAlertsChannel() unhandled unexpected exception raised : $route -> $e');
     }
 
-    return channel;
+    if (channel == null) {
+      return;
+    }
+
+    channel.stream.listen(
+      (data) {
+        final Map<String, dynamic> decodedData = jsonDecode(data);
+        final SensorNodeSnapshot snapshotObj = SensorNodeSnapshot.fromJSON(decodedData['message']);
+        DatabaseHelper.readingsLimit(snapshotObj.deviceID);
+        DatabaseHelper.addReadings(snapshotObj);
+        // pass to stream controller
+        //streamController.add(snapshotObj);
+
+        if (context.mounted) {
+          context.read<DevicesProvider>().setNewSensorSnapshot(snapshotObj);
+        }
+
+        _logs.warning(message: 'Listener attached to WebSocketChannel');
+      }, onError: (err) {
+        _logs.warning(message: 'connectAlertsChannel() error in stream.listen : $route -> $err');
+    });
   }
 
-  WebSocketChannel? connectSeReadingsChannel({
+  void connectAlertsChannel ({
     required String route,
-    required StreamController streamController}) {
+    required StreamController? streamController,
+    required BuildContext context}) {
 
     WebSocketChannel? channel;
-    channel = _channelConnect(route: route, streamController: streamController);
+    try{
+      channel = WebSocketChannel.connect(Uri.parse(route));
+    } on WebSocketChannelException catch (e) {
+      _logs.warning(message: 'connectAlertsChannel() called WebSocketChannelException : $route -> $e');
+    } on Exception catch (e) {
+      _logs.warning(message: 'connectAlertsChannel() unhandled unexpected exception raised : $route -> $e');
+    }
 
-    // return channel instance
-    return channel;
-  }
+    if (channel == null) {
+      return;
+    }
 
-  WebSocketChannel? connectAlertsChannel ({
-    required String route,
-    required StreamController streamController}) {
+    channel.stream.listen(
+      (data) {
+        final Map<String, dynamic> decodedData = jsonDecode(data);
+        final SensorNodeSnapshot snapshotObj = SensorNodeSnapshot.fromJSON(decodedData['message']);
+        DatabaseHelper.readingsLimit(snapshotObj.deviceID);
+        DatabaseHelper.addReadings(snapshotObj);
 
-    WebSocketChannel? channel;
-    channel = _channelConnect(route: route, streamController: streamController);
+        final SMAlerts alertObj = SMAlerts.fromJSON(decodedData['message']);
 
-    // return channel instance
-    return channel;
+        // pass to stream controller
+        //streamController.add(alertObj);
+
+        if (context.mounted) {
+          // TODO add alertObj context update
+          context.read<DevicesProvider>().setNewSensorSnapshot(snapshotObj);
+        }
+      }, onError: (err) {
+        _logs.warning(message: 'connectAlertsChannel() error in stream.listen : $route -> $err');
+    });
   }
 }

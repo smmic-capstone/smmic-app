@@ -105,6 +105,43 @@ class SensorNodeSnapshot {
     );
   }
 
+  static SensorNodeSnapshot? dynamicSerializer({required var data}) {
+    SensorNodeSnapshot? finalSnapshot;
+
+    if (data is Map<String, dynamic>) {
+      // TODO: verify keys first
+      finalSnapshot = SensorNodeSnapshot.fromJSON(data);
+    } else if (data is String) {
+      // assuming that if the reading variable is a string, it is an mqtt payload
+      Map<String, dynamic> fromStringMap = {};
+      List<String> outerSplit = data.split(';');
+
+      fromStringMap.addAll({
+        'device_id': outerSplit[1],
+        'timestamp': outerSplit[2],
+      });
+
+      List<String> dataSplit = outerSplit[3].split('&');
+
+      for (String keyValue in dataSplit) {
+        try {
+          List<String> x = keyValue.split(':');
+          fromStringMap.addAll({x[0]: x[1]});
+        } on FormatException catch (e) {
+          break;
+        }
+      }
+
+      // create a new sensor node snapshot object from the new string map
+      finalSnapshot = SensorNodeSnapshot.fromJSON(fromStringMap);
+
+    } else if (data is SensorNodeSnapshot) {
+      finalSnapshot = data;
+    }
+
+    return finalSnapshot;
+  }
+
   Map<String,dynamic> toJson() => {
     'device_id' : deviceID,
     'timestamp' : timestamp.toIso8601String(),
