@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:provider/provider.dart';
+import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/providers/mqtt_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:mqtt_client/mqtt_client.dart';
@@ -54,7 +55,10 @@ class _LocalConnectState extends State<LocalConnect> {
                         context.read<MqttProvider>().disconnectClient();
                       }
                       else if ([MqttConnectionState.disconnected, MqttConnectionState.faulted].contains(connectionState)) {
-                        Exception? err = await context.read<MqttProvider>().initClient(clientIdentifier: '');
+                        Exception? err = await context.read<MqttProvider>().initClient(
+                            clientIdentifier: '',
+                            streamController: context.read<DevicesProvider>().mqttStreamController!
+                        );
                         if (err != null && context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Unable to connect to broker, try again later'))

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
@@ -22,6 +24,7 @@ class MqttProvider extends ChangeNotifier {
   /// Returns the MqttClient
   Future<Exception?> initClient({
     required String clientIdentifier,
+    required StreamController<String> streamController,
     String? host,
     int? port,
     int? keepAlivePeriod,
@@ -45,6 +48,12 @@ class MqttProvider extends ChangeNotifier {
       _logs.success(message: 'mqtt client init done...');
     }
     _mqttConnectionState = mqttConnect.$1.connectionStatus!.state;
+
+    mqttConnect.$1.updates!.listen((messages) {
+      final MqttPublishMessage recMes = messages[0] as MqttPublishMessage;
+      final String payload = MqttPublishPayload.bytesToStringAsString(recMes.payload.message);
+      streamController.add(payload);
+    });
 
     notifyListeners();
     return mqttConnect.$2;

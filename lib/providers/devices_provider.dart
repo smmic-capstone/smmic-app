@@ -14,13 +14,12 @@ import 'package:smmic/utils/shared_prefs.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class DevicesProvider extends ChangeNotifier {
-  
   // dependencies
   final Logs _logs = Logs(tag: 'DevicesProvider()');
   final DevicesServices _devicesServices = DevicesServices();
   final DeviceUtils _deviceUtils = DeviceUtils();
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
-  
+
   // api helpers, dependencies
   final ApiRoutes _apiRoutes = ApiRoutes();
   final ApiRequest _apiRequest = ApiRequest();
@@ -82,11 +81,11 @@ class DevicesProvider extends ChangeNotifier {
     StreamController<SMAlerts> alSController = StreamController<SMAlerts>.broadcast();
     StreamController<String> mqttSController = StreamController<String>.broadcast();
 
-    WebSocketChannel seReadingsChannel = _apiRequest.snReadingsChannel(
+    WebSocketChannel? seReadingsChannel = _apiRequest.connectSeReadingsChannel(
         route: _apiRoutes.seReadingsWs,
         streamController: seSController
     );
-    WebSocketChannel alertsChannel = _apiRequest.alertsChannel(
+    WebSocketChannel? alertsChannel = _apiRequest.connectAlertsChannel(
         route: _apiRoutes.seAlertsWs,
         streamController: alSController
     );
@@ -182,8 +181,8 @@ class DevicesProvider extends ChangeNotifier {
   }
   
   void _setWebSocketChannels({
-    required WebSocketChannel seReadingsChannel,
-    required WebSocketChannel alertsChannel}) {
+    required WebSocketChannel? seReadingsChannel,
+    required WebSocketChannel? alertsChannel}) {
     
     _seReadingsChannel = seReadingsChannel;
     _alertsChannel = alertsChannel;

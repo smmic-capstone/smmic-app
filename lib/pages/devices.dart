@@ -109,7 +109,6 @@ class _Devices extends State<Devices> {
     required Map<String, bool Function(Widget)> options}){
 
     return SingleChildScrollView(
-
       child: Column(
         children: [
           ..._buildCards(

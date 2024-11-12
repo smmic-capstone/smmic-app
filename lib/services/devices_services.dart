@@ -43,9 +43,7 @@ class DevicesServices {
         headers: {'Authorization': 'Bearer $token', 'UID': userID});
 
     if (data.containsKey('error') || data.isEmpty || data['data'] == null) {
-      _logs.error(
-          message:
-              'data received from ApiRequest().get() contains error or invalid value: ${data.values}');
+      _logs.error(message:'data received from ApiRequest().get() contains error or invalid value: ${data.values}');
       throw Exception('unhandled error on DevicesServices().getDevices()');
     }
 

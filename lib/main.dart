@@ -72,9 +72,7 @@ class _AuthGateState extends State<AuthGate> {
 
     String? login = await _sharedPrefsUtils.getLogin();
     if (login == null) {
-      _logs.info(
-          message:
-              'did not find login key from SharedPreferences, returning LoginPage()');
+      _logs.info(message:'did not find login key from SharedPreferences, returning LoginPage()');
       return false;
     }
 
