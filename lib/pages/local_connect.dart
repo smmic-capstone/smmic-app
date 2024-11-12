@@ -57,7 +57,6 @@ class _LocalConnectState extends State<LocalConnect> {
                       else if ([MqttConnectionState.disconnected, MqttConnectionState.faulted].contains(connectionState)) {
                         Exception? err = await context.read<MqttProvider>().initClient(
                             clientIdentifier: '',
-                            streamController: context.read<DevicesProvider>().mqttStreamController!
                         );
                         if (err != null && context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(

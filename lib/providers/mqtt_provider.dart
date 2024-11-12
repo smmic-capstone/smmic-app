@@ -38,7 +38,6 @@ class MqttProvider extends ChangeNotifier {
   /// Returns the MqttClient
   Future<Exception?> initClient({
     required String clientIdentifier,
-    required StreamController<String> streamController,
     String? host,
     int? port,
     int? keepAlivePeriod,

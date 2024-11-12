@@ -54,8 +54,8 @@ class _Devices extends State<Devices> {
           ]
       ),
       body: _buildList(
-        sinkNodeList: context.watch<DevicesProvider>().sinkNodeList,
-        sensorNodeList: context.watch<DevicesProvider>().sensorNodeList,
+        sinkNodeMap: context.watch<DevicesProvider>().sinkNodeMap,
+        sensorNodeMap: context.watch<DevicesProvider>().sensorNodeMap,
         options: context.watch<DeviceListOptionsNotifier>().enabledConditions,
         seSnapShotMap: context.watch<DevicesProvider>().sensorNodeSnapshotMap,
       )
@@ -63,8 +63,8 @@ class _Devices extends State<Devices> {
   }
 
   Widget _buildList({
-    required List<SinkNode> sinkNodeList,
-    required List<SensorNode> sensorNodeList,
+    required Map<String, SinkNode> sinkNodeMap,
+    required Map<String, SensorNode> sensorNodeMap,
     required Map<String, bool Function(Widget)> options,
     required Map<String, SensorNodeSnapshot> seSnapShotMap}){
 
@@ -72,8 +72,8 @@ class _Devices extends State<Devices> {
       child: Column(
         children: [
           ..._buildCards(
-            sinkNodeList: sinkNodeList,
-            sensorNodeList: sensorNodeList,
+            sinkNodeMap: sinkNodeMap,
+            sensorNodeMap: sensorNodeMap,
             options: options,
             seSnapshotMap: seSnapShotMap
           ),
@@ -83,22 +83,21 @@ class _Devices extends State<Devices> {
   }
 
   List<Widget> _buildCards({
-    required List<SinkNode> sinkNodeList,
-    required List<SensorNode> sensorNodeList,
+    required Map<String, SinkNode> sinkNodeMap,
+    required Map<String, SensorNode> sensorNodeMap,
     required Map<String, bool Function(Widget)> options,
     required Map<String, SensorNodeSnapshot> seSnapshotMap}){
 
     List<Widget> cards = [];
-    for (int i = 0; i < sinkNodeList.length; i++) {
-      cards.add(SinkNodeCard(deviceInfo: sinkNodeList[i]));
+    List<String> sinkNodeMapKeys = sinkNodeMap.keys.toList();
 
-      //List<SensorNode> sensorGroup = sensorNodeList.where((item) => item.registeredSinkNode == sinkNodeList[i].deviceID).toList();
-      for (int x = 0; x < sensorNodeList.length; x++) {
-        if (sensorNodeList[x].registeredSinkNode == sinkNodeList[i].deviceID) {
-          SensorNodeSnapshot deviceSnapshot = seSnapshotMap[sensorNodeList[x].deviceID] ?? SensorNodeSnapshot.placeHolder(deviceId: sensorNodeList[x].deviceID);
-          cards.add(SensorNodeCard(deviceInfo: sensorNodeList[x], deviceSnapshot: deviceSnapshot)
-          );
-        }
+    for (String sinkId in sinkNodeMapKeys) {
+      cards.add(SinkNodeCard(deviceInfo: sinkNodeMap[sinkId]!));
+      for (String sensorId in sinkNodeMap[sinkId]!.registeredSensorNodes) {
+        cards.add(SensorNodeCard(
+            deviceInfo: sensorNodeMap[sensorId]!,
+            deviceSnapshot: seSnapshotMap[sensorId]
+        ));
       }
     }
 

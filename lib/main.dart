@@ -109,12 +109,10 @@ class _AuthGateState extends State<AuthGate> {
 
             _apiRequest.connectSeReadingsChannel(
                 route: _apiRoutes.seReadingsWs,
-                streamController: context.read<DevicesProvider>().seSnapshotStreamController,
                 context: context
             );
             _apiRequest.connectAlertsChannel(
                 route: _apiRoutes.seAlertsWs,
-                streamController: context.read<DevicesProvider>().alertsStreamController,
                 context: context
             );
 

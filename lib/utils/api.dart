@@ -154,7 +154,6 @@ class ApiRequest {
 
   void connectSeReadingsChannel({
     required String route,
-    required StreamController? streamController,
     required BuildContext context}) {
 
     WebSocketChannel? channel;
@@ -191,7 +190,6 @@ class ApiRequest {
 
   void connectAlertsChannel ({
     required String route,
-    required StreamController? streamController,
     required BuildContext context}) {
 
     WebSocketChannel? channel;
