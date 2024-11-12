@@ -1,8 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/services/devices_services.dart';
@@ -56,6 +53,20 @@ class DevicesProvider extends ChangeNotifier {
 
   Map <String, Map<String,int>> _deviceAlerts = {};
 
+  Future<void> init() async {
+    // acquire user data and tokens from shared prefs
+    Map<String, dynamic>? userData = await _sharedPrefsUtils.getUserData();
+    Map<String, dynamic> tokens = await _sharedPrefsUtils.getTokens(access: true);
+
+    if (userData == null) {
+      return;
+    }
+
+    await _setDeviceListFromApi(userData: userData, tokens: tokens);
+    notifyListeners();
+  }
+
+  // set device list with data from the api
   Future<bool> _setDeviceListFromApi({
     required Map<String, dynamic> userData,
     required Map<String, dynamic> tokens}) async {
@@ -101,17 +112,14 @@ class DevicesProvider extends ChangeNotifier {
     return true;
   }
 
-  Future<void> init(BuildContext context) async {
-    // acquire user data and tokens from shared prefs
-    Map<String, dynamic>? userData = await _sharedPrefsUtils.getUserData();
-    Map<String, dynamic> tokens = await _sharedPrefsUtils.getTokens(access: true);
+  Future<void> _setDeviceListFromSharedPrefs() async {
+    List<Map<String, dynamic>> sinkList = await _sharedPrefsUtils.getSinkList();
+    List<Map<String, dynamic>> sensorList = await _sharedPrefsUtils.getSensorList();
 
-    if (userData == null) {
-      return;
+    for (Map<String, dynamic> sinkMap in sinkList) {
+      SinkNode sinkObj = _deviceUtils.sinkNodeMapToObject(sinkMap);
+      _sinkNodeMap[sinkObj.deviceID] = sinkObj;
     }
-
-    await _setDeviceListFromApi(userData: userData, tokens: tokens);
-    notifyListeners();
   }
 
   // maps the payload from sensor devices
@@ -237,8 +245,8 @@ class DevicesProvider extends ChangeNotifier {
     }
 
     _logs.info(message: "getSKList running ....");
-    List<Map<String,dynamic>>? _getSKList = await _sharedPrefsUtils.getSKList();
-    _logs.info(message: "sharedPrefsUtils : ${_sharedPrefsUtils.getSKList}");
+    List<Map<String,dynamic>>? _getSKList = await _sharedPrefsUtils.getSinkList();
+    _logs.info(message: "sharedPrefsUtils : ${_sharedPrefsUtils.getSinkList()}");
     _logs.info(message: "_getSKList provider : $_getSKList");
     if(_getSKList == [] || _getSKList == null){
       _logs.error(message:"Way sulod si _getSKList");
@@ -257,7 +265,7 @@ class DevicesProvider extends ChangeNotifier {
       }
     }
     _logs.info(message: '$_getSKList');
-    bool success = await _sharedPrefsUtils.setSKList(sinkList: _getSKList);
+    bool success = await _sharedPrefsUtils.setSinkList(sinkList: _getSKList);
     if(success){
       SinkNode updatedSink = SinkNode.fromJSON(updatedSinkData);
       _sinkNodeMap[updatedSink.deviceID] = updatedSink;
@@ -276,7 +284,7 @@ class DevicesProvider extends ChangeNotifier {
       return;
     }
 
-    List<Map<String,dynamic>>? getSNList = await _sharedPrefsUtils.getSNList();
+    List<Map<String,dynamic>>? getSNList = await _sharedPrefsUtils.getSensorList();
 
     if(getSNList == null || getSNList.isEmpty){
       _logs.error(message: "getSNList is empty");
@@ -290,7 +298,7 @@ class DevicesProvider extends ChangeNotifier {
         }
       }
     }
-    bool success = await _sharedPrefsUtils.setSNList(sensorList: getSNList);
+    bool success = await _sharedPrefsUtils.setSensorList(sensorList: getSNList);
     if(success){
       SensorNode updatedSensor = SensorNode.fromJSON(updatedData);
       _sensorNodeMap[updatedSensor.deviceID] = updatedSensor;

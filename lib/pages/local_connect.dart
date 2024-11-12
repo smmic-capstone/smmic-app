@@ -21,10 +21,6 @@ class _LocalConnectState extends State<LocalConnect> {
   // mqtt setup
   final mqttClient = MqttServerClient('10.0.2.2', '');
 
-  // vars
-  // ignore: prefer_final_fields
-  MqttConnectionState _mqttConnectionState = MqttConnectionState.disconnected;
-
   @override
   void initState() {
     super.initState();

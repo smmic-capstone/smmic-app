@@ -21,6 +21,9 @@ class ApiRequest {
   // dependencies / helpers
   final ApiRoutes _apiRoutes = ApiRoutes();
 
+  WebSocketChannel? _seReadingsWsChannel;
+  WebSocketChannel? _alertsWsChannel;
+
   Future<Map<String, dynamic>> _request({
     required String route,
     required Either<
@@ -185,7 +188,17 @@ class ApiRequest {
         _logs.warning(message: 'Listener attached to WebSocketChannel');
       }, onError: (err) {
         _logs.warning(message: 'connectAlertsChannel() error in stream.listen : $route -> $err');
+    }, onDone: () {
+      channel!.sink.close();
     });
+
+    return;
+  }
+
+  void disconnectSeReadingsWs() {
+    if (_seReadingsWsChannel != null) {
+      _seReadingsWsChannel!.sink.close();
+    }
   }
 
   void connectAlertsChannel ({
@@ -223,6 +236,16 @@ class ApiRequest {
         }
       }, onError: (err) {
         _logs.warning(message: 'connectAlertsChannel() error in stream.listen : $route -> $err');
+    }, onDone: () {
+        channel!.sink.close();
     });
+
+    return;
+  }
+
+  void disconnectAlertsWs() {
+    if (_alertsWsChannel != null) {
+      _alertsWsChannel!.sink.close();
+    }
   }
 }

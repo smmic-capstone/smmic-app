@@ -82,6 +82,17 @@ class _AuthGateState extends State<AuthGate> {
 
   @override
   Widget build(BuildContext context) {
+
+    _apiRequest.connectSeReadingsChannel(
+        route: _apiRoutes.seReadingsWs,
+        context: context
+    );
+
+    _apiRequest.connectAlertsChannel(
+        route: _apiRoutes.seAlertsWs,
+        context: context
+    );
+
     return FutureBuilder(
         future: _authCheck(),
         builder: (context, AsyncSnapshot<bool> authCheckSnapshot) {
@@ -91,32 +102,25 @@ class _AuthGateState extends State<AuthGate> {
               child: const Center(child: CircularProgressIndicator()),
             );
           }
+
           if (authCheckSnapshot.hasError) {
             return const Center(
               child: Text('An unexpected error has occurred'),
             );
           }
+
           if (authCheckSnapshot.hasData) {
             bool authCheck = authCheckSnapshot.data!;
             if (!authCheck) {
               return const LoginPage();
             }
+
             // initiate user data when logged in
             context.read<UserDataProvider>().init();
-            context.read<DevicesProvider>().init(context);
+            context.read<DevicesProvider>().init();
             context.read<AuthProvider>().init();
             context.read<MqttProvider>().registerContext(context: context);
 
-            _apiRequest.connectSeReadingsChannel(
-                route: _apiRoutes.seReadingsWs,
-                context: context
-            );
-            _apiRequest.connectAlertsChannel(
-                route: _apiRoutes.seAlertsWs,
-                context: context
-            );
-
-            // TODO: fix this hack
             return const Stack(
               children: [
                 MyBottomNav(indexPage: 0),

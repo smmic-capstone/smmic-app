@@ -40,11 +40,11 @@ class DevicesServices {
       _logs.error(message:'data received from ApiRequest().get() contains error or invalid value: ${data.values}');
     } else {
       List<dynamic> sinkNodesUnparsed = data['data'];
-      List<Map<String, dynamic>> sensorNodesParsed = [];
 
       // parse devices
       for (var sinkUnparsed in sinkNodesUnparsed) {
         List<dynamic> sensorNodesUnparsed = sinkUnparsed['sensor_nodes'];
+        List<Map<String, dynamic>> sensorNodesParsed = [];
         for (var sensorUnparsed in sensorNodesUnparsed) {
           sensorNodesParsed.add({
             'device_id': sensorUnparsed['device_id'],
