@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dartz/dartz.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -20,300 +21,231 @@ class ApiRequest {
   // dependencies / helpers
   final ApiRoutes _apiRoutes = ApiRoutes();
 
-  /// Get request for api, returns a the response status code and the body if available
-  Future<dynamic> get(
-      {required String route, Map<String, String>? headers}) async {
+  WebSocketChannel? _seReadingsWsChannel;
+  WebSocketChannel? _alertsWsChannel;
+
+  Future<Map<String, dynamic>> _request({
+    required String route,
+    required Either<
+      Future<http.Response>Function(Uri, {Object? body, Encoding? encoding, Map<String, String>? headers}),
+      Future<http.Response>Function(Uri, {Map<String, String>? headers})>
+    method,
+    Map<String, String>? headers,
+    Object? body}) async {
+
+    http.Response? res;
+    int? statusCode;
+    String? resBody;
+
+    Map<String, dynamic> finalRes = {};
+
     try {
-      _logs.info(message: 'get() $route, headers: ${headers ?? 'none'}');
-      final response = await http.get(Uri.parse(route), headers: headers);
-      if (response.statusCode == 500) {
-        _logs.error(
-            message:
-                'get() $route, returned with error ${response.statusCode}');
-        return {
-          'error': response.statusCode,
-          'data': {'err': 'internal server error (code 500)'}
-        };
-      } else if (response.statusCode == 400) {
-        _logs.warning(
-            message:
-                'post() $route, returned with error ${response.statusCode}');
-        return {
-          'error': response.statusCode,
-          'data': jsonDecode(response.body)
-        };
-      } else if (response.statusCode == 401) {
-        _logs.warning(
-            message:
-                'post() $route, returned with error ${response.statusCode}');
-        return {
-          'error': response.statusCode,
-          'data': jsonDecode(response.body)
-        };
+      res = await method.fold(
+          (method1) => method1(
+              Uri.parse(route),
+              headers: headers,
+              body: body),
+          (method2) => method2(
+            Uri.parse(route),
+            headers: headers)
+      );
+
+      if (res == null) {
+        throw Exception('unhandled unexpected error -> request result null');
       }
-      if (response.statusCode == 200) {
-        _logs.success(
-            message:
-                'post() $route, returned with data ${response.statusCode}');
-        return {'code': response.statusCode, 'data': jsonDecode(response.body)};
+
+      statusCode = res.statusCode;
+      resBody = res.body;
+
+      switch (statusCode) {
+        case (500):
+          _logs.error(message:'post() $route, returned with error $statusCode');
+          finalRes.addAll({'error' : statusCode});
+        case (400):
+          _logs.warning(message:'post() $route, returned with error $statusCode');
+          finalRes.addAll({'error' : statusCode});
+        case (401):
+          _logs.warning(message:'post() $route, returned with error $statusCode');
+          finalRes.addAll({'error' : statusCode});
+        case (200):
+          _logs.success(message:'post() $route, returned with data $statusCode');
+          finalRes.addAll({
+            'status_code': statusCode,
+            'body': resBody,
+            'data': jsonDecode(resBody)
+          });
       }
+    } on http.ClientException catch (e) {
+      _logs.warning(message: 'post() raised ClientException -> $e');
     } catch (e) {
-      return {'error': e};
+      _logs.warning(message:'post() unhandled unexpected post() error (statusCode: $statusCode, body: $resBody)');
     }
-    return {'error': 'unhandled unexpected get() error'};
+
+    return finalRes;
   }
 
-  Future<Map<String, dynamic>> post(
-      {required String route,
-      Map<String, String>? headers,
-      Object? body}) async {
-    _logs.info(
-        message: 'post() -> route: $route, headers: $headers, body: $body');
-    http.Response? response;
-    try {
-      response =
-          await http.post(Uri.parse(route), headers: headers, body: body);
-      if (response.statusCode == 500) {
-        _logs.error(
-            message:
-                'post() $route, returned with error ${response.statusCode}');
-        return {
-          'error': response.statusCode,
-          'data': {'err': 'internal server error (code 500)'}
-        };
-      } else if (response.statusCode == 400) {
-        _logs.warning(
-            message:
-                'post() $route, returned with error ${response.statusCode}');
-        return {
-          'error': response.statusCode,
-          'data': jsonDecode(response.body)
-        };
-      } else if (response.statusCode == 401) {
-        _logs.warning(
-            message:
-                'post() $route, returned with error ${response.statusCode}');
-        return {
-          'error': response.statusCode,
-          'data': jsonDecode(response.body)
-        };
-      }
-      if (response.statusCode == 200) {
-        _logs.success(
-            message:
-                'post() $route, returned with data ${response.statusCode}');
-        return {
-          'success': response.statusCode,
-          'data': jsonDecode(response.body)
-        };
-      }
-    } catch (e) {
-      throw Exception(e);
-    }
-    _logs.warning(
-        message:
-            'post() unhandled unexpected post() error (statusCode: ${response.statusCode}, body: ${response.body})');
-    return {
-      'error': 'unhandled unexpected post() error',
-      'status_code': response.statusCode,
-      'body': response.body
-    };
+  /// Get request for api, returns a the response status code and the body if available
+  Future<dynamic> get({
+    required String route,
+    Map<String,String>? headers }) async {
+
+    _logs.info(message: 'get() $route, headers: ${headers ?? 'none'}');
+
+    Map<String, dynamic> result = await _request(
+        route: route,
+        method: right(http.get),
+        headers: headers,
+    );
+
+    return result;
+  }
+
+  Future<Map<String, dynamic>> post({
+    required String route,
+    Map<String, String>? headers,
+    Object? body }) async {
+
+    _logs.info(message: 'post() -> route: $route, headers: $headers, body: $body');
+
+    Map<String, dynamic> result = await _request(
+        route: route,
+        method: left(http.post),
+        headers: headers,
+        body: body
+    );
+
+    return result;
   }
 
   Future<Map<String, dynamic>> put(
       {required String route,
       Map<String, String>? headers,
       Object? body}) async {
-    try {
-      _logs.info(
-          message:
-              'put() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
-      final response =
-          await http.put(Uri.parse(route), headers: headers, body: body);
-      if (response.statusCode == 500) {
-        _logs.error(
-            message:
-                'put() $route, returned with error ${response.statusCode}');
-        return {
-          'error': response.statusCode,
-          'data': {'err': 'internal server error (code 500)'}
-        };
-      } else if (response.statusCode == 400) {
-        _logs.warning(
-            message:
-                'put() $route, returned with error ${response.statusCode}');
-        return {
-          'error': response.statusCode,
-          'data': jsonDecode(response.body)
-        };
-      } else if (response.statusCode == 401) {
-        _logs.warning(
-            message:
-                'put() $route, returned with error ${response.statusCode}');
-        return {
-          'error': response.statusCode,
-          'data': jsonDecode(response.body)
-        };
-      }
-      if (response.statusCode == 200) {
-        _logs.success(
-            message: 'put() $route, returned with data ${response.statusCode}');
-        return {
-          'success': response.statusCode,
-          'data': jsonDecode(response.body)
-        };
-      }
-    } catch (e) {
-      throw Exception(e);
-    }
-    return {'error': 'unhandled unexpected put() error'};
+
+    _logs.info(
+        message:
+          'put() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
+
+    Map<String, dynamic> result = await _request(
+        route: route,
+        method: left(http.put),
+        headers: headers,
+        body: body
+    );
+
+    return result;
   }
 
   Future<Map<String, dynamic>> patch(
       {required String route,
       Map<String, String>? headers,
       Object? body}) async {
-    try {
-      _logs.info(
-          message:
-              'patch() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
-      final response =
-          await http.patch(Uri.parse(route), headers: headers, body: body);
-      if (response.statusCode == 500) {
-        _logs.error(
-            message:
-                'patch() $route, returned with error ${response.statusCode}');
-        return {
-          'error': response.statusCode,
-          'data': {'err': 'internal server error (code 500)'}
-        };
-      } else if (response.statusCode == 400) {
-        _logs.warning(
-            message:
-                'patch() $route, returned with error ${response.statusCode}');
-        return {
-          'error': response.statusCode,
-          'data': jsonDecode(response.body)
-        };
-      } else if (response.statusCode == 401) {
-        _logs.warning(
-            message:
-                'patch() $route, returned with error ${response.statusCode}');
-        return {
-          'error': response.statusCode,
-          'data': jsonDecode(response.body)
-        };
-      }
-      if (response.statusCode == 200) {
-        _logs.success(
-            message:
-                'patch() $route, returned with data ${response.statusCode}');
-        return {
-          'success': response.statusCode,
-          'data': jsonDecode(response.body)
-        };
-      }
-    } catch (e) {
-      throw Exception(e);
-    }
-    return {'error': 'unhandled unexpected patch() error'};
+
+    _logs.info(
+        message:
+          'put() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
+
+    Map<String, dynamic> result = await _request(
+        route: route,
+        method: left(http.patch),
+        headers: headers,
+        body: body
+    );
+
+    return result;
   }
 
-  void channelConnect({required String route, Map<String, String>? headers, Object? body, required StreamController controller, required String deviceID}) {
-    try {
-      _logs.info(message: "channelConnect initializing");
-      final channel = WebSocketChannel.connect(Uri.parse(route));
-      _logs.info(message: 'stream response: ${channel.stream}');
-      channel.stream.listen((data) async {
-        _logs.info(message: 'stream data type: ${data.runtimeType}');
-        final Map<String, dynamic> decodedData = jsonDecode(data);
-        _logs.info(message: 'decoded data: $decodedData');
-        
-        if (decodedData['message']['device_id'] == deviceID) {
-          _logs.info(message: 'if statement for device_id == deviceID $deviceID');
-          final Map<String, dynamic> messageData = decodedData['message'];
-          _logs.info(message: 'message data: $messageData');
-          final SensorNodeSnapshot mappedData = SensorNodeSnapshot.fromJSON(messageData);
-          _logs.info(message: 'Mapped Data: $mappedData');
-          _logs.info(message: 'Adding Mapped Data to SQFLITE');
-          DatabaseHelper.addReadings(mappedData);
-          _logs.info(message: 'Checking if $deviceID sqlite readings record reached limit');
-          DatabaseHelper.readingsLimit(deviceID);
-          controller.add(mappedData);
-          await Future<void>.delayed(const Duration(seconds: 4));
-        }else{
-          _logs.info(message: "device ID not matched skipping");
-        }
-      });
-    } catch (e) {
-      _logs.error(message: 'Failed to connect to websocket');
-      _logs.error(message: '$e');
-      throw Exception(e);
-    }
-    return;
-  }
-
-  WebSocketChannel snReadingsChannel({
+  void connectSeReadingsChannel({
     required String route,
-    required StreamController streamController}) {
-    // initialize channel
-    final WebSocketChannel channel = WebSocketChannel.connect(Uri.parse(route));
-    // add listener
-    channel.stream.listen((data) {
-      final Map<String, dynamic> decodedData = jsonDecode(data);
-      final SensorNodeSnapshot snapshotObj = SensorNodeSnapshot.fromJSON(decodedData['message']);
-      DatabaseHelper.addReadings(snapshotObj);
-      DatabaseHelper.readingsLimit(snapshotObj.deviceID);
-      // pass to stream controller
-      streamController.add(snapshotObj);
-      _logs.info(message: 'snapshotObj sent added to snReadingsStreamController -> ${snapshotObj.toString()}');
-    });
-    // return channel instance
-    return channel;
-  }
+    required BuildContext context}) {
 
-  void channelReadings({required String route, required StreamController controller, required String deviceID, required BuildContext context}){
+    WebSocketChannel? channel;
     try{
-      final channel = WebSocketChannel.connect(Uri.parse(route));
-      channel.stream.listen((data){
-        final Map<String,dynamic> decodedData = jsonDecode(data);
-        _logs.info(message: 'alerts decoded: $decodedData');
-        if(decodedData['message']['device_id'] == deviceID){
-          final Map<String,dynamic> messageData = decodedData['message'];
-          _logs.info(message: 'alerts message data: $messageData');
-          _logs.info(message: 'alerts data jsonfield: ${messageData['data']['soil_moisture']}');
-          DatabaseHelper.addReadings(SensorNodeSnapshot.fromJSON(messageData));
-          _logs.info(message: 'Checking if $deviceID sqlite readings record reached limit');
-          DatabaseHelper.readingsLimit(deviceID);
-          final SMAlerts mappedData = SMAlerts.fromJSON(messageData);
-          context.read<DevicesProvider>().sensorNodeAlerts(alertMessage: mappedData);
-          _logs.info(message: 'alerts mapped data: ${mappedData.data['soil_moisture']}');
-          controller.add(mappedData);
-        }else{
-          _logs.info(message: 'deviceID not matching');
-        }
-      });
-    }catch(e){
-      throw Exception(e);
+      channel = WebSocketChannel.connect(Uri.parse(route));
+    } on WebSocketChannelException catch (e) {
+      _logs.warning(message: 'connectAlertsChannel() called WebSocketChannelException : $route -> $e');
+    } on Exception catch (e) {
+      _logs.warning(message: 'connectAlertsChannel() unhandled unexpected exception raised : $route -> $e');
     }
+
+    if (channel == null) {
+      return;
+    }
+
+    channel.stream.listen(
+      (data) {
+        final Map<String, dynamic> decodedData = jsonDecode(data);
+        final SensorNodeSnapshot snapshotObj = SensorNodeSnapshot.fromJSON(decodedData['message']);
+        DatabaseHelper.readingsLimit(snapshotObj.deviceID);
+        DatabaseHelper.addReadings(snapshotObj);
+        // pass to stream controller
+        //streamController.add(snapshotObj);
+
+        if (context.mounted) {
+          context.read<DevicesProvider>().setNewSensorSnapshot(snapshotObj);
+        }
+
+        _logs.warning(message: 'Listener attached to WebSocketChannel');
+      }, onError: (err) {
+        _logs.warning(message: 'connectAlertsChannel() error in stream.listen : $route -> $err');
+    }, onDone: () {
+      channel!.sink.close();
+    });
+
     return;
   }
 
-  WebSocketChannel alertsChannel ({
+  void disconnectSeReadingsWs() {
+    if (_seReadingsWsChannel != null) {
+      _seReadingsWsChannel!.sink.close();
+    }
+  }
+
+  void connectAlertsChannel ({
     required String route,
-    required StreamController streamController}) {
-    // initialize channel
-    final WebSocketChannel channel = WebSocketChannel.connect(Uri.parse(route));
-    // add listener
-    channel.stream.listen((data){
-      final Map<String,dynamic> decodedData = jsonDecode(data);
-      DatabaseHelper.addReadings(SensorNodeSnapshot.fromJSON(decodedData['message']));
-      // alert object
-      final SMAlerts alertObj = SMAlerts.fromJSON(decodedData['message']);
-      streamController.add(alertObj);
-      _logs.info(message: 'alertObject sent added to alertStreamController -> ${alertObj.toString()}');
+    required BuildContext context}) {
+
+    WebSocketChannel? channel;
+    try{
+      channel = WebSocketChannel.connect(Uri.parse(route));
+    } on WebSocketChannelException catch (e) {
+      _logs.warning(message: 'connectAlertsChannel() called WebSocketChannelException : $route -> $e');
+    } on Exception catch (e) {
+      _logs.warning(message: 'connectAlertsChannel() unhandled unexpected exception raised : $route -> $e');
+    }
+
+    if (channel == null) {
+      return;
+    }
+
+    channel.stream.listen(
+      (data) {
+        final Map<String, dynamic> decodedData = jsonDecode(data);
+        final SensorNodeSnapshot snapshotObj = SensorNodeSnapshot.fromJSON(decodedData['message']);
+        DatabaseHelper.readingsLimit(snapshotObj.deviceID);
+        DatabaseHelper.addReadings(snapshotObj);
+
+        final SMAlerts alertObj = SMAlerts.fromJSON(decodedData['message']);
+
+        // pass to stream controller
+        //streamController.add(alertObj);
+
+        if (context.mounted) {
+          // TODO add alertObj context update
+          context.read<DevicesProvider>().setNewSensorSnapshot(snapshotObj);
+        }
+      }, onError: (err) {
+        _logs.warning(message: 'connectAlertsChannel() error in stream.listen : $route -> $err');
+    }, onDone: () {
+        channel!.sink.close();
     });
-    // return channel instance
-    return channel;
+
+    return;
+  }
+
+  void disconnectAlertsWs() {
+    if (_alertsWsChannel != null) {
+      _alertsWsChannel!.sink.close();
+    }
   }
 }

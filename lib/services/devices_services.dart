@@ -13,8 +13,7 @@ part 'devices/sensor_data.dart';
 part 'devices/sink_data.dart';
 
 class DevicesServices {
-  final _SensorNodeDataServices _sensorNodeDataServices =
-      _SensorNodeDataServices();
+  final _SensorNodeDataServices _sensorNodeDataServices =_SensorNodeDataServices();
   final _SinkNodeDataServices _sinkNodeDataServices = _SinkNodeDataServices();
 
   // dependencies
@@ -26,58 +25,46 @@ class DevicesServices {
   final Logs _logs = Logs(tag: 'DevicesServices()');
 
   /// Retrieves all devices registered to the user, requires the user id
-  Future<List<Map<String, dynamic>>> getDevices({required String userID, required String token}) async {
-    String? accessToken;
-    TokenStatus accessStatus = await _authUtils.verifyToken(token: token);
-
-    if (accessStatus != TokenStatus.valid) {
-      Map<String, dynamic> refresh =
-          await _sharedPrefsUtils.getTokens(refresh: true);
-      accessToken =
-          await _authUtils.refreshAccessToken(refresh: refresh['refresh']);
-      await _authProvider.setAccess(access: accessToken!);
-    }
-
-    final Map<String, dynamic> data = await _apiRequest.get(
-        route: _apiRoutes.getDevices,
-        headers: {'Authorization': 'Bearer $token', 'UID': userID});
-
-    if (data.containsKey('error') || data.isEmpty || data['data'] == null) {
-      _logs.error(
-          message:
-              'data received from ApiRequest().get() contains error or invalid value: ${data.values}');
-      throw Exception('unhandled error on DevicesServices().getDevices()');
-    }
-
-    _logs.info(message: data['data'].toString());
-
-    List<dynamic> sinkNodesUnparsed = data['data'];
+  Future<List<Map<String, dynamic>>?> getDevices({
+    required String userID,
+    required String token}) async {
 
     List<Map<String, dynamic>> sinkNodesParsed = [];
 
-    // parse devices
-    for (int i = 0; i < sinkNodesUnparsed.length; i++) {
-      List<dynamic> sensorNodesUnparsed = sinkNodesUnparsed[i]['sensor_nodes'];
-      List<Map<String, dynamic>> sensorNodesParsed = [];
-      for (int x = 0; x < sensorNodesUnparsed.length; x++) {
-        sensorNodesParsed.add({
-          'device_id': sensorNodesUnparsed[x]['device_id'],
-          'name': sensorNodesUnparsed[x]['name'],
-          'latitude' : sensorNodesUnparsed[x]['latitude'],
-          'longitude' : sensorNodesUnparsed[x]['longitude'],
+    final Map<String, dynamic> data = await _apiRequest.get(
+        route: _apiRoutes.getDevices,
+        headers: {'Authorization': 'Bearer $token', 'UID': userID}
+    );
+
+    if (data.containsKey('error') || data.isEmpty || data['data'] == null) {
+      _logs.error(message:'data received from ApiRequest().get() contains error or invalid value: ${data.values}');
+    } else {
+      List<dynamic> sinkNodesUnparsed = data['data'];
+
+      // parse devices
+      for (var sinkUnparsed in sinkNodesUnparsed) {
+        List<dynamic> sensorNodesUnparsed = sinkUnparsed['sensor_nodes'];
+        List<Map<String, dynamic>> sensorNodesParsed = [];
+        for (var sensorUnparsed in sensorNodesUnparsed) {
+          sensorNodesParsed.add({
+            'device_id': sensorUnparsed['device_id'],
+            'name': sensorUnparsed['name'],
+            'latitude' : sensorUnparsed['latitude'],
+            'longitude' : sensorUnparsed['longitude'],
+          });
+        }
+        sinkNodesParsed.add({
+          'device_id': sinkUnparsed['device_id'],
+          'name': sinkUnparsed['name'],
+          'latitude' : sinkUnparsed['latitude'],
+          'longitude' : sinkUnparsed['longitude'],
+          'sensor_nodes': sensorNodesParsed
         });
       }
-      sinkNodesParsed.add({
-        'device_id': sinkNodesUnparsed[i]['device_id'],
-        'name': sinkNodesUnparsed[i]['name'],
-        'latitude' : sinkNodesUnparsed[i]['latitude'],
-        'longitude' : sinkNodesUnparsed[i]['longitude'],
-        'sensor_nodes': sensorNodesParsed
-      });
     }
 
     // type: List<Map<String, dynamic>>
-    return sinkNodesParsed;
+    return sinkNodesParsed.isNotEmpty ? sinkNodesParsed : null;
   }
 
   /// Returns sensor node snapshot data (`deviceID`, `timestamp`, `soilMoisture`, `temperature`, `humidity`, `batteryLevel`)

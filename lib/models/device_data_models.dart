@@ -1,5 +1,27 @@
 import 'dart:convert';
 
+enum SinkNodeKeys{
+  deviceID('device_id'),
+  deviceName('name'),
+  latitude('latitude'),
+  longitude('longitude'),
+  registeredSensorNodes('sensor_nodes');
+
+  final String key;
+  const SinkNodeKeys(this.key);
+}
+
+enum SensorNodeKeys{
+  deviceID('device_id'),
+  deviceName('name'),
+  latitude('latitude'),
+  longitude('longitude'),
+  sinkNode('sink_node');
+
+  final String key;
+  const SensorNodeKeys(this.key);
+}
+
 class Device {
   final String deviceID;
   String deviceName;
@@ -33,11 +55,11 @@ class SinkNode extends Device {
   //TODO: add logic to check if a device already exists (caching or from shared prefs)
   factory SinkNode.fromJSON(Map<String, dynamic> deviceInfo) {
     return SinkNode._internal(
-      deviceID: deviceInfo['deviceID'],
-      deviceName: deviceInfo['deviceName'],
-      longitude: deviceInfo['longitude'],
-      latitude: deviceInfo['latitude'],
-      registeredSensorNodes: deviceInfo['registeredSensorNodes']
+      deviceID: deviceInfo[SinkNodeKeys.deviceID.key],
+      deviceName: deviceInfo[SinkNodeKeys.deviceName.key],
+      longitude: deviceInfo[SinkNodeKeys.longitude.key],
+      latitude: deviceInfo[SinkNodeKeys.latitude.key],
+      registeredSensorNodes: deviceInfo[SinkNodeKeys.registeredSensorNodes.key]
     );
   }
 }
@@ -56,11 +78,11 @@ class SensorNode extends Device {
   //TODO: add logic to check if a device already exists (caching or from shared prefs)
   factory SensorNode.fromJSON(Map<String, dynamic> deviceInfo) {
     return SensorNode._internal(
-      deviceID: deviceInfo['deviceID'],
-      deviceName: deviceInfo['deviceName'],
-      latitude:deviceInfo['latitude'],
-      longitude: deviceInfo['longitude'],
-      registeredSinkNode: deviceInfo['sinkNodeID']
+      deviceID: deviceInfo[SensorNodeKeys.deviceID.key],
+      deviceName: deviceInfo[SensorNodeKeys.deviceName.key],
+      latitude:deviceInfo[SensorNodeKeys.latitude.key],
+      longitude: deviceInfo[SensorNodeKeys.longitude.key],
+      registeredSinkNode: deviceInfo[SensorNodeKeys.sinkNode.key]
     );
   }
 }
@@ -103,6 +125,43 @@ class SensorNodeSnapshot {
         humidity: 0,
         batteryLevel: 0
     );
+  }
+
+  static SensorNodeSnapshot? dynamicSerializer({required var data}) {
+    SensorNodeSnapshot? finalSnapshot;
+
+    if (data is Map<String, dynamic>) {
+      // TODO: verify keys first
+      finalSnapshot = SensorNodeSnapshot.fromJSON(data);
+    } else if (data is String) {
+      // assuming that if the reading variable is a string, it is an mqtt payload
+      Map<String, dynamic> fromStringMap = {};
+      List<String> outerSplit = data.split(';');
+
+      fromStringMap.addAll({
+        'device_id': outerSplit[1],
+        'timestamp': outerSplit[2],
+      });
+
+      List<String> dataSplit = outerSplit[3].split('&');
+
+      for (String keyValue in dataSplit) {
+        try {
+          List<String> x = keyValue.split(':');
+          fromStringMap.addAll({x[0]: x[1]});
+        } on FormatException catch (e) {
+          break;
+        }
+      }
+
+      // create a new sensor node snapshot object from the new string map
+      finalSnapshot = SensorNodeSnapshot.fromJSON(fromStringMap);
+
+    } else if (data is SensorNodeSnapshot) {
+      finalSnapshot = data;
+    }
+
+    return finalSnapshot;
   }
 
   Map<String,dynamic> toJson() => {

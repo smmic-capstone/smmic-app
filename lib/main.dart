@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
+import 'package:smmic/constants/api.dart';
 import 'package:smmic/preload/preloaddevices.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/pages/login.dart';
@@ -9,6 +10,7 @@ import 'package:smmic/providers/mqtt_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/providers/user_data_provider.dart';
+import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/global_navigator.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
@@ -60,21 +62,17 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-  // utils
+  // utils, dependencies
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
-
-  // providers
-  final AuthProvider _authProvider = AuthProvider();
-  final UserDataProvider _userDataProvider = UserDataProvider();
+  final ApiRequest _apiRequest = ApiRequest();
+  final ApiRoutes _apiRoutes = ApiRoutes();
 
   Future<bool> _authCheck() async {
     _logs.info2(message: 'executing _authCheck()');
 
     String? login = await _sharedPrefsUtils.getLogin();
     if (login == null) {
-      _logs.info(
-          message:
-              'did not find login key from SharedPreferences, returning LoginPage()');
+      _logs.info(message:'did not find login key from SharedPreferences, returning LoginPage()');
       return false;
     }
 
@@ -84,6 +82,17 @@ class _AuthGateState extends State<AuthGate> {
 
   @override
   Widget build(BuildContext context) {
+
+    _apiRequest.connectSeReadingsChannel(
+        route: _apiRoutes.seReadingsWs,
+        context: context
+    );
+
+    _apiRequest.connectAlertsChannel(
+        route: _apiRoutes.seAlertsWs,
+        context: context
+    );
+
     return FutureBuilder(
         future: _authCheck(),
         builder: (context, AsyncSnapshot<bool> authCheckSnapshot) {
@@ -93,26 +102,28 @@ class _AuthGateState extends State<AuthGate> {
               child: const Center(child: CircularProgressIndicator()),
             );
           }
+
           if (authCheckSnapshot.hasError) {
             return const Center(
               child: Text('An unexpected error has occurred'),
             );
           }
+
           if (authCheckSnapshot.hasData) {
             bool authCheck = authCheckSnapshot.data!;
             if (!authCheck) {
               return const LoginPage();
             }
+
             // initiate user data when logged in
             context.read<UserDataProvider>().init();
             context.read<DevicesProvider>().init();
             context.read<AuthProvider>().init();
+            context.read<MqttProvider>().registerContext(context: context);
 
-            // TODO: fix this hack
             return const Stack(
               children: [
                 MyBottomNav(indexPage: 0),
-                /*PreloadDevices()*/
               ],
             );
           }

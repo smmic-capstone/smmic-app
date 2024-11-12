@@ -1,8 +1,16 @@
+import 'dart:async';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
+import 'package:provider/provider.dart';
+import 'package:smmic/models/device_data_models.dart';
+import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/services/mqtt_services.dart';
+import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/logs.dart';
+import 'package:smmic/utils/mqtt_utils.dart';
 
 class MqttProvider extends ChangeNotifier {
   // helpers, configs
@@ -16,6 +24,14 @@ class MqttProvider extends ChangeNotifier {
 
   MqttServerClient get mqttClient => _mqttServerClient;
   MqttConnectionState get connectionState => _mqttConnectionState;
+
+  // internal context object for mqtt
+  BuildContext? _context;
+
+  void registerContext({required BuildContext context}){
+    _context = context;
+    notifyListeners();
+  }
 
   /// Initializes and connects the MqttClient
   ///
@@ -45,6 +61,24 @@ class MqttProvider extends ChangeNotifier {
       _logs.success(message: 'mqtt client init done...');
     }
     _mqttConnectionState = mqttConnect.$1.connectionStatus!.state;
+
+    mqttConnect.$1.updates!.listen((messages) {
+      final MqttReceivedMessage<MqttMessage> recMes = messages[0];
+      final MqttPublishMessage mes = recMes.payload as MqttPublishMessage;
+      final String payload = MqttPublishPayload.bytesToStringAsString(mes.payload.message);
+
+      // store to sqlite
+      Map<String, dynamic>? mappedPayload = MqttUtils().mapSensorPayload(payload);
+      if (mappedPayload != null) {
+        SensorNodeSnapshot snapshot = SensorNodeSnapshot.fromJSON(mappedPayload);
+        DatabaseHelper.addReadings(snapshot);
+        DatabaseHelper.readingsLimit(snapshot.deviceID);
+
+        if (_context != null && _context!.mounted){
+          _context!.read<DevicesProvider>().setNewSensorSnapshot(snapshot);
+        }
+      }
+    });
 
     notifyListeners();
     return mqttConnect.$2;

@@ -22,6 +22,7 @@ class MergedStreamExample extends StatelessWidget {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return CircularProgressIndicator();
             } else if (snapshot.hasData) {
+              print('new - data -----> ${snapshot.data}');
               if (snapshot.data is int){
                 return Text('Latest data: Stream 1 - ${snapshot.data}');
               } else if (snapshot.data is String) {
