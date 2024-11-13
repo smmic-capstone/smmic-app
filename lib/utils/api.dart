@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:smmic/models/device_data_models.dart';
@@ -213,7 +214,7 @@ class ApiRequest {
     return {'error': 'unhandled unexpected patch() error'};
   }
 
-  void channelConnect({required String route, Map<String, String>? headers, Object? body, required StreamController controller, required String deviceID}) {
+  void channelConnect({required String route, Map<String, String>? headers, Object? body, required StreamController controller, required String deviceID, required BuildContext context}) {
     try {
       _logs.info(message: "channelConnect initializing");
       final channel = WebSocketChannel.connect(Uri.parse(route));
@@ -228,6 +229,7 @@ class ApiRequest {
           final Map<String, dynamic> messageData = decodedData['message'];
           _logs.info(message: 'message data: $messageData');
           final SensorNodeSnapshot mappedData = SensorNodeSnapshot.fromJSON(messageData);
+          context.read<DevicesProvider>().sensorReadings(readingsData: mappedData);
           _logs.info(message: 'Mapped Data: $mappedData');
           _logs.info(message: 'Adding Mapped Data to SQFLITE');
           DatabaseHelper.addReadings(mappedData);
@@ -257,7 +259,11 @@ class ApiRequest {
           final Map<String,dynamic> messageData = decodedData['message'];
           _logs.info(message: 'alerts message data: $messageData');
           _logs.info(message: 'alerts data jsonfield: ${messageData['data']['soil_moisture']}');
-          DatabaseHelper.addReadings(SensorNodeSnapshot.fromJSON(messageData));
+
+          final SensorNodeSnapshot readingsData = SensorNodeSnapshot.fromJSON(messageData);
+          DatabaseHelper.addReadings(readingsData);
+          context.read<DevicesProvider>().sensorReadings(readingsData: readingsData);
+
           _logs.info(message: 'Checking if $deviceID sqlite readings record reached limit');
           DatabaseHelper.readingsLimit(deviceID);
           final SMAlerts mappedData = SMAlerts.fromJSON(messageData);

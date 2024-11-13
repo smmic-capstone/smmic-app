@@ -28,6 +28,9 @@ class DevicesProvider extends ChangeNotifier {
   List<SensorNodeSnapshot?> _sensorNodeSnapshotList = [];
   List<SensorNodeSnapshot?> get sensorNodeSnapshotList => _sensorNodeSnapshotList;
 
+  SensorNodeSnapshot? _sensorCardReadings;
+  SensorNodeSnapshot? get sensorCardReadings => _sensorCardReadings;
+
   SMAlerts? _alertCode;
   SMAlerts? get alertCode => _alertCode;
 
@@ -128,6 +131,15 @@ class DevicesProvider extends ChangeNotifier {
     _sensorNodeSnapshotList.add(latestReading);
 
     notifyListeners();
+
+  }
+
+  Future<void> sensorReadings ({required SensorNodeSnapshot? readingsData}) async {
+    _logs.info(message: "sensorReadings initialized");
+
+    _sensorCardReadings =  readingsData;
+
+    notifyListeners();
   }
 
   Future<void> sensorNodeAlerts ({required SMAlerts alertMessage}) async {
@@ -157,9 +169,9 @@ class DevicesProvider extends ChangeNotifier {
     if(alertMessage.alerts >= 20 && alertMessage.alerts < 30){
       _humidityAlert =  alertMessage;
     }else if(alertMessage.alerts >= 30 && alertMessage.alerts < 40){
-      _tempAlert = alertCode;
+      _tempAlert = alertMessage;
     }else if(alertMessage.alerts >= 40 && alertMessage.alerts < 50){
-      _moistureAlert = alertCode;
+      _moistureAlert = alertMessage;
     }
 
     notifyListeners();

@@ -36,6 +36,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
   StreamController<SMAlerts> get smStreamController => _alertsStreamController;
   StreamController<SensorNodeSnapshot> get streamController => _snapshotStreamController;
 
+
+
   SensorNodeSnapshot? cardReadings;
   SensorNodeSnapshot? sqlCardReadings;
   SMAlerts? alertsStreamData;
@@ -49,6 +51,12 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
   int? moistureAlert;
 
   SensorNodeSnapshot? readingsData;
+
+  Stream<List<dynamic>> combinedStream = Rx.combineLatest2(
+      StreamController<SensorNodeSnapshot>.broadcast().stream,
+      StreamController<SMAlerts>.broadcast().stream,
+      (SensorNodeSnapshot readingsData, SMAlerts alertsData) => [readingsData, alertsData],
+  );
 
   /*double? humidity;
   double? temperature;
@@ -119,6 +127,9 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                     stream: _snapshotStreamController.stream,
                     builder: (context, snapshot){
 
+
+
+
                       sqlCardReadings = context.watch<DevicesProvider>().sensorNodeSnapshotList.firstWhere((sensorNode) => sensorNode?.deviceID == widget.deviceInfo.deviceID,
                           orElse: () => SensorNodeSnapshot.fromJSON({
                             'device_id' : widget.deviceInfo.deviceID,
@@ -131,6 +142,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
 
                       if(snapshot.hasData && snapshot.data?.deviceID == widget.deviceInfo.deviceID){
                         cardReadings = snapshot.data;
+
                       }
 
                       return StreamBuilder<SMAlerts>(
