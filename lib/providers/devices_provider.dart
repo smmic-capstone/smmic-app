@@ -151,7 +151,6 @@ class DevicesProvider extends ChangeNotifier {
     // acquire sensor nodes and add to sensorNodeMap
     for (Map<String, dynamic> sinkMap in devices) {
       List<Map<String, dynamic>> sensorMapList = sinkMap['sensor_nodes'];
-
       for (Map<String, dynamic> sensorMap in sensorMapList) {
         SensorNode sensor = _deviceUtils.sensorNodeMapToObject(
             sensorMap: sensorMap,
@@ -167,9 +166,6 @@ class DevicesProvider extends ChangeNotifier {
   Future<bool> _setDeviceListFromSharedPrefs() async {
     List<Map<String, dynamic>> sinkList = await _sharedPrefsUtils.getSinkList();
     List<Map<String, dynamic>> sensorList = await _sharedPrefsUtils.getSensorList();
-
-    _logs.error(message: sinkList.toString());
-    _logs.error(message: sensorList.toString());
 
     for (Map<String, dynamic> sinkMap in sinkList) {
       SinkNode sinkObj = _deviceUtils.sinkNodeMapToObject(sinkMap);

@@ -128,11 +128,12 @@ class _AuthGateState extends State<AuthGate> {
                       connectivity: context.read<ConnectionProvider>().connectionStatus
                   );
 
-                  _apiRequest.connectSeReadingsChannel(
+                  _apiRequest.initSeReadingsWSChannel(
                       route: _apiRoutes.seReadingsWs,
                       context: context
                   );
-                  _apiRequest.connectAlertsChannel(
+
+                  _apiRequest.initSeAlertsWSChannel(
                       route: _apiRoutes.seAlertsWs,
                       context: context
                   );
