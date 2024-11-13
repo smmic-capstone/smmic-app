@@ -74,7 +74,7 @@ class ComponentDrawerState extends State<ComponentDrawer> {
           ),
           GestureDetector(
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => MergedStreamExample()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => ConnectivityExample()));
             },
             child: const ListTile(
               leading: Icon(Icons.science_outlined), title: Text('Lab'),

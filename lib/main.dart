@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/preload/preloaddevices.dart';
+import 'package:smmic/providers/connections_provider.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/pages/login.dart';
 import 'package:smmic/providers/devices_provider.dart';
@@ -22,14 +23,13 @@ void main() {
   GlobalNavigator().setupLocator();
   runApp(MultiProvider(
     providers: [
-      ChangeNotifierProvider<DeviceListOptionsNotifier>(
-          create: (_) => DeviceListOptionsNotifier()),
+      ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
       ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
-      ChangeNotifierProvider<UserDataProvider>(
-          create: (_) => UserDataProvider()),
+      ChangeNotifierProvider<UserDataProvider>(create: (_) => UserDataProvider()),
       ChangeNotifierProvider<UiProvider>(create: (_) => UiProvider()),
       ChangeNotifierProvider<DevicesProvider>(create: (_) => DevicesProvider()),
-      ChangeNotifierProvider<MqttProvider>(create: (_) => MqttProvider())
+      ChangeNotifierProvider<MqttProvider>(create: (_) => MqttProvider()),
+      ChangeNotifierProvider<ConnectionProvider>(create: (_) => ConnectionProvider())
     ],
     child: const MyApp(),
   ));
@@ -83,16 +83,6 @@ class _AuthGateState extends State<AuthGate> {
   @override
   Widget build(BuildContext context) {
 
-    _apiRequest.connectSeReadingsChannel(
-        route: _apiRoutes.seReadingsWs,
-        context: context
-    );
-
-    _apiRequest.connectAlertsChannel(
-        route: _apiRoutes.seAlertsWs,
-        context: context
-    );
-
     return FutureBuilder(
         future: _authCheck(),
         builder: (context, AsyncSnapshot<bool> authCheckSnapshot) {
@@ -120,6 +110,17 @@ class _AuthGateState extends State<AuthGate> {
             context.read<DevicesProvider>().init();
             context.read<AuthProvider>().init();
             context.read<MqttProvider>().registerContext(context: context);
+            context.read<ConnectionProvider>().init();
+
+            _apiRequest.connectSeReadingsChannel(
+                route: _apiRoutes.seReadingsWs,
+                context: context
+            );
+
+            _apiRequest.connectAlertsChannel(
+                route: _apiRoutes.seAlertsWs,
+                context: context
+            );
 
             return const Stack(
               children: [

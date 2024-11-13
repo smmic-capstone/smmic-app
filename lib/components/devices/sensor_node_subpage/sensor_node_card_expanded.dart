@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/models/device_data_models.dart';
+import 'package:smmic/providers/connections_provider.dart';
 import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/services/devices_services.dart';
 import 'package:smmic/sqlitedb/db.dart';
@@ -27,6 +29,23 @@ class SensorNodeCardExpanded extends StatefulWidget {
   State<SensorNodeCardExpanded> createState() => _SensorNodeCardExpandedState();
 }
 
+double getOpacity(ConnectivityResult connection) {
+  double opacity = 1;
+  switch (connection) {
+    case ConnectivityResult.wifi:
+      opacity = 1;
+      break;
+    case ConnectivityResult.mobile:
+      opacity = 1;
+      break;
+    default:
+      opacity = 0.25;
+      break;
+  }
+  return opacity;
+}
+
+
 class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
   final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
 
@@ -37,6 +56,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
         ?? SensorNodeSnapshot.placeHolder(deviceId: widget.deviceID);
 
     double height = MediaQuery.sizeOf(context).height;
+    ConnectivityResult connectionStatus = context.watch<ConnectionProvider>().connectionStatus;
 
     return Container(
       margin: EdgeInsets.symmetric(vertical: 15),
@@ -82,7 +102,8 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                 valueType: 'soilMoisture',
                 value: deviceSnapshot.soilMoisture,
                 limit: 100,
-                scaleMultiplier: 1.5
+                scaleMultiplier: 1.5,
+              opacity: getOpacity(connectionStatus),
             ),
           ),
           Expanded(
@@ -98,6 +119,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                         value: deviceSnapshot.temperature,
                         limit: 100,
                         radiusMultiplier: 0.9,
+                        opacity: getOpacity(connectionStatus),
                       ),
                     ),
                     SizedBox(
@@ -107,6 +129,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                         value: deviceSnapshot.humidity,
                         limit: 100,
                         radiusMultiplier: 0.9,
+                        opacity: getOpacity(connectionStatus),
                       ),
                     ),
                   ],

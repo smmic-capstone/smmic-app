@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/pages/devices_subpages/sensor_node_subpage.dart';
+import 'package:smmic/providers/connections_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/subcomponents/devices/battery_level.dart';
@@ -66,6 +68,22 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
     return colorMap[alertCode] ?? Colors.grey;
   }
 
+  double getOpacity(ConnectivityResult connection) {
+    double opacity = 1;
+    switch (connection) {
+      case ConnectivityResult.wifi:
+        opacity = 1;
+        break;
+      case ConnectivityResult.mobile:
+        opacity = 1;
+        break;
+      default:
+        opacity = 0.25;
+        break;
+    }
+    return opacity;
+  }
+
   @override
   Widget build(BuildContext context) {
     final SensorNodeSnapshot deviceSnapshot = widget.deviceSnapshot ?? SensorNodeSnapshot.placeHolder(deviceId: widget.deviceInfo.deviceID);
@@ -76,6 +94,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
         latitude: widget.deviceInfo.latitude,
         longitude: widget.deviceInfo.longitude
     );
+
+    ConnectivityResult connectionStatus = context.watch<ConnectionProvider>().connectionStatus;
 
     return GestureDetector(
       onTap: () =>
@@ -138,10 +158,12 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                                 DigitalDisplay(
                                   value: deviceSnapshot.temperature,
                                   valueType: 'temperature',
+                                  opacityOverride: getOpacity(connectionStatus),
                                 ),
                                 DigitalDisplay(
                                   value: deviceSnapshot.humidity,
                                   valueType: 'humidity',
+                                  opacityOverride: getOpacity(connectionStatus),
                                 )
                               ],
                             ),
@@ -153,7 +175,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                                 child: RadialGauge(
                                     valueType: 'soilMoisture',
                                     value:  deviceSnapshot.soilMoisture,
-                                    limit: 100)),
+                                    limit: 100,
+                                    opacity: getOpacity(connectionStatus))),
                           )
                         ],
                       )),
