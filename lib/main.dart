@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
 import 'package:smmic/constants/api.dart';
-import 'package:smmic/preload/preloaddevices.dart';
 import 'package:smmic/providers/connections_provider.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/pages/login.dart';
@@ -80,7 +79,7 @@ class _AuthGateState extends State<AuthGate> {
     return true;
   }
 
-  Future<void> loadProviders({
+  Future<void> _loadProviders({
     required BuildContext context,
   }) async {
     // initiate user data when logged in
@@ -88,7 +87,7 @@ class _AuthGateState extends State<AuthGate> {
     context.read<UserDataProvider>().init();
     context.read<AuthProvider>().init();
     context.read<MqttProvider>().registerContext(context: context);
-    await Future.delayed(const Duration(seconds: 5));
+    await Future.delayed(const Duration(seconds: 2));
     return;
   }
 
@@ -118,14 +117,15 @@ class _AuthGateState extends State<AuthGate> {
             }
 
             return FutureBuilder(
-                future: loadProviders(context: context),
+                future: _loadProviders(context: context),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+                    // TODO   add loading screen
+                    return const Center(child: CircularProgressIndicator());
                   }
 
                   context.read<DevicesProvider>().init(
-                      connectivity: context.watch<ConnectionProvider>().connectionStatus
+                      connectivity: context.read<ConnectionProvider>().connectionStatus
                   );
 
                   _apiRequest.connectSeReadingsChannel(

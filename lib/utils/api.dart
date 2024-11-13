@@ -28,8 +28,7 @@ class ApiRequest {
     required String route,
     required Either<
       Future<http.Response>Function(Uri, {Object? body, Encoding? encoding, Map<String, String>? headers}),
-      Future<http.Response>Function(Uri, {Map<String, String>? headers})>
-    method,
+      Future<http.Response>Function(Uri, {Map<String, String>? headers})> method,
     Map<String, String>? headers,
     Object? body}) async {
 
@@ -175,9 +174,9 @@ class ApiRequest {
     try{
       channel = WebSocketChannel.connect(Uri.parse(route));
     } on WebSocketChannelException catch (e) {
-      _logs.warning(message: 'connectAlertsChannel() called WebSocketChannelException : $route -> $e');
+      _logs.warning(message: 'connectSeReadingsChannel() called WebSocketChannelException : $route -> $e');
     } on Exception catch (e) {
-      _logs.warning(message: 'connectAlertsChannel() unhandled unexpected exception raised : $route -> $e');
+      _logs.warning(message: 'connectSeReadingsChannel() unhandled unexpected exception raised : $route -> $e');
     }
 
     if (channel == null) {
@@ -188,18 +187,19 @@ class ApiRequest {
       (data) {
         final Map<String, dynamic> decodedData = jsonDecode(data);
         final SensorNodeSnapshot snapshotObj = SensorNodeSnapshot.fromJSON(decodedData['message']);
+
+        // store data to sqlite database
         DatabaseHelper.readingsLimit(snapshotObj.deviceID);
         DatabaseHelper.addReadings(snapshotObj);
+
         // pass to stream controller
         //streamController.add(snapshotObj);
 
         if (context.mounted) {
           context.read<DevicesProvider>().setNewSensorSnapshot(snapshotObj);
         }
-
-        _logs.warning(message: 'Listener attached to WebSocketChannel');
       }, onError: (err) {
-        _logs.warning(message: 'connectAlertsChannel() error in stream.listen : $route -> $err');
+        _logs.warning(message: 'connectSeReadingsChannel() error in stream.listen : $route -> $err');
     }, onDone: () {
       channel!.sink.close();
     });
@@ -234,6 +234,8 @@ class ApiRequest {
       (data) {
         final Map<String, dynamic> decodedData = jsonDecode(data);
         final SensorNodeSnapshot snapshotObj = SensorNodeSnapshot.fromJSON(decodedData['message']);
+
+        // store data to sqlite
         DatabaseHelper.readingsLimit(snapshotObj.deviceID);
         DatabaseHelper.addReadings(snapshotObj);
 

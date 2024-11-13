@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -182,7 +183,7 @@ class SharedPrefsUtils {
   Future<bool> setSinkList({required List<Map<String,dynamic>> sinkList}) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
 
-    List <String> sinkData = sinkList.map(
+    List<String> sinkData = sinkList.map(
             (sink) => SinkNodeKeys.values.map(
                     (key) => (sink[key.key] == List<String>)
                         ? sink[key.key].join(",")

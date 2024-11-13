@@ -57,7 +57,8 @@ class DevicesProvider extends ChangeNotifier {
 
   Future<void> init({
     required ConnectivityResult connectivity}) async {
-    _logs.info(message: 'init() running');
+
+    await _setDeviceListFromSharedPrefs();
 
     // acquire user data and tokens from shared prefs
     Map<String, dynamic>? userData = await _sharedPrefsUtils.getUserData();
@@ -68,8 +69,63 @@ class DevicesProvider extends ChangeNotifier {
       return;
     }
 
-    await _setDeviceListFromApi(userData: userData, tokens: tokens);
+    if (connectivity != ConnectivityResult.none) {
+      await _setDeviceListFromApi(userData: userData, tokens: tokens);
+    }
+
+    await _loadReadingsFromSqFlite();
+
     notifyListeners();
+    await _setToSharedPrefs();
+  }
+
+  Future<bool> _setToSharedPrefs() async {
+
+    List<String> sinkNodeIds = _sinkNodeMap.keys.toList();
+    List<Map<String, dynamic>> sinkNodeMapList = [];
+    for (String id in sinkNodeIds) {
+      SinkNode skObj = _sinkNodeMap[id]!;
+      Map<String, dynamic> skMap = {
+        SinkNodeKeys.deviceID.key : skObj.deviceID,
+        SinkNodeKeys.deviceName.key : skObj.deviceName,
+        SinkNodeKeys.latitude.key : skObj.latitude,
+        SinkNodeKeys.longitude.key : skObj.longitude,
+        SinkNodeKeys.registeredSensorNodes.key : skObj.registeredSensorNodes
+      };
+      sinkNodeMapList.add(skMap);
+    }
+    await _sharedPrefsUtils.setSinkList(sinkList: sinkNodeMapList);
+
+    List<String> sensorNodeIds = _sensorNodeMap.keys.toList();
+    List<Map<String, dynamic>> sensorNodeMapList = [];
+    for (String id in sensorNodeIds) {
+      SensorNode seObj = _sensorNodeMap[id]!;
+      Map<String, dynamic> seMap = {
+        SensorNodeKeys.deviceID.key : seObj.deviceID,
+        SensorNodeKeys.deviceName.key : seObj.deviceName,
+        SensorNodeKeys.latitude.key : seObj.latitude,
+        SensorNodeKeys.longitude.key : seObj.longitude,
+        SensorNodeKeys.sinkNode.key : seObj.registeredSinkNode
+      };
+      sensorNodeMapList.add(seMap);
+    }
+    await _sharedPrefsUtils.setSensorList(sensorList: sensorNodeMapList);
+
+    return true;
+  }
+  
+  Future<bool> _loadReadingsFromSqFlite() async {
+    for (String seId in _sensorNodeMap.keys) {
+      SensorNodeSnapshot? fromSQFLiteSnapshot = await DatabaseHelper.getAllReadings(_sensorNodeMap[seId]!.deviceID);
+      if (fromSQFLiteSnapshot != null){
+        _sensorNodeSnapshotMap[_sensorNodeMap[seId]!.deviceID] = fromSQFLiteSnapshot;
+      }
+      List<SensorNodeSnapshot>? fromSQFLiteChartData = await DatabaseHelper.chartReadings(_sensorNodeMap[seId]!.deviceID);
+      if (fromSQFLiteChartData != null) {
+        _sensorNodeChartDataMap[_sensorNodeMap[seId]!.deviceID] = fromSQFLiteChartData;
+      }
+    }
+    return true;
   }
 
   // set device list with data from the api
@@ -102,30 +158,33 @@ class DevicesProvider extends ChangeNotifier {
             sinkNodeID: sinkMap['device_id']
         );
         _sensorNodeMap[sensor.deviceID] = sensor;
-
-        SensorNodeSnapshot? fromSQFLiteSnapshot = await DatabaseHelper.getAllReadings(sensor.deviceID);
-        if (fromSQFLiteSnapshot != null){
-          _sensorNodeSnapshotMap[sensor.deviceID] = fromSQFLiteSnapshot;
-        }
-        List<SensorNodeSnapshot>? fromSQFLiteChartData = await DatabaseHelper.chartReadings(sensor.deviceID);
-        if (fromSQFLiteChartData != null) {
-          _sensorNodeChartDataMap[sensor.deviceID] = fromSQFLiteChartData;
-        }
       }
     }
 
-    notifyListeners();
     return true;
   }
 
-  Future<void> _setDeviceListFromSharedPrefs() async {
+  Future<bool> _setDeviceListFromSharedPrefs() async {
     List<Map<String, dynamic>> sinkList = await _sharedPrefsUtils.getSinkList();
     List<Map<String, dynamic>> sensorList = await _sharedPrefsUtils.getSensorList();
+
+    _logs.error(message: sinkList.toString());
+    _logs.error(message: sensorList.toString());
 
     for (Map<String, dynamic> sinkMap in sinkList) {
       SinkNode sinkObj = _deviceUtils.sinkNodeMapToObject(sinkMap);
       _sinkNodeMap[sinkObj.deviceID] = sinkObj;
     }
+
+    for (Map<String, dynamic> sensorMap in sensorList) {
+      SensorNode sensorObj = _deviceUtils.sensorNodeMapToObject(
+          sensorMap: sensorMap,
+          sinkNodeID: sensorMap[SensorNodeKeys.sinkNode.key]
+      );
+      _sensorNodeMap[sensorObj.deviceID] = sensorObj;
+    }
+
+    return true;
   }
 
   // maps the payload from sensor devices
