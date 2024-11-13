@@ -1,12 +1,16 @@
 import 'dart:async';
-import 'package:rxdart/rxdart.dart';
+import 'dart:convert';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/pages/devices_subpages/sensor_node_subpage.dart';
+import 'package:smmic/providers/connections_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
+import 'package:smmic/sqlitedb/db.dart';
+import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/device_name.dart';
 import 'package:smmic/subcomponents/devices/digital_display.dart';
 import 'package:smmic/subcomponents/devices/gauge.dart';
@@ -16,15 +20,16 @@ import '../../../subcomponents/devices/device_dialog.dart';
 import 'package:smmic/utils/logs.dart';
 
 class SensorNodeCard extends StatefulWidget {
-  const SensorNodeCard({super.key, required this.deviceInfo});
+  const SensorNodeCard({super.key, required this.deviceInfo, required this.deviceSnapshot});
 
   final SensorNode deviceInfo;
+  final SensorNodeSnapshot? deviceSnapshot;
 
   @override
   State<SensorNodeCard> createState() => _SensorNodeCardState();
 }
 
-class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAliveClientMixin {
+class _SensorNodeCardState extends State<SensorNodeCard> {
 
   final ApiRequest _apiRequest = ApiRequest();
   final ApiRoutes _apiRoutes = ApiRoutes();
@@ -48,21 +53,9 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
   int? humidityAlert;
   int? moistureAlert;
 
-  SensorNodeSnapshot? readingsData;
-
-  /*double? humidity;
-  double? temperature;
-  double? soilMoisture;
-  double? batteryLevel;
-*/
-
-
   @override
   void initState(){
     super.initState();
-    context.read<DevicesProvider>().deviceReadings(widget.deviceInfo.deviceID);
-    _apiRequest.channelReadings(route: _apiRoutes.getSMAlerts, controller: smStreamController, deviceID: widget.deviceInfo.deviceID, context: context);
-    _apiRequest.channelConnect(route: _apiRoutes.getSNReadings, controller: streamController, deviceID: widget.deviceInfo.deviceID, context: context);
   }
 
   @override
@@ -71,15 +64,29 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
     _alertsStreamController.close();
     super.dispose();
   }
-
-
   Color _getColor(int? alertCode, Map<int,Color> colorMap){
     return colorMap[alertCode] ?? Colors.grey;
   }
 
+  double getOpacity(ConnectivityResult connection) {
+    double opacity = 1;
+    switch (connection) {
+      case ConnectivityResult.wifi:
+        opacity = 1;
+        break;
+      case ConnectivityResult.mobile:
+        opacity = 1;
+        break;
+      default:
+        opacity = 0.25;
+        break;
+    }
+    return opacity;
+  }
+
   @override
   Widget build(BuildContext context) {
-    super.build(context);
+    final SensorNodeSnapshot deviceSnapshot = widget.deviceSnapshot ?? SensorNodeSnapshot.placeHolder(deviceId: widget.deviceInfo.deviceID);
 
     final DeviceDialog _skDeviceDialog = DeviceDialog(
         context: context,
@@ -87,6 +94,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
         latitude: widget.deviceInfo.latitude,
         longitude: widget.deviceInfo.longitude
     );
+
+    ConnectivityResult connectionStatus = context.watch<ConnectionProvider>().connectionStatus;
 
     return GestureDetector(
       onTap: () =>
@@ -115,130 +124,64 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
                         offset: const Offset(0, 4))
                   ]),
               height: 160,
-              child:StreamBuilder<SensorNodeSnapshot>(
-                    stream: _snapshotStreamController.stream,
-                    builder: (context, snapshot){
-
-                      sqlCardReadings = context.watch<DevicesProvider>().sensorNodeSnapshotList.firstWhere((sensorNode) => sensorNode?.deviceID == widget.deviceInfo.deviceID,
-                          orElse: () => SensorNodeSnapshot.fromJSON({
-                            'device_id' : widget.deviceInfo.deviceID,
-                            'timestamp' : DateTime.now().toString(),
-                            'soil_moisture' : 00,
-                            'temperature' : 00,
-                            'humidity' : 00,
-                            'battery_level' : 00
-                          }));
-
-                      if(snapshot.hasData && snapshot.data?.deviceID == widget.deviceInfo.deviceID){
-                        cardReadings = snapshot.data;
-                      }
-
-                      return StreamBuilder<SMAlerts>(
-                        stream: _alertsStreamController.stream,
-                        builder: (context, alertsSnapshot) {
-                          _logs.info(message: "alertSnapshot deviceID = ${alertsSnapshot.data?.deviceID} == widget Device ID = ${widget.deviceInfo.deviceID}");
-
-                          String? readingsDeviceID = context.watch<DevicesProvider>().sensorCardReadings?.deviceID;
-                          String? alertsDeviceID = context.watch<DevicesProvider>().alertCode?.deviceID;
-
-                          if(readingsDeviceID == widget.deviceInfo.deviceID || alertsDeviceID == widget.deviceInfo.deviceID){
-
-                            alertsStreamData = alertsSnapshot.data;
-
-                            _logs.info(message: "alertsStreamData message : ${alertsStreamData?.alerts}");
-
-                            readingsData = context.watch<DevicesProvider>().sensorCardReadings;
-
-                            if (alertsDeviceID == widget.deviceInfo.deviceID) {
-                              tempAlert = context.watch<DevicesProvider>().tempAlert?.alerts;
-                              moistureAlert = context.watch<DevicesProvider>().moistureAlert?.alerts;
-                              humidityAlert = context.watch<DevicesProvider>().humidityAlert?.alerts;
-
-                              tempColor = _getColor(tempAlert, {30: Colors.red, 31: Colors.green, 32: Colors.blue,});
-                              moistureColor = _getColor(moistureAlert, {40: Colors.red, 41: Colors.green, 42: Colors.blue});
-                              humidityColor = _getColor(humidityAlert, {20: Colors.red, 21: Colors.green, 22: Colors.blue});
-                            }
-                          }
-
-                          final batteryLevel = readingsData?.batteryLevel ?? sqlCardReadings?.batteryLevel ?? 00;
-                          final humidity = readingsData?.humidity ?? sqlCardReadings?.humidity ?? 00;
-                          final temperature = readingsData?.temperature ?? sqlCardReadings?.temperature ?? 00;
-                          final soilMoisture = readingsData?.soilMoisture ?? sqlCardReadings?.soilMoisture ?? 00;
-
-
-
-                          /*final batteryLevel = cardReadings?.batteryLevel ?? sqlCardReadings?.batteryLevel ?? 00;
-                          final humidity = alertsStreamData?.data['humidity'] ?? cardReadings?.humidity ?? sqlCardReadings?.humidity ?? 00;
-                          final temperature = alertsStreamData?.data['temperature'] ?? cardReadings?.temperature ?? sqlCardReadings?.temperature ?? 00;
-                          final soilMoisture = alertsStreamData?.data['soil_moisture'] ?? cardReadings?.soilMoisture ?? sqlCardReadings?.soilMoisture ?? 00;*/
-
-                          return Row(
-                            children: [
-                              Expanded(
-                                flex: 4,
-                                child: Column(
-                                  children: [
-                                    Expanded(
-                                        flex: 3,
-                                        child: DeviceName(
-                                            deviceName: widget.deviceInfo
-                                                .deviceName)),
-                                    Expanded(
-                                      flex: 1,
-                                      //TODO: add snapshot data here
-                                      child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.start,
-                                            children: [
-                                              Icon(Icons.device_thermostat_outlined,color: tempColor,),
-                                              Icon(Icons.water_drop_outlined, color: moistureColor),
-                                              Icon(Icons.water, color: humidityColor,)
-                                            ],
-                                          )
-                                    )
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                  flex: 10,
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        flex: 3,
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment
-                                              .spaceAround,
-                                          children: [
-                                            DigitalDisplay(
-                                              //TODO: add snapshot data here
-                                              value: temperature,
-                                              valueType: 'temperature',
-                                            ),
-                                            DigitalDisplay(
-                                              //TODO: add snapshot data here
-                                              value: humidity,
-                                              valueType: 'humidity',
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                      Expanded(
-                                        flex: 4,
-                                        child: Container(
-                                            alignment: Alignment.center,
-                                            child: RadialGauge(
-                                                valueType: 'soilMoisture',
-                                                //TODO: add snapshot data here
-                                                value:  soilMoisture,
-                                                limit: 100)),
-                                      )
-                                    ],
-                                  )),
-                            ],
-                          );
-                        }
-                      );
-                    }
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: Column(
+                      children: [
+                        Expanded(flex: 3, child: DeviceName(deviceName: widget.deviceInfo.deviceName)),
+                        Expanded(
+                            flex: 1,
+                            //TODO: add snapshot data here
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Icon(Icons.device_thermostat_outlined,color: tempColor,),
+                                Icon(Icons.water_drop_outlined, color: moistureColor),
+                                Icon(Icons.water, color: humidityColor,)
+                              ],
+                            )
+                        )
+                      ],
+                    ),
                   ),
+                  Expanded(
+                      flex: 10,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                DigitalDisplay(
+                                  value: deviceSnapshot.temperature,
+                                  valueType: 'temperature',
+                                  opacityOverride: getOpacity(connectionStatus),
+                                ),
+                                DigitalDisplay(
+                                  value: deviceSnapshot.humidity,
+                                  valueType: 'humidity',
+                                  opacityOverride: getOpacity(connectionStatus),
+                                )
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            flex: 4,
+                            child: Container(
+                                alignment: Alignment.center,
+                                child: RadialGauge(
+                                    valueType: 'soilMoisture',
+                                    value:  deviceSnapshot.soilMoisture,
+                                    limit: 100,
+                                    opacity: getOpacity(connectionStatus))),
+                          )
+                        ],
+                      )),
+                ],
+              )
           ),
           Container(
             padding: const EdgeInsets.only(right: 37, top: 12),
@@ -280,8 +223,4 @@ class _SensorNodeCardState extends State<SensorNodeCard> with AutomaticKeepAlive
       ),
     );
   }
-
-  @override
-  // TODO: implement wantKeepAlive
-  bool get wantKeepAlive => true;
 }

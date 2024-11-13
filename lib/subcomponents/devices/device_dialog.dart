@@ -37,15 +37,14 @@ class DeviceDialog{
               }, child: const Text("Cancel")
               ),
               TextButton(onPressed: () async {
-                UserAccess? _userAccess = context.read<AuthProvider>().accessData;
-                List <SinkNode>? _sinkNodeList = context.read<DevicesProvider>().sinkNodeList;
-                if(_userAccess == null) {
+                UserAccess? userAccess = context.read<AuthProvider>().accessData;
+                SinkNode? sinkNode = context.read<DevicesProvider>().sinkNodeMap[deviceID];
+                if(userAccess == null) {
                   context.read<AuthProvider>().accessStatus == TokenStatus.forceLogin;
                   _globalNavigator.forceLoginDialog();
                 }else{
-                  if(_sinkNodeList == null) {
+                  if(sinkNode == null) {
                     //TODO: implement a proper null handle in case _sinkNode == null
-                    print('sink node list is null: $_sinkNodeList');
                     return;
                   }else{
                     Map<String,dynamic> skDataProvider = {
@@ -53,7 +52,7 @@ class DeviceDialog{
                       'deviceName' : sinkNameController.text,
                       'latitude' : latitude,
                       'longitude' : longitude,
-                      "registeredSensorNodes" : context.read<DevicesProvider>().sinkNodeList.where((sink) => sink.deviceID == deviceID).first.registeredSensorNodes
+                      "registeredSensorNodes" : sinkNode.registeredSensorNodes
                     };
 
                     Map<String,dynamic> skData = {
@@ -62,7 +61,7 @@ class DeviceDialog{
                       'latitude' : latitude,
                       'longitude' : longitude
                     };
-                    await _devicesServices.updateSKDeviceName(token: _userAccess.token, deviceID: deviceID, sinkName: skData);
+                    await _devicesServices.updateSKDeviceName(token: userAccess.token, deviceID: deviceID, sinkName: skData);
 
                     if(context.mounted){
                       context.read<DevicesProvider>().sinkNameChange(skDataProvider);
@@ -97,16 +96,16 @@ class DeviceDialog{
               }, child: const Text("Cancel")),
               TextButton(onPressed: () async {
                 UserAccess? userAccess = context.read<AuthProvider>().accessData;
-                List<SensorNode>? sensorNodeList = context.read<DevicesProvider>().sensorNodeList;
+                SensorNode? sensorNode = context.read<DevicesProvider>().sensorNodeMap[deviceID];
 
                 if(userAccess == null){
                   context.read<AuthProvider>().accessStatus == TokenStatus.forceLogin;
                   _globalNavigator.forceLoginDialog();
                 }else{
-                  if(sensorNodeList == null){
-                    print("sensor node device dialog null : $sensorNodeList");
+                  if(sensorNode == null){
+                    return;
                   }else{
-                    String registerSinkNodeID = context.read<DevicesProvider>().sensorNodeList.where((sensor) => sensor.deviceID == deviceID).first.registeredSinkNode;
+                    String registerSinkNodeID = sensorNode.registeredSinkNode;
                     Map<String,dynamic> snDataProvider = {
                       'deviceID' : deviceID,
                       'deviceName' : sensorNameController.text,

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/models/auth_models.dart';
+import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
 import 'package:smmic/utils/logs.dart';
 
@@ -25,11 +26,26 @@ enum UserFields{
   profilePic('profilepic');
 
   final String key;
-
   const UserFields(this.key);
 }
 
-List<String> _userDataKeys = ['UID', 'first_name', 'last_name', 'province', 'city', 'barangay', 'zone', 'zip_code', 'email', 'password', 'profilepic'];
+List<String> sensorNodeKeys = [
+
+];
+
+List<String> _userDataKeys = [
+  'UID',
+  'first_name',
+  'last_name',
+  'province',
+  'city',
+  'barangay',
+  'zone',
+  'zip_code',
+  'email',
+  'password',
+  'profilepic'
+];
 
 ///SharedPreferences Utilities for setting and getting data from the SharedPreferences
 class SharedPrefsUtils {
@@ -152,102 +168,90 @@ class SharedPrefsUtils {
     return userMapped;
   }
 
-  Future<bool> setSKList({required List<Map<String,dynamic>> sinkList}) async {
+  /// Set the sink list into the shared preferences
+  Future<bool> setSinkList({required List<Map<String,dynamic>> sinkList}) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
 
-    List <String> sinkData = sinkList.map((sink) => sink.keys.map((key) => (sink[key] == List<String>) ? sink[key].join(",") : sink[key] ).toList().join(":")).toList();
-
-    /// ["SKID : Name : Coordinates","SKID : Name : Coordinates"]
+    List <String> sinkData = sinkList.map(
+            (sink) => SinkNodeKeys.values.map(
+                    (key) => (sink[key.key] == List<String>)
+                        ? sink[key.key].join(",")
+                        : sink[key.key])
+                .toList().join(":"))
+        .toList();
 
     bool success = await sharedPreferences.setStringList('sink_data', sinkData);
-    _logs.info(message: "setSKList shared prefs: $sinkData");
-
     return success;
   }
 
-  Future<List<Map<String,dynamic>>?> getSKList() async {
+  /// Get the sink list from the shared preferences
+  Future<List<Map<String,dynamic>>> getSinkList() async {
+    // acquire from shared prefs
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    List<String>? sinkNodeList =  sharedPreferences.getStringList('sink_data');
 
-    List <String>? sinkNodeList =  sharedPreferences.getStringList('sink_data');
-    List <String> keys = ["deviceID","deviceName","latitude","longitude","registeredSensorNodes"];
+    // map each item in the sink node string list from shared prefs
+    // and insert all into the final sink list
+    List<Map<String,dynamic>> finalSinkList = (sinkNodeList == null)
+        ? []
+        : sinkNodeList.map(
+            (sink) {
+              Map<String,dynamic> sinkMap = {};
+              List<String> sinkValues = sink.split(":");
 
-    _logs.info(message: "getSKList shared prefs: $sinkNodeList");
-    List<Map<String,dynamic>> sinkNodeList_map = sinkNodeList == null ? [] : sinkNodeList.map((sink){
-      Map<String,dynamic> map = {};
-      List<String> values = sink.split(":");
+              for (SinkNodeKeys key in SinkNodeKeys.values) {
+                if (key.key == SinkNodeKeys.registeredSensorNodes.key) {
+                  sinkMap[key.key] = sinkValues[key.index]
+                      .replaceAll(RegExp(r'[\[\]]'), '')
+                      .split(',');
+                } else {
+                  try {
+                    sinkMap[key.key] = int.parse(sinkValues[key.index]);
+                  } on FormatException catch (e) {
+                    sinkMap[key.key] = sinkValues[key.index];
+                  }
+                }
+              }
+              return sinkMap;})
+        .toList();
 
-      for(int i =0; i <keys.length;i++){
-        if(keys == "registeredSensorNodes"){
-          map[keys[i]] = values[i].replaceAll(RegExp(r'[\[\]]'), '').split(',');
-        }else{
-          map[keys[i]] = values[i];
-        }
-      }
-      /*sink.split(":").map((value) => {
-        ///[SKID : Name : Coordinates : registeredSensorNodes]
-        ///registeredSensorNodes
-        keys.map((key) => map.addAll({key : value}))
-      });*/
-      return map;
-    }).toList();
-
-    if(sinkNodeList == null){
-      ///TODO:Error Handle
-      _logs.error(message: "Ala wabalo");
-    }
-    _logs.info(message: "sharedPrefs sinkNodeList_map : $sinkNodeList_map");
-    return sinkNodeList_map;
+    return finalSinkList;
   }
 
-  Future<bool> setSNList({required List <Map<String,dynamic>> sensorList}) async {
+  Future<bool> setSensorList({required List <Map<String,dynamic>> sensorList}) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
 
-    List<String> sensorData = sensorList.map((sensor) {
-      return sensor.keys.map((key) {
-        var value = sensor[key];
-        return value is List<String> ? value.join(',') : value.toString();
-      }).toList().join(":");
-    }).toList();
-
-    _logs.info(message: sensorData.toString());
-
-
-
-    /*List<String> sensorData = sensorList.map((sensor) =>
-        sensor.keys.map((key) =>
-        (sensor[key] == List<String>) ? sensor[key].join(',') : sensor[key]).toList().join(":")).toList();*/
+    List<String> sensorData = sensorList.map(
+            (sensor) => SensorNodeKeys.values.map(
+                    (key) => sensor[key.key])
+                .toList().join(':'))
+        .toList();
 
     bool success = await sharedPreferences.setStringList('sensor_data', sensorData);
-
     return success;
-
   }
 
-  Future <List<Map<String,dynamic>>?> getSNList() async {
+  Future <List<Map<String,dynamic>>> getSensorList() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    List<String>? sensorNodeList = sharedPreferences.getStringList('sensor_data');
 
-    List<String>? snData = sharedPreferences.getStringList('sensor_data');
-    List <String> keys = ["deviceID","deviceName","latitude","longitude","sinkNodeID"];
+    List<Map<String, dynamic>> sensorNodeListMap = (sensorNodeList == null)
+        ? []
+        : sensorNodeList.map(
+            (sensor){
+              Map<String, dynamic> sensorMap = {};
+              List<String> sensorValues = sensor.split(':');
+              for (SensorNodeKeys key in SensorNodeKeys.values) {
+                try {
+                  sensorMap[key.key] = int.parse(sensorValues[key.index]);
+                } on FormatException catch (e) {
+                  sensorMap[key.key] = sensorValues[key.index];
+                }
+              }
+              return sensorMap;
+            })
+        .toList();
 
-    if(snData == null){
-      _logs.error(message: "snData is null");
-      _logs.error(message: snData.toString());
-      return null;
-    }
-
-    List<Map<String,dynamic>> sensorNodeListMap = snData.map((sensor) {
-      Map<String,dynamic> map = {};
-      List<String> values = sensor.split(":");
-
-      for (int i = 0; i < keys.length; i++){
-        map[keys[i]] = i == 2 || i == 3 ? double.parse(values[i]) : values[i];
-      }
-      return map;
-    }).toList();
-
-    if(sensorNodeListMap == null){
-      _logs.error(message: "sharedPrefs sensornodelist is null : $sensorNodeListMap");
-    }
     return sensorNodeListMap;
   }
 

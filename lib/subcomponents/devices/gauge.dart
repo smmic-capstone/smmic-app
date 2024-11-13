@@ -9,10 +9,12 @@ class RadialGauge extends StatefulWidget {
       required this.valueType,
       required this.value,
       required this.limit,
+      required this.opacity,
       this.scaleMultiplier = 1,
       this.radiusMultiplier = 1});
 
   final String valueType;
+  final double opacity;
   final double value;
   final double limit;
   final double scaleMultiplier;
@@ -23,6 +25,7 @@ class RadialGauge extends StatefulWidget {
 }
 
 class _RadialGaugeState extends State<RadialGauge> {
+
   @override
   Widget build(BuildContext context) {
     return SfRadialGauge(
@@ -30,8 +33,8 @@ class _RadialGaugeState extends State<RadialGauge> {
         RadialAxis(
           axisLineStyle: AxisLineStyle(
             color: context.watch<UiProvider>().isDark
-                ? Colors.white.withOpacity(0.15)
-                : Colors.black.withOpacity(0.15),
+                ? Colors.white.withOpacity(0.10)
+                : Colors.black.withOpacity(0.10),
             cornerStyle: CornerStyle.bothCurve,
             thickness: 8,
           ),
@@ -47,7 +50,7 @@ class _RadialGaugeState extends State<RadialGauge> {
               value: widget.value,
               cornerStyle: CornerStyle.bothCurve,
               width: 8,
-              color: setColor(widget.value, widget.limit),
+              color: setColor(widget.value, widget.limit, widget.opacity),
             )
           ],
           annotations: [
@@ -60,8 +63,8 @@ class _RadialGaugeState extends State<RadialGauge> {
                         fontFamily: 'Inter',
                         fontSize: 30 * widget.scaleMultiplier,
                         color: context.watch<UiProvider>().isDark
-                            ? Colors.white
-                            : Colors.black),
+                            ? Colors.white.withOpacity(widget.opacity)
+                            : Colors.black.withOpacity(widget.opacity)),
                     children: [
                       TextSpan(
                           text: setSymbol(widget.valueType),
@@ -84,8 +87,8 @@ class _RadialGaugeState extends State<RadialGauge> {
                                 : 1),
                         fontFamily: 'Inter',
                         color: context.watch<UiProvider>().isDark
-                            ? Colors.white
-                            : Colors.black),
+                            ? Colors.white.withOpacity(widget.opacity)
+                            : Colors.black.withOpacity(widget.opacity)),
                   ),
                 ))
           ],
@@ -119,27 +122,26 @@ String setTitle(String type) {
   }
 }
 
-MaterialColor setColor(double value, double limit) {
+Color setColor(double value, double limit, double opacity) {
   double percent = (value / limit) * 100;
-  MaterialColor? color;
-
+  Color color = Colors.grey;
   switch (percent) {
     case <= 15:
-      color = Colors.red;
+      color = Colors.red.withOpacity(opacity);
       break;
     case > 15 && <= 25:
-      color = Colors.orange;
+      color = Colors.orange.withOpacity(opacity);
       break;
     case > 25 && <= 50:
-      color = Colors.lime;
+      color = Colors.lime.withOpacity(opacity);
       break;
     case > 50 && <= 75:
-      color = Colors.lightGreen;
+      color = Colors.lightGreen.withOpacity(opacity);
       break;
     case > 75 && <= 100:
-      color = Colors.green;
+      color = Colors.green.withOpacity(opacity);
       break;
   }
 
-  return color!;
+  return color;
 }

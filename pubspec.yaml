@@ -51,7 +51,12 @@ dependencies:
   web_socket_channel: ^3.0.1
   sqflite: ^2.3.3+1
   mqtt_client: ^10.3.0
-  rxdart: ^0.27.0
+  async: ^2.11.0
+  mobile_scanner: ^6.0.2
+  qr_scanner_overlay: ^0.0.2
+  qr_flutter: ^4.1.0
+  dartz: ^0.10.1
+  connectivity_plus: ^6.1.0
 
 dev_dependencies:
   flutter_test:

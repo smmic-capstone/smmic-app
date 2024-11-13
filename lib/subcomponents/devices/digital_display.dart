@@ -3,11 +3,16 @@ import 'package:provider/provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
 
 class DigitalDisplay extends StatefulWidget {
-  const DigitalDisplay(
-      {super.key, required this.value, required this.valueType});
+  const DigitalDisplay({
+    super.key,
+    required this.value,
+    required this.valueType,
+    required this.opacityOverride
+  });
 
   final String valueType;
   final dynamic value;
+  final double opacityOverride;
 
   @override
   State<DigitalDisplay> createState() => _DigitalDisplayState();
@@ -37,8 +42,8 @@ class _DigitalDisplayState extends State<DigitalDisplay> {
                       fontSize: 24,
                       fontFamily: 'Inter',
                       color: context.watch<UiProvider>().isDark
-                          ? Colors.white
-                          : Colors.black),
+                          ? Colors.white.withOpacity(widget.opacityOverride)
+                          : Colors.black.withOpacity(widget.opacityOverride)),
                   children: [
                     TextSpan(
                         text: widget.valueType == 'temperature'
@@ -51,8 +56,8 @@ class _DigitalDisplayState extends State<DigitalDisplay> {
                             fontSize: 14,
                             fontFamily: 'Inter',
                             color: context.watch<UiProvider>().isDark
-                                ? Colors.black
-                                : Colors.white)),
+                                ? Colors.black.withOpacity(widget.opacityOverride)
+                                : Colors.white.withOpacity(widget.opacityOverride))),
                     TextSpan(
                         text: widget.valueType == 'soil moisture'
                             ? 'Soil Moisture'
@@ -65,8 +70,8 @@ class _DigitalDisplayState extends State<DigitalDisplay> {
                             fontSize: 9,
                             fontFamily: 'Inter',
                             color: context.watch<UiProvider>().isDark
-                                ? Colors.white
-                                : Colors.black))
+                                ? Colors.white.withOpacity(widget.opacityOverride)
+                                : Colors.black.withOpacity(widget.opacityOverride)))
                   ]),
             ),
           ],

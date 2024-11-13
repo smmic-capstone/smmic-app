@@ -1,6 +1,10 @@
 import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:smmic/models/device_data_models.dart';
+import 'package:smmic/providers/connections_provider.dart';
+import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/services/devices_services.dart';
 import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/subcomponents/devices/device_dialog.dart';
@@ -25,15 +29,34 @@ class SensorNodeCardExpanded extends StatefulWidget {
   State<SensorNodeCardExpanded> createState() => _SensorNodeCardExpandedState();
 }
 
+double getOpacity(ConnectivityResult connection) {
+  double opacity = 1;
+  switch (connection) {
+    case ConnectivityResult.wifi:
+      opacity = 1;
+      break;
+    case ConnectivityResult.mobile:
+      opacity = 1;
+      break;
+    default:
+      opacity = 0.25;
+      break;
+  }
+  return opacity;
+}
+
+
 class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
   final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
 
-  SensorNodeSnapshot? cardReadings;
-  SensorNodeSnapshot? sqlCardReadings;
-
   @override
   Widget build(BuildContext context) {
+
+    SensorNodeSnapshot deviceSnapshot = context.watch<DevicesProvider>().sensorNodeSnapshotMap[widget.deviceID]
+        ?? SensorNodeSnapshot.placeHolder(deviceId: widget.deviceID);
+
     double height = MediaQuery.sizeOf(context).height;
+    ConnectivityResult connectionStatus = context.watch<ConnectionProvider>().connectionStatus;
 
     return Container(
       margin: EdgeInsets.symmetric(vertical: 15),
@@ -51,85 +74,70 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
             )
           ]
       ),
-      child: FutureBuilder(
-        future: DatabaseHelper.getAllReadings(widget.deviceID),
-        builder: (context, futureSnapshot) {
-          sqlCardReadings = futureSnapshot.data;
-          return StreamBuilder<SensorNodeSnapshot>(
-            stream: widget.streamController,
-            builder: (context, readingsSnapshot) {
-              if(readingsSnapshot.hasData && readingsSnapshot.data?.deviceID == widget.deviceID){
-                cardReadings = readingsSnapshot.data;
-              }
-              final batteryLevel = cardReadings?.batteryLevel ?? sqlCardReadings?.batteryLevel ?? 00;
-              final humidity = cardReadings?.humidity ?? sqlCardReadings?.humidity ?? 00;
-              final temperature = cardReadings?.temperature ?? sqlCardReadings?.temperature ?? 00;
-              final soilMoisture = cardReadings?.soilMoisture ?? sqlCardReadings?.soilMoisture ?? 00;
-              return Column(
-                children: [
-                  Expanded(
-                      flex: 1,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const BatteryLevel(
-                                batteryLevel: 11.0,
-                                alignmentAdjust: 1,
-                                shrinkPercentSign: false
-                            ),
-                            Text(
-                                _dateTimeFormatting.formatTime(widget.snapshot == null ? DateTime.now() : widget.snapshot!.timestamp),
-                                style: const TextStyle(fontFamily: 'Inter', fontSize: 20)
-                            )
-                          ],
-                        ),
-                      )
-                  ),
-                  Expanded(
-                    flex: 4,
-                    child: RadialGauge(
-                        valueType: 'soilMoisture',
-                        value: soilMoisture,
-                        limit: 100,
-                        scaleMultiplier: 1.5
+      child: Column(
+        children: [
+          Expanded(
+              flex: 1,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const BatteryLevel(
+                        batteryLevel: 11.0,
+                        alignmentAdjust: 1,
+                        shrinkPercentSign: false
                     ),
-                  ),
-                  Expanded(
-                      flex: 3,
-                      child: Container(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 160,
-                              child: RadialGauge(
-                                valueType: 'temperature',
-                                value: temperature,
-                                limit: 100,
-                                radiusMultiplier: 0.9,
-                              ),
-                            ),
-                            SizedBox(
-                              width: 160,
-                              child: RadialGauge(
-                                valueType: 'humidity',
-                                value: humidity,
-                                limit: 100,
-                                radiusMultiplier: 0.9,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                  )
-                ],
-              );
-            }
-          );
-        }
-      ),
+                    Text(
+                        _dateTimeFormatting.formatTime(widget.snapshot == null ? DateTime.now() : widget.snapshot!.timestamp),
+                        style: const TextStyle(fontFamily: 'Inter', fontSize: 20)
+                    )
+                  ],
+                ),
+              )
+          ),
+          Expanded(
+            flex: 4,
+            child: RadialGauge(
+                valueType: 'soilMoisture',
+                value: deviceSnapshot.soilMoisture,
+                limit: 100,
+                scaleMultiplier: 1.5,
+              opacity: getOpacity(connectionStatus),
+            ),
+          ),
+          Expanded(
+              flex: 3,
+              child: Container(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 160,
+                      child: RadialGauge(
+                        valueType: 'temperature',
+                        value: deviceSnapshot.temperature,
+                        limit: 100,
+                        radiusMultiplier: 0.9,
+                        opacity: getOpacity(connectionStatus),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 160,
+                      child: RadialGauge(
+                        valueType: 'humidity',
+                        value: deviceSnapshot.humidity,
+                        limit: 100,
+                        radiusMultiplier: 0.9,
+                        opacity: getOpacity(connectionStatus),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+          )
+        ],
+      )
     );
   }
 }
