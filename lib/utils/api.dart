@@ -143,7 +143,7 @@ class ApiRequest {
 
     _logs.info(
         message:
-          'put() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
+          'patch() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
 
     Map<String, dynamic> result = await _request(
         route: route,

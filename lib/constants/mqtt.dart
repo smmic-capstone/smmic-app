@@ -1,6 +1,6 @@
 class BrokerConfigs {
   // 10.0.2.2
-  final String _hostAddress = '192.168.1.2';
+  final String _hostAddress = '10.0.2.2';
   final int _port = 1883;
 
   String get hostAddress => _hostAddress;

@@ -1,40 +1,46 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-import 'package:async/async.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:provider/provider.dart';
+import 'package:smmic/providers/connections_provider.dart';
 
-class MergedStreamExample extends StatelessWidget {
+class ConnectivityExample extends StatefulWidget {
+  @override
+  _ConnectivityExampleState createState() => _ConnectivityExampleState();
+}
+
+class _ConnectivityExampleState extends State<ConnectivityExample> {
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-
-    // Define two streams
-    Stream<int> stream1 = Stream.periodic(Duration(seconds: 1), (count) => count).take(10);
-    Stream<String> stream2 = Stream.periodic(Duration(milliseconds: 1500), (count) => 'Stream 2 - $count').take(10);
-
-    // Merge streams
-    var mergedStream = StreamGroup.merge([stream1, stream2]);
-
     return Scaffold(
-      appBar: AppBar(title: Text('Merged Stream Example')),
+      appBar: AppBar(title: Text("Connectivity Example")),
       body: Center(
-        child: StreamBuilder(
-          stream: mergedStream,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return CircularProgressIndicator();
-            } else if (snapshot.hasData) {
-              print('new - data -----> ${snapshot.data}');
-              if (snapshot.data is int){
-                return Text('Latest data: Stream 1 - ${snapshot.data}');
-              } else if (snapshot.data is String) {
-                return Text('Latest data: ${snapshot.data}');
-              }
-            } else if (snapshot.hasError) {
-              return Text('Error: ${snapshot.error}');
-            }
-            return Text('No data');
-          },
+        child: Text(
+          getTextDisplay(context.watch<ConnectionProvider>().connectionStatus),
+          style: TextStyle(fontSize: 18),
         ),
       ),
     );
+  }
+
+  String getTextDisplay(ConnectivityResult res) {
+    String fString = 'Unknown Connection';
+    switch (res) {
+      case ConnectivityResult.wifi:
+        fString = 'Connected to Wifi';
+        break;
+      case ConnectivityResult.mobile:
+        fString = 'Connected to Mobile Network';
+        break;
+      default:
+        fString = 'Disconnected';
+        break;
+    }
+    return fString;
   }
 }
