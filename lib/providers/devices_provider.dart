@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
@@ -53,12 +55,16 @@ class DevicesProvider extends ChangeNotifier {
 
   Map <String, Map<String,int>> _deviceAlerts = {};
 
-  Future<void> init() async {
+  Future<void> init({
+    required ConnectivityResult connectivity}) async {
+    _logs.info(message: 'init() running');
+
     // acquire user data and tokens from shared prefs
     Map<String, dynamic>? userData = await _sharedPrefsUtils.getUserData();
     Map<String, dynamic> tokens = await _sharedPrefsUtils.getTokens(access: true);
 
     if (userData == null) {
+      _logs.warning(message: '.init() -> user data null!');
       return;
     }
 

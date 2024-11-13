@@ -61,12 +61,18 @@ class ApiRequest {
         case (500):
           _logs.error(message:'post() $route, returned with error $statusCode');
           finalRes.addAll({'error' : statusCode});
+          break;
+
         case (400):
           _logs.warning(message:'post() $route, returned with error $statusCode');
           finalRes.addAll({'error' : statusCode});
+          break;
+
         case (401):
           _logs.warning(message:'post() $route, returned with error $statusCode');
           finalRes.addAll({'error' : statusCode});
+          break;
+
         case (200):
           _logs.success(message:'post() $route, returned with data $statusCode');
           finalRes.addAll({
@@ -74,9 +80,15 @@ class ApiRequest {
             'body': resBody,
             'data': jsonDecode(resBody)
           });
+          break;
       }
+
     } on http.ClientException catch (e) {
-      _logs.warning(message: 'post() raised ClientException -> $e');
+      _logs.warning(message: 'request() raised ClientException -> $e');
+      finalRes.addAll({
+        'error': 0
+      });
+
     } catch (e) {
       _logs.warning(message:'post() unhandled unexpected post() error (statusCode: $statusCode, body: $resBody)');
     }

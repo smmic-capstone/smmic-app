@@ -40,7 +40,7 @@ class DeviceDialog{
                 UserAccess? userAccess = context.read<AuthProvider>().accessData;
                 SinkNode? sinkNode = context.read<DevicesProvider>().sinkNodeMap[deviceID];
                 if(userAccess == null) {
-                  context.read<AuthProvider>().accessStatus == TokenStatus.forceLogin;
+                  context.read<AuthProvider>().accessStatus == TokenStatus.invalid;
                   _globalNavigator.forceLoginDialog();
                 }else{
                   if(sinkNode == null) {
@@ -99,7 +99,7 @@ class DeviceDialog{
                 SensorNode? sensorNode = context.read<DevicesProvider>().sensorNodeMap[deviceID];
 
                 if(userAccess == null){
-                  context.read<AuthProvider>().accessStatus == TokenStatus.forceLogin;
+                  context.read<AuthProvider>().accessStatus == TokenStatus.invalid;
                   _globalNavigator.forceLoginDialog();
                 }else{
                   if(sensorNode == null){

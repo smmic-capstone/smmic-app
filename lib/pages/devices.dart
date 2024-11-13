@@ -1,23 +1,13 @@
-import 'dart:async';
-
-import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/components/devices/cards/sensor_node_card.dart';
 import 'package:smmic/components/devices/cards/sink_node_card.dart';
 import 'package:smmic/components/devices/bottom_drawer.dart';
 import 'package:smmic/models/device_data_models.dart';
-import 'package:smmic/pages/dashboard.dart';
-import 'package:smmic/pages/devices_subpages/sensor_node_subpage.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
-import 'package:smmic/services/devices_services.dart';
-import 'package:smmic/services/user_data_services.dart';
-import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/logs.dart';
-import '../constants/api.dart';
-import '../utils/api.dart';
 
 class Devices extends StatefulWidget {
   const Devices({super.key});
