@@ -21,16 +21,12 @@ class DatabaseHelper {
   }
 
   static Future<int> addReadings(SensorNodeSnapshot readings) async {
-    print("Add Readings Initialized");
-    print("Adding Mapped Data from Stream to SQFLITE: $readings");
     final db = await _getDB();
-    print("Added Mapped Data from Stream to SQFLITE");
     return await db.insert("SMSensorReadings", readings.toJson(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   static Future<SensorNodeSnapshot?> getAllReadings(String deviceID) async {
-    print('Readings for deviceID: $deviceID');
     final db = await _getDB();
     final List<Map<String, dynamic>> maps = await db.query("SMSensorReadings",
         where: 'device_id = ?',
@@ -38,24 +34,18 @@ class DatabaseHelper {
         orderBy: 'timestamp DESC',
         limit: 1);
 
-    print("Raw Data from SQLITe: $maps");
-
     if (maps.isEmpty) {
-      print("maps is empty");
       return null;
     }
     try {
       final snapshot = SensorNodeSnapshot.fromJSON(maps.first);
-      print("Mapped SensorNodeSnapshot: $snapshot");
       return snapshot;
     } catch (e) {
-      print("Error mapping data: $e");
       return null;
     }
   }
 
   static Future<void> readingsLimit(String deviceID) async {
-    print("readingsLimit Initialized");
     final db = await _getDB();
 
     final countResult = await db.rawQuery(
@@ -67,7 +57,6 @@ class DatabaseHelper {
     const limit = 100;
 
     if (count > limit) {
-      print("Limit Exceeded Proceed to Deleting Readings for $deviceID");
       final excess = count - limit;
 
       await db.delete("SMSensorReadings",
@@ -75,7 +64,6 @@ class DatabaseHelper {
               "device_id = ? AND timestamp IN (SELECT timestamp from SMSensorReadings WHERE device_id = ? ORDER BY timestamp ASC LIMIT ?)",
           whereArgs: [deviceID, deviceID, excess]);
     }
-    print("Limit did not exceed, go on about your usual day");
   }
   
   
@@ -92,7 +80,6 @@ class DatabaseHelper {
 
     final readings = queryResult.map((data) => SensorNodeSnapshot.fromJSON(data)).toList().reversed.toList();
 
-    Logs(tag: 'DatabaseHelper.chartReadings()').info(message: '$readings');
     return readings;
   }
 }

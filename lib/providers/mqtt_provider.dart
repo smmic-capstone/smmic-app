@@ -30,7 +30,6 @@ class MqttProvider extends ChangeNotifier {
 
   void registerContext({required BuildContext context}){
     _context = context;
-    notifyListeners();
   }
 
   /// Initializes and connects the MqttClient

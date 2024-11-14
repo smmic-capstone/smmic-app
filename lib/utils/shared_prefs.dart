@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -55,24 +56,34 @@ class SharedPrefsUtils {
   final Logs _logs = Logs(tag: 'SharedPrefsUtils()');
 
   ///Gets `refresh` and `access` tokens from SharedPreferences. Returns both tokens by default
-  Future<Map<String, dynamic>> getTokens({bool? refresh, bool? access}) async {
+  Future<Map<String, dynamic>> getTokens({
+    bool? refresh,
+    bool? access,
+    SharedPreferences? sharedPrefsInstance}) async {
+
     Map<String, dynamic> tokens = {};
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+
+    SharedPreferences sharedPreferences = sharedPrefsInstance
+        ?? await SharedPreferences.getInstance();
+
     String? refreshToken = sharedPreferences.getString('refresh');
     String? accessToken = sharedPreferences.getString('access');
+
     if(refresh == null && access == null){
       tokens.addAll({'refresh':refreshToken, 'access':accessToken});
-      _logs.info(message: 'getTokens() refreshToken: ${refreshToken.toString().substring(0, 25)}..., accessToken: ${accessToken.toString().substring(0, 25)}...');
       return tokens;
     }
+
     if(refresh != null && refresh){
       tokens.addAll({'refresh':refreshToken});
       _logs.info(message: 'getTokens() refreshToken: ${refreshToken.toString().substring(0, 25)}...');
     }
+
     if(access != null && access){
       tokens.addAll({'access':accessToken});
       _logs.info(message: 'getTokens() accessToken: ${accessToken.toString().substring(0, 25)}...');
     }
+
     return tokens;
   }
 
@@ -172,7 +183,7 @@ class SharedPrefsUtils {
   Future<bool> setSinkList({required List<Map<String,dynamic>> sinkList}) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
 
-    List <String> sinkData = sinkList.map(
+    List<String> sinkData = sinkList.map(
             (sink) => SinkNodeKeys.values.map(
                     (key) => (sink[key.key] == List<String>)
                         ? sink[key.key].join(",")

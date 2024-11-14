@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
 import 'package:smmic/constants/api.dart';
-import 'package:smmic/preload/preloaddevices.dart';
 import 'package:smmic/providers/connections_provider.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/pages/login.dart';
@@ -80,6 +79,18 @@ class _AuthGateState extends State<AuthGate> {
     return true;
   }
 
+  Future<void> _loadProviders({
+    required BuildContext context,
+  }) async {
+    // initiate user data when logged in
+    context.read<ConnectionProvider>().init();
+    context.read<UserDataProvider>().init();
+    context.read<AuthProvider>().init();
+    context.read<MqttProvider>().registerContext(context: context);
+    await Future.delayed(const Duration(seconds: 2));
+    return;
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -105,28 +116,34 @@ class _AuthGateState extends State<AuthGate> {
               return const LoginPage();
             }
 
-            // initiate user data when logged in
-            context.read<UserDataProvider>().init();
-            context.read<DevicesProvider>().init();
-            context.read<AuthProvider>().init();
-            context.read<MqttProvider>().registerContext(context: context);
-            context.read<ConnectionProvider>().init();
+            return FutureBuilder(
+                future: _loadProviders(context: context),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    // TODO   add loading screen
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-            _apiRequest.connectSeReadingsChannel(
-                route: _apiRoutes.seReadingsWs,
-                context: context
-            );
+                  context.read<DevicesProvider>().init(
+                      connectivity: context.read<ConnectionProvider>().connectionStatus
+                  );
 
-            _apiRequest.connectAlertsChannel(
-                route: _apiRoutes.seAlertsWs,
-                context: context
-            );
+                  _apiRequest.initSeReadingsWSChannel(
+                      route: _apiRoutes.seReadingsWs,
+                      context: context
+                  );
 
-            return const Stack(
-              children: [
-                MyBottomNav(indexPage: 0),
-              ],
-            );
+                  _apiRequest.initSeAlertsWSChannel(
+                      route: _apiRoutes.seAlertsWs,
+                      context: context
+                  );
+
+                  return const Stack(
+                    children: [
+                      MyBottomNav(indexPage: 0),
+                    ],
+                  );
+                });
           }
           return const Center(
             child: Text('AuthPage._authCheck has returned a null value'),

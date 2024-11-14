@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-enum SinkNodeKeys{
+enum SinkNodeKeys {
   deviceID('device_id'),
   deviceName('name'),
   latitude('latitude'),
@@ -11,7 +11,7 @@ enum SinkNodeKeys{
   const SinkNodeKeys(this.key);
 }
 
-enum SensorNodeKeys{
+enum SensorNodeKeys {
   deviceID('device_id'),
   deviceName('name'),
   latitude('latitude'),
@@ -20,6 +20,28 @@ enum SensorNodeKeys{
 
   final String key;
   const SensorNodeKeys(this.key);
+}
+
+enum SMSensorSnapshotKeys {
+  deviceID('device_id'),
+  timestamp('timestamp'),
+  soilMoisture('soil_moisture'),
+  temperature('temperature'),
+  humidity('humidity'),
+  batteryLevel('battery_level');
+
+  final String key;
+  const SMSensorSnapshotKeys(this.key);
+}
+
+enum SensorAlertKeys {
+  deviceID('device_id'),
+  timestamp('timestamp'),
+  alertCode('alert_code'),
+  data('data');
+  
+  final String key;
+  const SensorAlertKeys(this.key);
 }
 
 class Device {
@@ -105,14 +127,27 @@ class SensorNodeSnapshot {
   });
 
   factory SensorNodeSnapshot.fromJSON(Map<String, dynamic> data) {
+    // the data contains a 'data' key, it is an alert message
     final dataValues = data.containsKey('data') ? data['data'] : data;
     return SensorNodeSnapshot._internal(
-      deviceID: data['device_id'],
-      timestamp: DateTime.parse(data['timestamp']),
-      soilMoisture: double.parse(dataValues['soil_moisture'].toString()),
-      temperature: double.parse(dataValues['temperature'].toString()),
-      humidity: double.parse(dataValues['humidity'].toString()),
-      batteryLevel: double.parse(dataValues['battery_level'].toString()),
+      deviceID: data[SMSensorSnapshotKeys.deviceID.key],
+      timestamp: DateTime.parse(data[SMSensorSnapshotKeys.timestamp.key]),
+      soilMoisture: double.parse(
+          dataValues[SMSensorSnapshotKeys.soilMoisture.key]
+              .toString()
+      ),
+      temperature: double.parse(
+          dataValues[SMSensorSnapshotKeys.temperature.key]
+              .toString()
+      ),
+      humidity: double.parse(
+          dataValues[SMSensorSnapshotKeys.humidity.key]
+              .toString()
+      ),
+      batteryLevel: double.parse(
+          dataValues[SMSensorSnapshotKeys.batteryLevel.key]
+              .toString()
+      ),
     );
   }
 
@@ -133,6 +168,7 @@ class SensorNodeSnapshot {
     if (data is Map<String, dynamic>) {
       // TODO: verify keys first
       finalSnapshot = SensorNodeSnapshot.fromJSON(data);
+
     } else if (data is String) {
       // assuming that if the reading variable is a string, it is an mqtt payload
       Map<String, dynamic> fromStringMap = {};
@@ -159,18 +195,19 @@ class SensorNodeSnapshot {
 
     } else if (data is SensorNodeSnapshot) {
       finalSnapshot = data;
+
     }
 
     return finalSnapshot;
   }
 
   Map<String,dynamic> toJson() => {
-    'device_id' : deviceID,
-    'timestamp' : timestamp.toIso8601String(),
-    'soil_moisture' : soilMoisture,
-    'temperature' : temperature,
-    'humidity' : humidity,
-    'battery_level': batteryLevel
+    SMSensorSnapshotKeys.deviceID.key : deviceID,
+    SMSensorSnapshotKeys.timestamp.key : timestamp.toIso8601String(),
+    SMSensorSnapshotKeys.soilMoisture.key : soilMoisture,
+    SMSensorSnapshotKeys.temperature.key : temperature,
+    SMSensorSnapshotKeys.humidity.key : humidity,
+    SMSensorSnapshotKeys.batteryLevel.key: batteryLevel
   };
 
   @override
@@ -180,33 +217,33 @@ class SensorNodeSnapshot {
   }
 }
 
-class SMAlerts {
+class SensorAlerts {
   final String deviceID;
   final DateTime timestamp;
-  final int alerts;
+  final int alertCode;
   final Map<String,dynamic> data;
 
-  SMAlerts._internal({
+  SensorAlerts._internal({
     required this.deviceID,
     required this.timestamp,
-    required this.alerts,
+    required this.alertCode,
     required this.data
   });
 
-  factory SMAlerts.fromJSON(Map<String,dynamic> data){
-    return SMAlerts._internal(
-        deviceID: data['device_id'],
-        timestamp: DateTime.parse(data['timestamp']),
-        alerts: data['alert_code'],
-        data: data['data']
+  factory SensorAlerts.fromJSON(Map<String,dynamic> data){
+    return SensorAlerts._internal(
+        deviceID: data[SensorAlertKeys.deviceID.key],
+        timestamp: DateTime.parse(data[SensorAlertKeys.timestamp.key]),
+        alertCode: data[SensorAlertKeys.alertCode.key],
+        data: data[SensorAlertKeys.data.key]
     );
   }
 
   Map<String,dynamic> toJson() => {
-    "device_id" : deviceID,
-    "timestamp" : timestamp.toIso8601String(),
-    "alerts" : alerts,
-    "data" : data,
+    SensorAlertKeys.deviceID.key : deviceID,
+    SensorAlertKeys.timestamp.key : timestamp.toIso8601String(),
+    SensorAlertKeys.alertCode.key : alertCode,
+    SensorAlertKeys.data.key : data,
   };
 }
 
