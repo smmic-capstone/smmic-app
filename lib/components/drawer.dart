@@ -74,7 +74,7 @@ class ComponentDrawerState extends State<ComponentDrawer> {
           ),
           GestureDetector(
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => ConnectivityExample()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => ExpiryColorChangeWidget(expiryTime: DateTime.now().add(Duration(seconds: 10),))));
             },
             child: const ListTile(
               leading: Icon(Icons.science_outlined), title: Text('Lab'),

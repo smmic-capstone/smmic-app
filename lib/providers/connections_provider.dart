@@ -42,7 +42,7 @@ class ConnectionProvider extends ChangeNotifier {
   WsConnectionStatus get seReadingsWsConnectionStatus => _seWsConnectionStatus;
   void sensorWsConnectStatus(WsConnectionStatus connectionStatus) {
     _seWsConnectionStatus = connectionStatus;
-    notifyListeners();
+    //notifyListeners();
   }
 
   // alerts web socket connection status

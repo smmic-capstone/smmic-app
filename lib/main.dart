@@ -125,7 +125,8 @@ class _AuthGateState extends State<AuthGate> {
                   }
 
                   context.read<DevicesProvider>().init(
-                      connectivity: context.read<ConnectionProvider>().connectionStatus
+                      connectivity: context.read<ConnectionProvider>().connectionStatus,
+                      context: context
                   );
 
                   _apiRequest.initSeReadingsWSChannel(

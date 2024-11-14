@@ -77,18 +77,19 @@ class ApiRequest {
 
         case (200):
           _logs.success(message:'post() $route, returned with data $statusCode');
-          finalRes.addAll({
-            'status_code': statusCode,
-            'body': resBody,
-            'data': jsonDecode(resBody)
-          });
           break;
       }
+
+      finalRes.addAll({
+        'status_code': statusCode,
+        'body': resBody,
+        'data': jsonDecode(resBody)
+      });
 
     } on http.ClientException catch (e) {
       _logs.warning(message: 'request() raised ClientException -> $e');
       finalRes.addAll({
-        'error': 0
+        'status_code': 0
       });
 
     } catch (e) {
@@ -310,12 +311,11 @@ class ApiRequest {
       DatabaseHelper.readingsLimit(snapshotObj.deviceID);
       DatabaseHelper.addReadings(snapshotObj);
 
-      final SensorAlerts alertObj = SensorAlerts.fromJSON(decodedData['message']);
-
       // pass to stream controller
       //streamController.add(alertObj);
 
       context.read<DevicesProvider>().setNewSensorSnapshot(snapshotObj);
+      context.read<DevicesProvider>().updateSMSensorState(decodedData);
 
     }, onError: (err) {
       channel.sink.close();

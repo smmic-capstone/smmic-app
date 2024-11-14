@@ -5,6 +5,7 @@ import 'package:smmic/providers/auth_provider.dart'; //Token status
 import 'package:http/http.dart' as http;
 import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
+import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
 
 ///Authentication utilities, contains all reusable functions for authentication purposes, mainly token handling (`verify token`, `refresh access token`)
@@ -13,6 +14,7 @@ class AuthUtils {
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
   final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
   final ApiRequest _apiRequest = ApiRequest();
+  final Logs _logs = Logs(tag: 'Auth Utils');
 
   ///Parses a JWT token and returns a map with keys: `token`, `user_id`, `token_id`, `created`, `expires`. Will return a null value of the token is null.
   Map<String, dynamic>? parseToken({

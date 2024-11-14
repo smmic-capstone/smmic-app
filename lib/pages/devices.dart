@@ -28,7 +28,7 @@ class _Devices extends State<Devices> {
 
   @override
   Widget build(BuildContext context) {
-    Color bgColor = context.watch<UiProvider>().isDark ? Colors.black : Colors.white;
+    Color bgColor = context.watch<UiProvider>().isDark ? Colors.black : Color.fromRGBO(240, 240, 240, 1);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -102,7 +102,7 @@ class _Devices extends State<Devices> {
     WidgetsFlutterBinding.ensureInitialized();
     if (data is SensorNodeSnapshot) {
       context.read<DevicesProvider>().setNewSensorSnapshot(data);
-    } else if (data is SensorAlerts) {
+    } else if (data is SMSensorState) {
       // TODO: handle from alerts
     } else if (data is String) {
       context.read<DevicesProvider>().setNewSensorSnapshot(data);
