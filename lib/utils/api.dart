@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/cupertino.dart';
@@ -51,7 +49,7 @@ class ApiRequest {
               body: body),
           (method2) => method2(
             Uri.parse(route),
-            headers: headers)
+            headers: headers),
       );
 
       if (res == null) {
@@ -249,7 +247,7 @@ class ApiRequest {
 
   }
 
-  /// Initialize connection with the sensor readings channel
+  /// Initialize connection with the sensor readings WebSocket
   void initSeReadingsWSChannel({required String route, required BuildContext context}) {
     // attempt connection with the websocket
     WebSocketChannel? seReadingsWebSocket = _connectChannel(route);
@@ -289,7 +287,7 @@ class ApiRequest {
     });
   }
 
-  // Initialize connection with the sensor node alert websocket channel
+  /// Initialize connection with the sensor node alert WebSocket
   void initSeAlertsWSChannel({required String route, required BuildContext context}) {
     // attempt websocket connection
     WebSocketChannel? seAlertsWebSocket = _connectChannel(route);
@@ -312,7 +310,7 @@ class ApiRequest {
       DatabaseHelper.readingsLimit(snapshotObj.deviceID);
       DatabaseHelper.addReadings(snapshotObj);
 
-      final SMAlerts alertObj = SMAlerts.fromJSON(decodedData['message']);
+      final SensorAlerts alertObj = SensorAlerts.fromJSON(decodedData['message']);
 
       // pass to stream controller
       //streamController.add(alertObj);

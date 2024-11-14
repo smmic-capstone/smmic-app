@@ -10,7 +10,6 @@ import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/device_utils.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 class DevicesProvider extends ChangeNotifier {
   // dependencies
@@ -23,10 +22,10 @@ class DevicesProvider extends ChangeNotifier {
   final ApiRoutes _apiRoutes = ApiRoutes();
   final ApiRequest _apiRequest = ApiRequest();
 
-  // sink node map lists
+  // sink node map
   Map<String, SinkNode> _sinkNodeMap = {}; // ignore: prefer_final_fields
   Map<String, SinkNode> get sinkNodeMap => _sinkNodeMap;
-  // sensor node
+  // sensor node map
   Map<String, SensorNode> _sensorNodeMap = {}; // ignore: prefer_final_fields
   Map<String, SensorNode> get sensorNodeMap => _sensorNodeMap;
 
@@ -39,25 +38,26 @@ class DevicesProvider extends ChangeNotifier {
   Map<String, List<SensorNodeSnapshot>> get sensorNodeChartDataMap => _sensorNodeChartDataMap;
 
   // sm alerts
-  List<SMAlerts?> _smAlertsList = []; // ignore: prefer_final_fields
-  List<SMAlerts?> get smAlertsList => _smAlertsList;
+  List<SensorAlerts?> _smAlertsList = []; // ignore: prefer_final_fields
+  List<SensorAlerts?> get smAlertsList => _smAlertsList;
 
-  SMAlerts? _alertCode;
-  SMAlerts? get alertCode => _alertCode;
+  SensorAlerts? _alertCode;
+  SensorAlerts? get alertCode => _alertCode;
 
-  SMAlerts? _humidityAlert;
-  SMAlerts? _tempAlert;
-  SMAlerts? _moistureAlert;
+  SensorAlerts? _humidityAlert;
+  SensorAlerts? _tempAlert;
+  SensorAlerts? _moistureAlert;
 
-  SMAlerts? get humidityAlert => _humidityAlert;
-  SMAlerts? get tempAlert => _tempAlert;
-  SMAlerts? get moistureAlert => _moistureAlert;
+  SensorAlerts? get humidityAlert => _humidityAlert;
+  SensorAlerts? get tempAlert => _tempAlert;
+  SensorAlerts? get moistureAlert => _moistureAlert;
 
   Map <String, Map<String,int>> _deviceAlerts = {};
 
-  Future<void> init({
-    required ConnectivityResult connectivity}) async {
+  Future<void> init({required ConnectivityResult connectivity}) async {
 
+    // set device list from the shared preferences
+    // TODO: add cross checking with api to verify integrity
     await _setDeviceListFromSharedPrefs();
 
     // acquire user data and tokens from shared prefs
@@ -65,20 +65,27 @@ class DevicesProvider extends ChangeNotifier {
     Map<String, dynamic> tokens = await _sharedPrefsUtils.getTokens(access: true);
 
     if (userData == null) {
-      _logs.warning(message: '.init() -> user data null!');
+      _logs.warning(message: '.init() -> user data from shared prefs is null!');
       return;
     }
 
+    // if connection sources are available,
+    // attempt setting device list from the api
     if (connectivity != ConnectivityResult.none) {
       await _setDeviceListFromApi(userData: userData, tokens: tokens);
     }
 
-    await _loadReadingsFromSqFlite();
+    // initially, load readings from the sqlite
+    await _loadReadingsFromSqlite();
 
     notifyListeners();
+
+    // set *updated* list to shared preferences
     await _setToSharedPrefs();
   }
 
+  /// Set current SinkNode and Sensor Node *objects* map
+  /// to shared preferences as `List<String>`
   Future<bool> _setToSharedPrefs() async {
 
     List<String> sinkNodeIds = _sinkNodeMap.keys.toList();
@@ -113,8 +120,9 @@ class DevicesProvider extends ChangeNotifier {
 
     return true;
   }
-  
-  Future<bool> _loadReadingsFromSqFlite() async {
+
+  /// Load initial readings and chart data from the sqlite local storage
+  Future<bool> _loadReadingsFromSqlite() async {
     for (String seId in _sensorNodeMap.keys) {
       SensorNodeSnapshot? fromSQFLiteSnapshot = await DatabaseHelper.getAllReadings(_sensorNodeMap[seId]!.deviceID);
       if (fromSQFLiteSnapshot != null){
@@ -128,7 +136,7 @@ class DevicesProvider extends ChangeNotifier {
     return true;
   }
 
-  // set device list with data from the api
+  /// Set device list from the API
   Future<bool> _setDeviceListFromApi({
     required Map<String, dynamic> userData,
     required Map<String, dynamic> tokens}) async {
@@ -163,16 +171,28 @@ class DevicesProvider extends ChangeNotifier {
     return true;
   }
 
+  /// Set device list from share preferences
+  // TODO: add cross-checking with the API to verify integrity
   Future<bool> _setDeviceListFromSharedPrefs() async {
     List<Map<String, dynamic>> sinkList = await _sharedPrefsUtils.getSinkList();
     List<Map<String, dynamic>> sensorList = await _sharedPrefsUtils.getSensorList();
 
+    // map sink nodes to objects and set to sink node map
     for (Map<String, dynamic> sinkMap in sinkList) {
       SinkNode sinkObj = _deviceUtils.sinkNodeMapToObject(sinkMap);
       _sinkNodeMap[sinkObj.deviceID] = sinkObj;
     }
 
     for (Map<String, dynamic> sensorMap in sensorList) {
+      SinkNode? correspondingSk = _sinkNodeMap[sensorMap[SensorNodeKeys.sinkNode.key]];
+      // check existence of corresponding sink node
+      if (correspondingSk == null) {
+        _logs.warning(message: 'sensor node${sensorMap[SensorNodeKeys.deviceID.key]}'
+            'present in shared preferences, but corresponding SinkNode id does'
+            'not exist in current _sinkNodeMap!');
+        continue;
+      }
+      // map to object and set to sensor node map
       SensorNode sensorObj = _deviceUtils.sensorNodeMapToObject(
           sensorMap: sensorMap,
           sinkNodeID: sensorMap[SensorNodeKeys.sinkNode.key]
@@ -195,40 +215,13 @@ class DevicesProvider extends ChangeNotifier {
   // reading:value&
   // ...
   //
+  /// Set a new sensor snapshot from any of the following type:
+  /// `Map<String, dynamic>`, `String`, `SensorNodeSnapshot` and
+  /// update chart data.
   void setNewSensorSnapshot(var reading) {
     SensorNodeSnapshot? finalSnapshot;
 
-    if (reading is Map<String, dynamic>) {
-      // TODO: verify keys first
-      finalSnapshot = SensorNodeSnapshot.fromJSON(reading);
-    } else if (reading is String) {
-      // assuming that if the reading variable is a string, it is an mqtt payload
-      Map<String, dynamic> fromStringMap = {};
-      List<String> outerSplit = reading.split(';');
-
-      fromStringMap.addAll({
-        'device_id': outerSplit[1],
-        'timestamp': outerSplit[2],
-      });
-
-      List<String> dataSplit = outerSplit[3].split('&');
-
-      for (String keyValue in dataSplit) {
-        try {
-          List<String> x = keyValue.split(':');
-          fromStringMap.addAll({x[0]: x[1]});
-        } on FormatException catch (e) {
-          _logs.error(message: 'setNewSensorReadings() raised FormatException error -> $e}');
-          break;
-        }
-      }
-
-      // create a new sensor node snapshot object from the new string map
-      finalSnapshot = SensorNodeSnapshot.fromJSON(fromStringMap);
-
-    } else if (reading is SensorNodeSnapshot) {
-      finalSnapshot = reading;
-    }
+    finalSnapshot = SensorNodeSnapshot.dynamicSerializer(data: reading);
 
     if (finalSnapshot == null) {
       return;
@@ -236,7 +229,7 @@ class DevicesProvider extends ChangeNotifier {
 
     // set snapshot
     _sensorNodeSnapshotMap[finalSnapshot.deviceID] = finalSnapshot;
-    // set chartdata
+    // set chart data
     List<SensorNodeSnapshot>? chartDataBuffer = _sensorNodeChartDataMap[finalSnapshot.deviceID];
     if (chartDataBuffer == null) {
       chartDataBuffer = [finalSnapshot];
@@ -251,20 +244,7 @@ class DevicesProvider extends ChangeNotifier {
     return;
   }
 
-  Future<void> deviceReadings(String deviceID) async {
-    _logs.info(message: 'deviceReadings running');
-
-    final latestReading = await DatabaseHelper.getAllReadings(deviceID);
-
-    if (latestReading == null) {
-      return;
-    }
-
-    _sensorNodeSnapshotMap[latestReading.deviceID] = latestReading;
-    notifyListeners();
-  }
-
-  Future<void> sensorNodeAlerts ({required SMAlerts alertMessage}) async {
+  Future<void> sensorNodeAlerts ({required SensorAlerts alertMessage}) async {
     _logs.info(message: "sensorNodeAlerts running");
 
     List<Map<String, dynamic>>? alertDataSharedPrefs = await _sharedPrefsUtils.getAlertsData();
@@ -272,7 +252,7 @@ class DevicesProvider extends ChangeNotifier {
 
     alertDataSharedPrefs.removeWhere((alert) {
       return alert['device_id'] == alertMessage.deviceID &&
-          (int.parse(alert['alerts']) ~/ 10) == (alertMessage.alerts ~/ 10);
+          (int.parse(alert['alerts']) ~/ 10) == (alertMessage.alertCode ~/ 10);
     });
 
     alertDataSharedPrefs.add(alertMessage.toJson());
@@ -286,11 +266,11 @@ class DevicesProvider extends ChangeNotifier {
 
     _alertCode = alertMessage;
 
-    if(alertMessage.alerts >= 20 && alertMessage.alerts < 30){
+    if(alertMessage.alertCode >= 20 && alertMessage.alertCode < 30){
       _humidityAlert =  alertMessage;
-    }else if(alertMessage.alerts >= 30 && alertMessage.alerts < 40){
+    }else if(alertMessage.alertCode >= 30 && alertMessage.alertCode < 40){
       _tempAlert = alertCode;
-    }else if(alertMessage.alerts >= 40 && alertMessage.alerts < 50){
+    }else if(alertMessage.alertCode >= 40 && alertMessage.alertCode < 50){
       _moistureAlert = alertCode;
     }
 

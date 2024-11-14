@@ -80,7 +80,6 @@ class DatabaseHelper {
 
     final readings = queryResult.map((data) => SensorNodeSnapshot.fromJSON(data)).toList().reversed.toList();
 
-    Logs(tag: 'DatabaseHelper.chartReadings()').info(message: '$readings');
     return readings;
   }
 }

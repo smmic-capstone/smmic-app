@@ -102,7 +102,7 @@ class _Devices extends State<Devices> {
     WidgetsFlutterBinding.ensureInitialized();
     if (data is SensorNodeSnapshot) {
       context.read<DevicesProvider>().setNewSensorSnapshot(data);
-    } else if (data is SMAlerts) {
+    } else if (data is SensorAlerts) {
       // TODO: handle from alerts
     } else if (data is String) {
       context.read<DevicesProvider>().setNewSensorSnapshot(data);
