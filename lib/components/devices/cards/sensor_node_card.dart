@@ -36,14 +36,14 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
   final Logs _logs = Logs(tag: 'Sensor Node Card()');
 
   final StreamController<SensorNodeSnapshot> _snapshotStreamController = StreamController<SensorNodeSnapshot>.broadcast();
-  final StreamController<SensorAlerts> _alertsStreamController = StreamController<SensorAlerts>.broadcast();
+  final StreamController<SMSensorState> _alertsStreamController = StreamController<SMSensorState>.broadcast();
 
-  StreamController<SensorAlerts> get smStreamController => _alertsStreamController;
+  StreamController<SMSensorState> get smStreamController => _alertsStreamController;
   StreamController<SensorNodeSnapshot> get streamController => _snapshotStreamController;
 
   SensorNodeSnapshot? cardReadings;
   SensorNodeSnapshot? sqlCardReadings;
-  SensorAlerts? alertsStreamData;
+  SMSensorState? alertsStreamData;
 
   Color? tempColor;
   Color? moistureColor;

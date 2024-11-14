@@ -37,23 +37,6 @@ class DevicesProvider extends ChangeNotifier {
   Map<String, List<SensorNodeSnapshot>> _sensorNodeChartDataMap = {}; // ignore: prefer_final_fields
   Map<String, List<SensorNodeSnapshot>> get sensorNodeChartDataMap => _sensorNodeChartDataMap;
 
-  // sm alerts
-  List<SensorAlerts?> _smAlertsList = []; // ignore: prefer_final_fields
-  List<SensorAlerts?> get smAlertsList => _smAlertsList;
-
-  SensorAlerts? _alertCode;
-  SensorAlerts? get alertCode => _alertCode;
-
-  SensorAlerts? _humidityAlert;
-  SensorAlerts? _tempAlert;
-  SensorAlerts? _moistureAlert;
-
-  SensorAlerts? get humidityAlert => _humidityAlert;
-  SensorAlerts? get tempAlert => _tempAlert;
-  SensorAlerts? get moistureAlert => _moistureAlert;
-
-  Map <String, Map<String,int>> _deviceAlerts = {};
-
   Future<void> init({required ConnectivityResult connectivity}) async {
 
     // set device list from the shared preferences
@@ -77,6 +60,8 @@ class DevicesProvider extends ChangeNotifier {
 
     // initially, load readings from the sqlite
     await _loadReadingsFromSqlite();
+
+    _initSensorStates();
 
     notifyListeners();
 
@@ -244,38 +229,60 @@ class DevicesProvider extends ChangeNotifier {
     return;
   }
 
-  Future<void> sensorNodeAlerts ({required SensorAlerts alertMessage}) async {
-    _logs.info(message: "sensorNodeAlerts running");
+  // soil moisture sensor states as map
+  Map<String, SMSensorState> _sensorAlertsMap = {}; // ignore: prefer_final_fields
+  Map<String, SMSensorState> get sensorAlertsMap => _sensorAlertsMap;
 
-    List<Map<String, dynamic>>? alertDataSharedPrefs = await _sharedPrefsUtils.getAlertsData();
-    alertDataSharedPrefs ??= [];
-
-    alertDataSharedPrefs.removeWhere((alert) {
-      return alert['device_id'] == alertMessage.deviceID &&
-          (int.parse(alert['alerts']) ~/ 10) == (alertMessage.alertCode ~/ 10);
-    });
-
-    alertDataSharedPrefs.add(alertMessage.toJson());
-
-    _logs.info(message: "alertMessage : ${alertMessage.deviceID}");
-    _logs.info(message: "alertDataSharedPrefs : $alertDataSharedPrefs");
-
-    _sharedPrefsUtils.setAlertsData(alertsList: alertDataSharedPrefs);
-
-    _logs.info(message: "sensorNodeAlerts Running");
-
-    _alertCode = alertMessage;
-
-    if(alertMessage.alertCode >= 20 && alertMessage.alertCode < 30){
-      _humidityAlert =  alertMessage;
-    }else if(alertMessage.alertCode >= 30 && alertMessage.alertCode < 40){
-      _tempAlert = alertCode;
-    }else if(alertMessage.alertCode >= 40 && alertMessage.alertCode < 50){
-      _moistureAlert = alertCode;
+  void _initSensorStates() {
+    for (String sensorId in _sensorNodeMap.keys) {
+      SMSensorState smStateObj = SMSensorState.initObj(sensorId);
+      _sensorAlertsMap[sensorId] = smStateObj;
     }
-
-    notifyListeners();
   }
+  
+  void updateSMSensorState(Map<String, dynamic> alertMap) {
+    SMSensorState? smSensorStateObj = _sensorAlertsMap[alertMap[SensorAlertKeys.deviceID.key]];
+    if (smSensorStateObj == null) {
+      _logs.warning(message: 'setSMSensorState() -> received sensor alert for'
+          '${alertMap[SensorAlertKeys.deviceID.key]} but not corresponding sensor state object'
+          'in _sensorAlertsMap!');
+    } else {
+      _sensorAlertsMap[alertMap[SensorAlertKeys.deviceID.key]]!.updateState(alertMap);
+    }
+  }
+
+  // Future<void> sensorNodeAlerts ({required SMSensorState alertMessage}) async {
+  //   _logs.info(message: "sensorNodeAlerts running");
+  //
+  //   List<Map<String, dynamic>>? alertDataSharedPrefs = await _sharedPrefsUtils.getAlertsData();
+  //   alertDataSharedPrefs ??= [];
+  //
+  //   alertDataSharedPrefs.removeWhere((alert) {
+  //     return alert['device_id'] == alertMessage.deviceID &&
+  //         (int.parse(alert['alerts']) ~/ 10) == (alertMessage.alertCode ~/ 10);
+  //   });
+  //
+  //   alertDataSharedPrefs.add(alertMessage.toJson());
+  //
+  //   _logs.info(message: "alertMessage : ${alertMessage.deviceID}");
+  //   _logs.info(message: "alertDataSharedPrefs : $alertDataSharedPrefs");
+  //
+  //   _sharedPrefsUtils.setAlertsData(alertsList: alertDataSharedPrefs);
+  //
+  //   _logs.info(message: "sensorNodeAlerts Running");
+  //
+  //   _alertCode = alertMessage;
+  //
+  //   if(alertMessage.alertCode >= 20 && alertMessage.alertCode < 30){
+  //     _humidityAlert =  alertMessage;
+  //   }else if(alertMessage.alertCode >= 30 && alertMessage.alertCode < 40){
+  //     _tempAlert = alertCode;
+  //   }else if(alertMessage.alertCode >= 40 && alertMessage.alertCode < 50){
+  //     _moistureAlert = alertCode;
+  //   }
+  //
+  //   notifyListeners();
+  // }
 
   Future<void> sinkNameChange(Map<String,dynamic> updatedSinkData) async {
     _logs.info(message: "sinkNameChange running....");

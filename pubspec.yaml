@@ -57,6 +57,7 @@ dependencies:
   qr_flutter: ^4.1.0
   dartz: ^0.10.1
   connectivity_plus: ^6.1.0
+  tuple: ^2.0.2
 
 dev_dependencies:
   flutter_test:
