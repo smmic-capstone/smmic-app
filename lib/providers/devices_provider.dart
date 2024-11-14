@@ -2,6 +2,9 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
+import 'package:flutter/widgets.dart';
+import 'package:provider/provider.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/services/devices_services.dart';
@@ -17,6 +20,8 @@ class DevicesProvider extends ChangeNotifier {
   final DevicesServices _devicesServices = DevicesServices();
   final DeviceUtils _deviceUtils = DeviceUtils();
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
+
+  late final BuildContext _internalContext;
 
   // api helpers, dependencies
   final ApiRoutes _apiRoutes = ApiRoutes();
@@ -37,7 +42,11 @@ class DevicesProvider extends ChangeNotifier {
   Map<String, List<SensorNodeSnapshot>> _sensorNodeChartDataMap = {}; // ignore: prefer_final_fields
   Map<String, List<SensorNodeSnapshot>> get sensorNodeChartDataMap => _sensorNodeChartDataMap;
 
-  Future<void> init({required ConnectivityResult connectivity}) async {
+  Future<void> init({
+    required ConnectivityResult connectivity,
+    required BuildContext context}) async {
+
+    _internalContext = context;
 
     // set device list from the shared preferences
     // TODO: add cross checking with api to verify integrity
@@ -225,64 +234,79 @@ class DevicesProvider extends ChangeNotifier {
       chartDataBuffer.add(finalSnapshot);
     }
     _sensorNodeChartDataMap[finalSnapshot.deviceID] = chartDataBuffer;
+
+    // update connection state
+    _sensorStatesMap[finalSnapshot.deviceID]!.updateState({
+      SensorAlertKeys.alertCode.key : SMSensorAlertCodes.connectedState.code.toString(),
+      SensorAlertKeys.timestamp.key : finalSnapshot.timestamp.toString(),
+    });
+
     notifyListeners();
+
+    // store the timer object into the _statesTimerMap
+    // check if a timer for connection state is already present in the map
+    // and cancel if true
+    if (_statesTimerMap[finalSnapshot.deviceID] == null) {
+      _statesTimerMap[finalSnapshot.deviceID] = {};
+    } else if (_statesTimerMap[finalSnapshot.deviceID]![SMSensorAlertCodes.connectionState] != null) {
+      _statesTimerMap[finalSnapshot.deviceID]![SMSensorAlertCodes.connectionState]!.cancel();
+      _statesTimerMap[finalSnapshot.deviceID]![SMSensorAlertCodes.connectionState] = null;
+      _logs.info(message: 'cancelling and removing existing timer in _statesTimerMap');
+    }
+    
+    // timer mechanism that updates 
+    // keep an update time record of the snapshot
+    DateTime updateTime = finalSnapshot.timestamp;
+    Timer timer = Timer(finalSnapshot
+        .timestamp
+        .add(Duration(seconds: 10))//add(SMSensorState.keepStateTime)
+        .difference(DateTime.now()), () {
+      // check whether the update time still matches
+      // the last update time currently in store in the _sensorStatesMap
+      // if so, no updates have been made since the updateTime record has been kept
+      // and assume sensor disconnect
+      if (_sensorStatesMap[finalSnapshot!.deviceID]!.lastUpdate.difference(updateTime) == Duration.zero) {
+        _sensorStatesMap[finalSnapshot.deviceID]!.updateState({
+          SensorAlertKeys.alertCode.key : SMSensorAlertCodes.disconnectedState.code.toString(),
+          SensorAlertKeys.timestamp.key : finalSnapshot.timestamp.toString()
+        });
+        notifyListeners();
+      } else {
+        return;
+      }
+    });
+    // replace timer with the new timer
+    _statesTimerMap[finalSnapshot.deviceID]![SMSensorAlertCodes.connectionState] = timer;
+
     return;
   }
 
   // soil moisture sensor states as map
-  Map<String, SMSensorState> _sensorAlertsMap = {}; // ignore: prefer_final_fields
-  Map<String, SMSensorState> get sensorAlertsMap => _sensorAlertsMap;
+  Map<String, SMSensorState> _sensorStatesMap = {}; // ignore: prefer_final_fields
+  Map<String, SMSensorState> get sensorStatesMap => _sensorStatesMap;
+
+  // internal map of timers for each sensor node, to avoid overhead from timer objects
+  // and to outright cancel timers that are no longer relevant
+  Map<String, Map<SMSensorAlertCodes, Timer?>> _statesTimerMap = {}; // ignore: prefer_final_fields
 
   void _initSensorStates() {
     for (String sensorId in _sensorNodeMap.keys) {
       SMSensorState smStateObj = SMSensorState.initObj(sensorId);
-      _sensorAlertsMap[sensorId] = smStateObj;
+      _sensorStatesMap[sensorId] = smStateObj;
+      _statesTimerMap = {};
     }
   }
   
   void updateSMSensorState(Map<String, dynamic> alertMap) {
-    SMSensorState? smSensorStateObj = _sensorAlertsMap[alertMap[SensorAlertKeys.deviceID.key]];
+    SMSensorState? smSensorStateObj = _sensorStatesMap[alertMap[SensorAlertKeys.deviceID.key]];
     if (smSensorStateObj == null) {
       _logs.warning(message: 'setSMSensorState() -> received sensor alert for'
           '${alertMap[SensorAlertKeys.deviceID.key]} but not corresponding sensor state object'
           'in _sensorAlertsMap!');
     } else {
-      _sensorAlertsMap[alertMap[SensorAlertKeys.deviceID.key]]!.updateState(alertMap);
+      _sensorStatesMap[alertMap[SensorAlertKeys.deviceID.key]]!.updateState(alertMap);
     }
   }
-
-  // Future<void> sensorNodeAlerts ({required SMSensorState alertMessage}) async {
-  //   _logs.info(message: "sensorNodeAlerts running");
-  //
-  //   List<Map<String, dynamic>>? alertDataSharedPrefs = await _sharedPrefsUtils.getAlertsData();
-  //   alertDataSharedPrefs ??= [];
-  //
-  //   alertDataSharedPrefs.removeWhere((alert) {
-  //     return alert['device_id'] == alertMessage.deviceID &&
-  //         (int.parse(alert['alerts']) ~/ 10) == (alertMessage.alertCode ~/ 10);
-  //   });
-  //
-  //   alertDataSharedPrefs.add(alertMessage.toJson());
-  //
-  //   _logs.info(message: "alertMessage : ${alertMessage.deviceID}");
-  //   _logs.info(message: "alertDataSharedPrefs : $alertDataSharedPrefs");
-  //
-  //   _sharedPrefsUtils.setAlertsData(alertsList: alertDataSharedPrefs);
-  //
-  //   _logs.info(message: "sensorNodeAlerts Running");
-  //
-  //   _alertCode = alertMessage;
-  //
-  //   if(alertMessage.alertCode >= 20 && alertMessage.alertCode < 30){
-  //     _humidityAlert =  alertMessage;
-  //   }else if(alertMessage.alertCode >= 30 && alertMessage.alertCode < 40){
-  //     _tempAlert = alertCode;
-  //   }else if(alertMessage.alertCode >= 40 && alertMessage.alertCode < 50){
-  //     _moistureAlert = alertCode;
-  //   }
-  //
-  //   notifyListeners();
-  // }
 
   Future<void> sinkNameChange(Map<String,dynamic> updatedSinkData) async {
     _logs.info(message: "sinkNameChange running....");

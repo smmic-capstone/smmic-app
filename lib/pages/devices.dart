@@ -28,7 +28,7 @@ class _Devices extends State<Devices> {
 
   @override
   Widget build(BuildContext context) {
-    Color bgColor = context.watch<UiProvider>().isDark ? Colors.black : Colors.white;
+    Color bgColor = context.watch<UiProvider>().isDark ? Colors.black : Color.fromRGBO(240, 240, 240, 1);
 
     return Scaffold(
       backgroundColor: bgColor,

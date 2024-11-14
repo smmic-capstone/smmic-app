@@ -1,5 +1,7 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smmic/models/device_data_models.dart';
 
 String defaultFont = 'Inter';
 
@@ -43,5 +45,14 @@ class UiProvider extends ChangeNotifier {
   Future<void> _saveTheme() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isDark', _isDark);
+  }
+
+  Color setConnectionColor(ConnectivityResult connectionStatus, int sensorConnectionState) {
+    Color finalColor = const Color.fromRGBO(76, 166, 42, 0.9);
+    if (connectionStatus == ConnectivityResult.none
+        || sensorConnectionState == SMSensorAlertCodes.disconnectedState.code) {
+      finalColor = Colors.black.withOpacity(0.2);
+    }
+    return finalColor;
   }
 }

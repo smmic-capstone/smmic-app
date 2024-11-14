@@ -65,7 +65,11 @@ class _SensorNodePageState extends State<SensorNodePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // TODO:
-              SensorNodeCardExpanded(deviceID: widget.deviceID, snapshot: null, streamController: widget.streamController.stream,),
+              SensorNodeCardExpanded(
+                deviceID: widget.deviceID,
+                snapshot: context.watch<DevicesProvider>().sensorNodeSnapshotMap[widget.deviceID],
+                streamController: widget.streamController.stream
+              ),
               Container(
                 margin: EdgeInsets.only(bottom: 25),
                 decoration: BoxDecoration(

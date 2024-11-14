@@ -214,6 +214,7 @@ enum SMSensorAlertCodes {
   disconnectedState(0),
 
   // alertCode identifiers
+  connectionState(-1),
   soilMoistureAlert(4),
   temperatureAlert(3),
   humidityAlert(2),
@@ -251,11 +252,12 @@ enum SensorAlertKeys {
   const SensorAlertKeys(this.key);
 }
 
-Duration _alertStateDuration = const Duration(minutes: 10);
-
 class SMSensorState {
   final String deviceID;
   DateTime lastUpdate;
+  /// The time that *individual* states are kept before they 'expire'
+  static Duration keepStateTime = const Duration(minutes: 10);
+
   // states are a tuple of:
   // 1. the current state code / alert code received from the web socket
   // 2. the timestamp when the alert was received
@@ -283,35 +285,35 @@ class SMSensorState {
         deviceID: sensorId,
         lastUpdate: DateTime.now(),
         connectionState: Tuple3(
-            SMSensorAlertCodes.connectedState.code,
+            SMSensorAlertCodes.disconnectedState.code,
             DateTime.now(),
-            DateTime.now().add(_alertStateDuration)
+            DateTime.now().add(keepStateTime)
         ),
       soilMoistureState: Tuple3(
           SMSensorAlertCodes.soilMoistureNormal.code,
           DateTime.now(),
-          DateTime.now().add(_alertStateDuration)
+          DateTime.now().add(keepStateTime)
       ),
       humidityState: Tuple3(
           SMSensorAlertCodes.humidityNormal.code,
           DateTime.now(),
-          DateTime.now().add(_alertStateDuration)
+          DateTime.now().add(keepStateTime)
       ),
       temperatureState: Tuple3(
           SMSensorAlertCodes.temperatureNormal.code,
           DateTime.now(),
-          DateTime.now().add(_alertStateDuration)
+          DateTime.now().add(keepStateTime)
       ),
       batteryState: Tuple3(
           SMSensorAlertCodes.normalBattery.code,
           DateTime.now(),
-          DateTime.now().add(_alertStateDuration)
+          DateTime.now().add(keepStateTime)
       ),
     );
   }
 
   void updateState(Map<String, dynamic> alertMap) {
-    lastUpdate = DateTime.now();
+    lastUpdate = DateTime.parse(alertMap[SensorAlertKeys.timestamp.key]);
     DateTime alertTimeStamp = DateTime.parse(
         alertMap[SensorAlertKeys.timestamp.key]
     );
@@ -322,7 +324,7 @@ class SMSensorState {
       connectionState = Tuple3(
           alertCode,
           alertTimeStamp,
-          alertTimeStamp.add(_alertStateDuration)
+          alertTimeStamp.add(keepStateTime)
       );
       return;
     }
@@ -331,19 +333,19 @@ class SMSensorState {
       soilMoistureState = Tuple3(
           alertCode,
           alertTimeStamp,
-          alertTimeStamp.add(_alertStateDuration)
+          alertTimeStamp.add(keepStateTime)
       );
     } else if (alertType == SMSensorAlertCodes.temperatureAlert.code) {
       temperatureState = Tuple3(
           alertCode,
           alertTimeStamp,
-          alertTimeStamp.add(_alertStateDuration)
+          alertTimeStamp.add(keepStateTime)
       );
     } else if (alertType == SMSensorAlertCodes.humidityAlert.code) {
       humidityState = Tuple3(
           alertCode,
           alertTimeStamp,
-          alertTimeStamp.add(_alertStateDuration)
+          alertTimeStamp.add(keepStateTime)
       );
     }
 
@@ -352,7 +354,7 @@ class SMSensorState {
     connectionState = Tuple3(
         1,
         alertTimeStamp,
-        alertTimeStamp.add(_alertStateDuration)
+        alertTimeStamp.add(keepStateTime)
     );
   }
 }
