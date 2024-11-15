@@ -1,12 +1,15 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
 import 'package:smmic/constants/api.dart';
+import 'package:smmic/firebase_options.dart';
 import 'package:smmic/preload/preloaddevices.dart';
 import 'package:smmic/providers/connections_provider.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/pages/login.dart';
 import 'package:smmic/providers/devices_provider.dart';
+import 'package:smmic/providers/fcm_provider.dart';
 import 'package:smmic/providers/mqtt_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/providers/auth_provider.dart';
@@ -15,14 +18,36 @@ import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/global_navigator.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_core/firebase_core.dart';
+
 
 final Logs _logs = Logs(tag: 'Main.dart');
 
-void main() {
+///Code is needed to be here
+///When app is in background event FCM/Notifs Handler
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+
+  if (kDebugMode) {
+    print("Handling a background message: ${message.messageId}");
+    print('Message data: ${message.data}');
+    print('Message notification: ${message.notification?.title}');
+    print('Message notification: ${message.notification?.body}');
+  }
+}
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform
+  );
+  ///Same function as the top level, background notifs handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   GlobalNavigator().setupLocator();
   runApp(MultiProvider(
     providers: [
+      ChangeNotifierProvider<FcmProvider>(create: (_) => FcmProvider()),
       ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
       ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
       ChangeNotifierProvider<UserDataProvider>(create: (_) => UserDataProvider()),
@@ -106,6 +131,7 @@ class _AuthGateState extends State<AuthGate> {
             }
 
             // initiate user data when logged in
+            context.read<FcmProvider>().init();
             context.read<UserDataProvider>().init();
             context.read<DevicesProvider>().init();
             context.read<AuthProvider>().init();

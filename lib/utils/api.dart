@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:dartz/dartz.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -11,6 +12,8 @@ import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+
+import '../constants/api.dart';
 
 class ApiRequest {
   final Logs _logs = Logs(tag: 'ApiRequest()');

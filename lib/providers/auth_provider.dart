@@ -37,6 +37,7 @@ class AuthProvider extends ChangeNotifier {
   TokenStatus? _accessStatus;
   TokenStatus? get accessStatus => _accessStatus;
 
+
   /// Initializes AuthProvider() using tokens from the SharedPreferences, performs verification on tokens
   Future<void> init() async {
     _logs.info2(message: 'init() executing');
@@ -54,7 +55,6 @@ class AuthProvider extends ChangeNotifier {
 
     //if refresh status check fails, verifyToken will return a TokenStatus.forceLogin and the forceLoginDialog is executed
     if(refreshStatus == TokenStatus.forceLogin){
-      _accessData = null;
       _accessStatus = TokenStatus.forceLogin;
       _globalNavigator.forceLoginDialog();
       notifyListeners();
