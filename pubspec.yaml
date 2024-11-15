@@ -109,6 +109,15 @@ flutter:
     - assets/notibell.png
     - assets/device.png
     - assets/irrigation.png
+    - assets/icons/soil_moisture_normal.svg
+    - assets/icons/soil_moisture_low.svg
+    - assets/icons/soil_moisture_high.svg
+    - assets/icons/temperature_normal.svg
+    - assets/icons/temperature_low.svg
+    - assets/icons/temperature_high.svg
+    - assets/icons/humidity_normal.svg
+    - assets/icons/humidity_low.svg
+    - assets/icons/humidity_high.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
