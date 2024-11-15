@@ -22,10 +22,11 @@ class AuthService {
 
   Future<void> login({required String email, required String password}) async {
     _logs.info(message: 'Log in process started');
-    final data = await _apiRequest.post(route: _apiRoutes.login, body: {
-      'email': email,
-      'password': password
-    });
+    final data = await _apiRequest.post(
+        route: _apiRoutes.login, body: {
+          'email': email,
+          'password': password
+        });
 
     if (data.containsKey('error')) {
       if (data['error'] == 400) {
@@ -34,8 +35,7 @@ class AuthService {
       //TODO: HANDLE ERROR SCENARIO
       _logs.warning(message: 'Data caught error key!');
       _logs.warning(message: data.toString());
-      _globalNavigator
-          .forceLoginDialog(); // replace with a more specific dialog
+      _globalNavigator.forceLoginDialog(); // replace with a more specific dialog
     }
 
     Map<String, dynamic> body = data['data'];

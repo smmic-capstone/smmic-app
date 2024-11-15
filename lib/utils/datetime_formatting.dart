@@ -6,7 +6,7 @@ class DateTimeFormatting {
   final String _dateTimeFormat = 'yyyy-MM-dd HH:mm';
 
   String formatTime(DateTime dateTime) {
-    return DateFormat('HH:mm').format(dateTime);
+    return DateFormat('HH:mm a').format(dateTime);
   }
 
   String formatTimeClearZero(DateTime dateTime) {

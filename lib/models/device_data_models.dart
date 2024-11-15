@@ -1,6 +1,8 @@
 import 'dart:convert';
 
-enum SinkNodeKeys{
+import 'package:dartz/dartz.dart';
+
+enum SinkNodeKeys {
   deviceID('device_id'),
   deviceName('name'),
   latitude('latitude'),
@@ -11,7 +13,7 @@ enum SinkNodeKeys{
   const SinkNodeKeys(this.key);
 }
 
-enum SensorNodeKeys{
+enum SensorNodeKeys {
   deviceID('device_id'),
   deviceName('name'),
   latitude('latitude'),
@@ -20,6 +22,18 @@ enum SensorNodeKeys{
 
   final String key;
   const SensorNodeKeys(this.key);
+}
+
+enum SMSensorSnapshotKeys {
+  deviceID('device_id'),
+  timestamp('timestamp'),
+  soilMoisture('soil_moisture'),
+  temperature('temperature'),
+  humidity('humidity'),
+  batteryLevel('battery_level');
+
+  final String key;
+  const SMSensorSnapshotKeys(this.key);
 }
 
 class Device {
@@ -105,14 +119,27 @@ class SensorNodeSnapshot {
   });
 
   factory SensorNodeSnapshot.fromJSON(Map<String, dynamic> data) {
+    // the data contains a 'data' key, it is an alert message
     final dataValues = data.containsKey('data') ? data['data'] : data;
     return SensorNodeSnapshot._internal(
-      deviceID: data['device_id'],
-      timestamp: DateTime.parse(data['timestamp']),
-      soilMoisture: double.parse(dataValues['soil_moisture'].toString()),
-      temperature: double.parse(dataValues['temperature'].toString()),
-      humidity: double.parse(dataValues['humidity'].toString()),
-      batteryLevel: double.parse(dataValues['battery_level'].toString()),
+      deviceID: data[SMSensorSnapshotKeys.deviceID.key],
+      timestamp: DateTime.parse(data[SMSensorSnapshotKeys.timestamp.key]),
+      soilMoisture: double.parse(
+          dataValues[SMSensorSnapshotKeys.soilMoisture.key]
+              .toString()
+      ),
+      temperature: double.parse(
+          dataValues[SMSensorSnapshotKeys.temperature.key]
+              .toString()
+      ),
+      humidity: double.parse(
+          dataValues[SMSensorSnapshotKeys.humidity.key]
+              .toString()
+      ),
+      batteryLevel: double.parse(
+          dataValues[SMSensorSnapshotKeys.batteryLevel.key]
+              .toString()
+      ),
     );
   }
 
@@ -133,6 +160,7 @@ class SensorNodeSnapshot {
     if (data is Map<String, dynamic>) {
       // TODO: verify keys first
       finalSnapshot = SensorNodeSnapshot.fromJSON(data);
+
     } else if (data is String) {
       // assuming that if the reading variable is a string, it is an mqtt payload
       Map<String, dynamic> fromStringMap = {};
@@ -159,18 +187,19 @@ class SensorNodeSnapshot {
 
     } else if (data is SensorNodeSnapshot) {
       finalSnapshot = data;
+
     }
 
     return finalSnapshot;
   }
 
   Map<String,dynamic> toJson() => {
-    'device_id' : deviceID,
-    'timestamp' : timestamp.toIso8601String(),
-    'soil_moisture' : soilMoisture,
-    'temperature' : temperature,
-    'humidity' : humidity,
-    'battery_level': batteryLevel
+    SMSensorSnapshotKeys.deviceID.key : deviceID,
+    SMSensorSnapshotKeys.timestamp.key : timestamp.toIso8601String(),
+    SMSensorSnapshotKeys.soilMoisture.key : soilMoisture,
+    SMSensorSnapshotKeys.temperature.key : temperature,
+    SMSensorSnapshotKeys.humidity.key : humidity,
+    SMSensorSnapshotKeys.batteryLevel.key: batteryLevel
   };
 
   @override
@@ -180,34 +209,154 @@ class SensorNodeSnapshot {
   }
 }
 
-class SMAlerts {
-  final String deviceID;
-  final DateTime timestamp;
-  final int alerts;
-  final Map<String,dynamic> data;
+enum SMSensorAlertCodes {
+  connectedState(1),
+  disconnectedState(0),
 
-  SMAlerts._internal({
+  // alertCode identifiers
+  connectionState(-1),
+  soilMoistureAlert(4),
+  temperatureAlert(3),
+  humidityAlert(2),
+
+  // soil moisture
+  soilMoistureLow(40),
+  soilMoistureNormal(41),
+  soilMoistureHigh(42),
+
+  // temperature
+  temperatureLow(30),
+  temperatureNormal(31),
+  temperatureHigh(32),
+
+  // humidity
+  humidityLow(20),
+  humidityNormal(21),
+  humidityHigh(22),
+
+  // battery
+  lowBattery(50),
+  normalBattery(51);
+
+  final int code;
+  const SMSensorAlertCodes(this.code);
+}
+
+enum SensorAlertKeys {
+  deviceID('device_id'),
+  timestamp('timestamp'),
+  alertCode('alert_code'),
+  data('data');
+
+  final String key;
+  const SensorAlertKeys(this.key);
+}
+
+class SMSensorState {
+  final String deviceID;
+  DateTime lastUpdate;
+  /// The time that *individual* states are kept before they 'expire'
+  static Duration keepStateTime = const Duration(minutes: 10);
+
+  // states are a tuple of:
+  // 1. the current state code / alert code received from the web socket
+  // 2. the timestamp when the alert was received
+  // 3. the timestamp it should 'expire'
+  Tuple3<int, DateTime, DateTime> connectionState;
+  Tuple3<int, DateTime, DateTime> soilMoistureState;
+  Tuple3<int, DateTime, DateTime> humidityState;
+  Tuple3<int, DateTime, DateTime> temperatureState;
+  Tuple3<int, DateTime, DateTime> batteryState;
+
+  SMSensorState._internal({
     required this.deviceID,
-    required this.timestamp,
-    required this.alerts,
-    required this.data
+    required this.lastUpdate,
+    required this.connectionState,
+    required this.soilMoistureState,
+    required this.humidityState,
+    required this.temperatureState,
+    required this.batteryState
   });
 
-  factory SMAlerts.fromJSON(Map<String,dynamic> data){
-    return SMAlerts._internal(
-        deviceID: data['device_id'],
-        timestamp: DateTime.parse(data['timestamp']),
-        alerts: data['alert_code'],
-        data: data['data']
+  /// Initiate the soil moisture sensor state with the default values.
+  /// This method **should** only be called with device provider init.
+  factory SMSensorState.initObj(String sensorId){
+    return SMSensorState._internal(
+        deviceID: sensorId,
+        lastUpdate: DateTime.now(),
+        connectionState: Tuple3(
+            SMSensorAlertCodes.disconnectedState.code,
+            DateTime.now(),
+            DateTime.now().add(keepStateTime)
+        ),
+      soilMoistureState: Tuple3(
+          SMSensorAlertCodes.soilMoistureNormal.code,
+          DateTime.now(),
+          DateTime.now().add(keepStateTime)
+      ),
+      humidityState: Tuple3(
+          SMSensorAlertCodes.humidityNormal.code,
+          DateTime.now(),
+          DateTime.now().add(keepStateTime)
+      ),
+      temperatureState: Tuple3(
+          SMSensorAlertCodes.temperatureNormal.code,
+          DateTime.now(),
+          DateTime.now().add(keepStateTime)
+      ),
+      batteryState: Tuple3(
+          SMSensorAlertCodes.normalBattery.code,
+          DateTime.now(),
+          DateTime.now().add(keepStateTime)
+      ),
     );
   }
 
-  Map<String,dynamic> toJson() => {
-    "device_id" : deviceID,
-    "timestamp" : timestamp.toIso8601String(),
-    "alerts" : alerts,
-    "data" : data,
-  };
+  void updateState(Map<String, dynamic> alertMap) {
+    lastUpdate = DateTime.parse(alertMap[SensorAlertKeys.timestamp.key]);
+    DateTime alertTimeStamp = DateTime.parse(
+        alertMap[SensorAlertKeys.timestamp.key]
+    );
+    int alertCode = int.parse(alertMap[SensorAlertKeys.alertCode.key]);
+    int alertType = alertCode ~/ 10;
+
+    if (alertCode == 1 || alertCode == 0) {
+      connectionState = Tuple3(
+          alertCode,
+          alertTimeStamp,
+          alertTimeStamp.add(keepStateTime)
+      );
+      return;
+    }
+
+    if (alertType == SMSensorAlertCodes.soilMoistureAlert.code) {
+      soilMoistureState = Tuple3(
+          alertCode,
+          alertTimeStamp,
+          alertTimeStamp.add(keepStateTime)
+      );
+    } else if (alertType == SMSensorAlertCodes.temperatureAlert.code) {
+      temperatureState = Tuple3(
+          alertCode,
+          alertTimeStamp,
+          alertTimeStamp.add(keepStateTime)
+      );
+    } else if (alertType == SMSensorAlertCodes.humidityAlert.code) {
+      humidityState = Tuple3(
+          alertCode,
+          alertTimeStamp,
+          alertTimeStamp.add(keepStateTime)
+      );
+    }
+
+    // update connection state to 1 if received alert is
+    // not a connection state alert
+    connectionState = Tuple3(
+        1,
+        alertTimeStamp,
+        alertTimeStamp.add(keepStateTime)
+    );
+  }
 }
 
 //TODO: Add other data fields

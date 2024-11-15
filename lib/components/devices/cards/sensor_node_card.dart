@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
@@ -36,22 +37,14 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
   final Logs _logs = Logs(tag: 'Sensor Node Card()');
 
   final StreamController<SensorNodeSnapshot> _snapshotStreamController = StreamController<SensorNodeSnapshot>.broadcast();
-  final StreamController<SMAlerts> _alertsStreamController = StreamController<SMAlerts>.broadcast();
+  final StreamController<SMSensorState> _alertsStreamController = StreamController<SMSensorState>.broadcast();
 
-  StreamController<SMAlerts> get smStreamController => _alertsStreamController;
+  StreamController<SMSensorState> get smStreamController => _alertsStreamController;
   StreamController<SensorNodeSnapshot> get streamController => _snapshotStreamController;
 
   SensorNodeSnapshot? cardReadings;
   SensorNodeSnapshot? sqlCardReadings;
-  SMAlerts? alertsStreamData;
-
-  Color? tempColor;
-  Color? moistureColor;
-  Color? humidityColor;
-
-  int? tempAlert;
-  int? humidityAlert;
-  int? moistureAlert;
+  SMSensorState? alertsStreamData;
 
   @override
   void initState(){
@@ -95,7 +88,12 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
         longitude: widget.deviceInfo.longitude
     );
 
-    ConnectivityResult connectionStatus = context.watch<ConnectionProvider>().connectionStatus;
+    ConnectivityResult deviceConnectionStatus = context
+        .watch<ConnectionProvider>().connectionStatus;
+    int sensorConnectionState = context
+        .watch<DevicesProvider>()
+        .sensorStatesMap[widget.deviceInfo.deviceID]!
+        .connectionState.value1;
 
     return GestureDetector(
       onTap: () =>
@@ -115,10 +113,12 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
               padding: const EdgeInsets.symmetric(horizontal: 19, vertical: 18),
               decoration: BoxDecoration(
                   color: context.watch<UiProvider>().isDark ? Colors.black : Colors.white,
-                  borderRadius: const BorderRadius.all(Radius.circular(15)),
+                  borderRadius: const BorderRadius.all(Radius.circular(10)),
                   boxShadow: [
                     BoxShadow(
-                        color: context.watch<UiProvider>().isDark ? Colors.white.withOpacity(0.09) : Colors.black.withOpacity(0.09),
+                        color: context.watch<UiProvider>().isDark
+                            ? Colors.white.withOpacity(0.09)
+                            : Colors.black.withOpacity(0.09),
                         spreadRadius: 0,
                         blurRadius: 4,
                         offset: const Offset(0, 4))
@@ -130,16 +130,24 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                     flex: 4,
                     child: Column(
                       children: [
-                        Expanded(flex: 3, child: DeviceName(deviceName: widget.deviceInfo.deviceName)),
+                        const SizedBox(height: 2),
+                        Expanded(flex: 5, child: DeviceName(deviceName: widget.deviceInfo.deviceName)),
                         Expanded(
-                            flex: 1,
+                            flex: 2,
                             //TODO: add snapshot data here
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: [
-                                Icon(Icons.device_thermostat_outlined,color: tempColor,),
-                                Icon(Icons.water_drop_outlined, color: moistureColor),
-                                Icon(Icons.water, color: humidityColor,)
+                                const SizedBox(width: 3),
+                                // soil moisture
+                                Icon(
+                                  CupertinoIcons.dot_radiowaves_left_right,
+                                  color: UiProvider().setConnectionColor(
+                                      deviceConnectionStatus,
+                                      sensorConnectionState
+                                  ),
+                                  size: 24
+                                ),
                               ],
                             )
                         )
@@ -158,12 +166,12 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                                 DigitalDisplay(
                                   value: deviceSnapshot.temperature,
                                   valueType: 'temperature',
-                                  opacityOverride: getOpacity(connectionStatus),
+                                  opacityOverride: getOpacity(deviceConnectionStatus),
                                 ),
                                 DigitalDisplay(
                                   value: deviceSnapshot.humidity,
                                   valueType: 'humidity',
-                                  opacityOverride: getOpacity(connectionStatus),
+                                  opacityOverride: getOpacity(deviceConnectionStatus),
                                 )
                               ],
                             ),
@@ -176,7 +184,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                                     valueType: 'soilMoisture',
                                     value:  deviceSnapshot.soilMoisture,
                                     limit: 100,
-                                    opacity: getOpacity(connectionStatus))),
+                                    opacity: getOpacity(deviceConnectionStatus))),
                           )
                         ],
                       )),
@@ -184,39 +192,17 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
               )
           ),
           Container(
-            padding: const EdgeInsets.only(right: 37, top: 12),
+            padding: const EdgeInsets.only(right: 40, top: 16),
             alignment: Alignment.topRight,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                RotatedBox(
-                  quarterTurns: 2,
-                  child: IconButton(
-                    icon: const Icon(
-                      CupertinoIcons.pencil_circle,
-                      size: 20,
-                    ),
-                    color: context.watch<UiProvider>().isDark
-                        ? Colors.white.withOpacity(0.30)
-                        : Colors.black.withOpacity(0.30),
-                    onPressed: () {
-                      _skDeviceDialog.renameSNDialog();
-                    },
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ),
-                RotatedBox(
-                  quarterTurns: 2,
-                  child: Icon(
-                    CupertinoIcons.arrow_down_left_circle,
-                    size: 20,
-                    color: context.watch<UiProvider>().isDark
-                        ? Colors.white
-                        : Colors.black,
-                  ),
-                ),
-              ],
+            child: RotatedBox(
+              quarterTurns: 2,
+              child: Icon(
+                CupertinoIcons.arrow_down_left_circle,
+                size: 20,
+                color: context.watch<UiProvider>().isDark
+                    ? Colors.white.withOpacity(0.35)
+                    : Colors.black.withOpacity(0.35),
+              ),
             ),
           )
         ],

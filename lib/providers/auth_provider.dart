@@ -4,6 +4,7 @@ import 'package:jwt_decode/jwt_decode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/models/auth_models.dart';
 import 'package:flutter/material.dart';
+import 'package:smmic/models/user_data_model.dart';
 import 'package:smmic/utils/auth_utils.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
 import 'package:smmic/utils/global_navigator.dart';
@@ -17,7 +18,6 @@ enum TokenStatus {
   invalid, /// Invalid token
   expired, /// Expired token
   unverified, /// Cannot verify
-  forceLogin /// Force re log in
 }
 
 ///Authentication Provider
@@ -29,66 +29,80 @@ class AuthProvider extends ChangeNotifier {
   final GlobalNavigator _globalNavigator = locator<GlobalNavigator>();
   final Logs _logs = Logs(tag: 'AuthProvider()');
 
-  ///Returns the access data
+  ///Returns the access token data as a `UserAccess` object
   UserAccess? _accessData;
   UserAccess? get accessData => _accessData;
 
-  ///Returns the access status
+  ///Returns the status of the access token
   TokenStatus? _accessStatus;
   TokenStatus? get accessStatus => _accessStatus;
 
+  /// Returns the status of the refresh token
+  TokenStatus? _refreshStatus;
+  TokenStatus? get refreshStatus => _refreshStatus;
 
-  /// Initializes AuthProvider() using tokens from the SharedPreferences, performs verification on tokens
   Future<void> init() async {
-    _logs.info2(message: 'init() executing');
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    //String? login = await _sharedPrefsUtils.getLogin();
-    if(!sharedPreferences.containsKey('login')){
-      _logs.info(message: 'no login key found, exiting');
+
+    if (!sharedPreferences.containsKey('login')){
       return;
     }
-    Map<String, dynamic> tokens = await _sharedPrefsUtils.getTokens();
 
-    //refresh token status check
-    _logs.info(message: 'AuthProvider() verifying refreshToken');
-    TokenStatus refreshStatus = await _authUtils.verifyToken(token: tokens['refresh'], refresh: true);
+    // acquire keys first
+    // check token status of refresh token
+    // if refresh token is good, proceed to check access token
+    Map<String, dynamic> tokens = await _sharedPrefsUtils.getTokens(
+        sharedPrefsInstance: sharedPreferences
+    );
+    String? refreshToken = tokens['refresh'];
+    String? accessToken = tokens['access'];
 
-    //if refresh status check fails, verifyToken will return a TokenStatus.forceLogin and the forceLoginDialog is executed
-    if(refreshStatus == TokenStatus.forceLogin){
-      _accessStatus = TokenStatus.forceLogin;
+    _refreshStatus = await _authUtils.verifyToken(
+      token: refreshToken,
+      refresh: true
+    );
+
+    if (_refreshStatus == TokenStatus.invalid) {
       _globalNavigator.forceLoginDialog();
-      notifyListeners();
-      _logs.warning(message: 'forceLoginDialog() executed on .init()');
       return;
+    } else if (_refreshStatus == TokenStatus.expired) {
+      _globalNavigator.forceLoginDialog();
+      return;
+    } else if (_refreshStatus == TokenStatus.unverified) {
+      // TODO handle unverified refresh token status
+    } else if (_refreshStatus == TokenStatus.valid) {
+      _accessStatus = await _authUtils.verifyToken(
+          token: accessToken
+      );
     }
 
-    //access token status check
-    _logs.info(message: 'AuthProvider() verifying accessToken');
-    TokenStatus accessStatus = await _authUtils.verifyToken(token: tokens['access']);
-    //if access status valid, assign values to _accessData, _accessStatus
-    if(accessStatus == TokenStatus.valid){
-      _logs.success(message: 'init() done without errors or warning');
-      Map<String, dynamic>? parsedToken = _authUtils.parseToken(token: tokens['access']);
-      _accessData = UserAccess.fromJSON(parsedToken!);
-      _accessStatus = accessStatus;
-    } else {
-      _logs.warning(message: 'access token from SharedPreferences failed AuthUtils.verifyToken() check, executing AuthUtils.refreshAccessToken()...');
-      String? newAccess = await _authUtils.refreshAccessToken(refresh: tokens['refresh']);
-      if (newAccess != null) {
-        Map<String, dynamic>? newMapped = _authUtils.parseToken(token: newAccess);
-        _accessData = UserAccess.fromJSON(newMapped!);
-        _accessStatus = await _authUtils.verifyToken(token: newAccess);
-        _logs.info(message: 'access token refreshed, .init() done');
-      } else {
-        _accessData = null;
-        //TODO: handle scenario: invalid token
-        _accessStatus = TokenStatus.invalid;
-        _logs.warning(message: 'new access token invalid or null');
+    if ([TokenStatus.invalid, TokenStatus.expired].contains(_accessStatus)) {
+      // if refresh is valid refresh access token
+      if (_refreshStatus == TokenStatus.valid) {
+        accessToken = await _authUtils.refreshAccessToken(
+            refresh: refreshToken!
+        );
+      } else if (_refreshStatus == TokenStatus.unverified) {
+        _logs.warning(message: 'refresh token unverified but access status invalid, this will be allowed for now');
       }
+    } else if (_accessStatus == TokenStatus.unverified) {
+      _logs.warning(message: 'access status unverified, this will be allowed for now');
     }
+    _accessData = UserAccess.fromJSON(
+        _authUtils.parseToken(token: accessToken)!
+    );
+    _accessStatus = TokenStatus.valid;
+
+    _sharedPrefsUtils.setTokens(
+        tokens: {
+          Tokens.refresh: refreshToken,
+          Tokens.access: accessToken
+        }
+    );
+
+    _logs.success(message: 'init() done');
 
     notifyListeners();
-    return;
   }
 
   /// Sets new access data for AuthProvider. If accessStatus is not provided, will verify token using AuthUtils.verifyToken

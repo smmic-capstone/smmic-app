@@ -1,5 +1,10 @@
 import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
+import 'package:flutter/widgets.dart';
+import 'package:provider/provider.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/services/devices_services.dart';
@@ -8,7 +13,6 @@ import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/device_utils.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 class DevicesProvider extends ChangeNotifier {
   // dependencies
@@ -17,14 +21,16 @@ class DevicesProvider extends ChangeNotifier {
   final DeviceUtils _deviceUtils = DeviceUtils();
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
 
+  late final BuildContext _internalContext;
+
   // api helpers, dependencies
   final ApiRoutes _apiRoutes = ApiRoutes();
   final ApiRequest _apiRequest = ApiRequest();
 
-  // sink node map lists
+  // sink node map
   Map<String, SinkNode> _sinkNodeMap = {}; // ignore: prefer_final_fields
   Map<String, SinkNode> get sinkNodeMap => _sinkNodeMap;
-  // sensor node
+  // sensor node map
   Map<String, SensorNode> _sensorNodeMap = {}; // ignore: prefer_final_fields
   Map<String, SensorNode> get sensorNodeMap => _sensorNodeMap;
 
@@ -36,40 +42,95 @@ class DevicesProvider extends ChangeNotifier {
   Map<String, List<SensorNodeSnapshot>> _sensorNodeChartDataMap = {}; // ignore: prefer_final_fields
   Map<String, List<SensorNodeSnapshot>> get sensorNodeChartDataMap => _sensorNodeChartDataMap;
 
-  // sm alerts
-  List<SMAlerts?> _smAlertsList = []; // ignore: prefer_final_fields
-  List<SMAlerts?> get smAlertsList => _smAlertsList;
+  Future<void> init({
+    required ConnectivityResult connectivity,
+    required BuildContext context}) async {
 
-  SensorNodeSnapshot? _sensorCardReadings;
-  SensorNodeSnapshot? get sensorCardReadings => _sensorCardReadings;
+    _internalContext = context;
 
-  SMAlerts? _alertCode;
-  SMAlerts? get alertCode => _alertCode;
+    // set device list from the shared preferences
+    // TODO: add cross checking with api to verify integrity
+    await _setDeviceListFromSharedPrefs();
 
-  SMAlerts? _humidityAlert;
-  SMAlerts? _tempAlert;
-  SMAlerts? _moistureAlert;
-
-  SMAlerts? get humidityAlert => _humidityAlert;
-  SMAlerts? get tempAlert => _tempAlert;
-  SMAlerts? get moistureAlert => _moistureAlert;
-
-  Map <String, Map<String,int>> _deviceAlerts = {};
-
-  Future<void> init() async {
     // acquire user data and tokens from shared prefs
     Map<String, dynamic>? userData = await _sharedPrefsUtils.getUserData();
     Map<String, dynamic> tokens = await _sharedPrefsUtils.getTokens(access: true);
 
     if (userData == null) {
+      _logs.warning(message: '.init() -> user data from shared prefs is null!');
       return;
     }
 
-    await _setDeviceListFromApi(userData: userData, tokens: tokens);
+    // if connection sources are available,
+    // attempt setting device list from the api
+    if (connectivity != ConnectivityResult.none) {
+      await _setDeviceListFromApi(userData: userData, tokens: tokens);
+    }
+
+    // initially, load readings from the sqlite
+    await _loadReadingsFromSqlite();
+
+    _initSensorStates();
+
     notifyListeners();
+
+    // set *updated* list to shared preferences
+    await _setToSharedPrefs();
   }
 
-  // set device list with data from the api
+  /// Set current SinkNode and Sensor Node *objects* map
+  /// to shared preferences as `List<String>`
+  Future<bool> _setToSharedPrefs() async {
+
+    List<String> sinkNodeIds = _sinkNodeMap.keys.toList();
+    List<Map<String, dynamic>> sinkNodeMapList = [];
+    for (String id in sinkNodeIds) {
+      SinkNode skObj = _sinkNodeMap[id]!;
+      Map<String, dynamic> skMap = {
+        SinkNodeKeys.deviceID.key : skObj.deviceID,
+        SinkNodeKeys.deviceName.key : skObj.deviceName,
+        SinkNodeKeys.latitude.key : skObj.latitude,
+        SinkNodeKeys.longitude.key : skObj.longitude,
+        SinkNodeKeys.registeredSensorNodes.key : skObj.registeredSensorNodes
+      };
+      sinkNodeMapList.add(skMap);
+    }
+    await _sharedPrefsUtils.setSinkList(sinkList: sinkNodeMapList);
+
+    List<String> sensorNodeIds = _sensorNodeMap.keys.toList();
+    List<Map<String, dynamic>> sensorNodeMapList = [];
+    for (String id in sensorNodeIds) {
+      SensorNode seObj = _sensorNodeMap[id]!;
+      Map<String, dynamic> seMap = {
+        SensorNodeKeys.deviceID.key : seObj.deviceID,
+        SensorNodeKeys.deviceName.key : seObj.deviceName,
+        SensorNodeKeys.latitude.key : seObj.latitude,
+        SensorNodeKeys.longitude.key : seObj.longitude,
+        SensorNodeKeys.sinkNode.key : seObj.registeredSinkNode
+      };
+      sensorNodeMapList.add(seMap);
+    }
+    await _sharedPrefsUtils.setSensorList(sensorList: sensorNodeMapList);
+
+    return true;
+  }
+
+  /// Load initial readings and chart data from the sqlite local storage
+  Future<bool> _loadReadingsFromSqlite() async {
+    for (String seId in _sensorNodeMap.keys) {
+      SensorNodeSnapshot? fromSQFLiteSnapshot = await DatabaseHelper.getAllReadings(_sensorNodeMap[seId]!.deviceID);
+      if (fromSQFLiteSnapshot != null){
+        _sensorNodeSnapshotMap[_sensorNodeMap[seId]!.deviceID] = fromSQFLiteSnapshot;
+      }
+      List<SensorNodeSnapshot>? fromSQFLiteChartData = await DatabaseHelper.chartReadings(_sensorNodeMap[seId]!.deviceID);
+      if (fromSQFLiteChartData != null) {
+        _sensorNodeChartDataMap[_sensorNodeMap[seId]!.deviceID] = fromSQFLiteChartData;
+      }
+    }
+    return true;
+  }
+
+  /// Set device list from the API
   Future<bool> _setDeviceListFromApi({
     required Map<String, dynamic> userData,
     required Map<String, dynamic> tokens}) async {
@@ -92,37 +153,48 @@ class DevicesProvider extends ChangeNotifier {
     // acquire sensor nodes and add to sensorNodeMap
     for (Map<String, dynamic> sinkMap in devices) {
       List<Map<String, dynamic>> sensorMapList = sinkMap['sensor_nodes'];
-
       for (Map<String, dynamic> sensorMap in sensorMapList) {
         SensorNode sensor = _deviceUtils.sensorNodeMapToObject(
             sensorMap: sensorMap,
             sinkNodeID: sinkMap['device_id']
         );
         _sensorNodeMap[sensor.deviceID] = sensor;
-
-        SensorNodeSnapshot? fromSQFLiteSnapshot = await DatabaseHelper.getAllReadings(sensor.deviceID);
-        if (fromSQFLiteSnapshot != null){
-          _sensorNodeSnapshotMap[sensor.deviceID] = fromSQFLiteSnapshot;
-        }
-        List<SensorNodeSnapshot>? fromSQFLiteChartData = await DatabaseHelper.chartReadings(sensor.deviceID);
-        if (fromSQFLiteChartData != null) {
-          _sensorNodeChartDataMap[sensor.deviceID] = fromSQFLiteChartData;
-        }
       }
     }
 
-    notifyListeners();
     return true;
   }
 
-  Future<void> _setDeviceListFromSharedPrefs() async {
+  /// Set device list from share preferences
+  // TODO: add cross-checking with the API to verify integrity
+  Future<bool> _setDeviceListFromSharedPrefs() async {
     List<Map<String, dynamic>> sinkList = await _sharedPrefsUtils.getSinkList();
     List<Map<String, dynamic>> sensorList = await _sharedPrefsUtils.getSensorList();
 
+    // map sink nodes to objects and set to sink node map
     for (Map<String, dynamic> sinkMap in sinkList) {
       SinkNode sinkObj = _deviceUtils.sinkNodeMapToObject(sinkMap);
       _sinkNodeMap[sinkObj.deviceID] = sinkObj;
     }
+
+    for (Map<String, dynamic> sensorMap in sensorList) {
+      SinkNode? correspondingSk = _sinkNodeMap[sensorMap[SensorNodeKeys.sinkNode.key]];
+      // check existence of corresponding sink node
+      if (correspondingSk == null) {
+        _logs.warning(message: 'sensor node${sensorMap[SensorNodeKeys.deviceID.key]}'
+            'present in shared preferences, but corresponding SinkNode id does'
+            'not exist in current _sinkNodeMap!');
+        continue;
+      }
+      // map to object and set to sensor node map
+      SensorNode sensorObj = _deviceUtils.sensorNodeMapToObject(
+          sensorMap: sensorMap,
+          sinkNodeID: sensorMap[SensorNodeKeys.sinkNode.key]
+      );
+      _sensorNodeMap[sensorObj.deviceID] = sensorObj;
+    }
+
+    return true;
   }
 
   // maps the payload from sensor devices
@@ -137,40 +209,13 @@ class DevicesProvider extends ChangeNotifier {
   // reading:value&
   // ...
   //
+  /// Set a new sensor snapshot from any of the following type:
+  /// `Map<String, dynamic>`, `String`, `SensorNodeSnapshot` and
+  /// update chart data.
   void setNewSensorSnapshot(var reading) {
     SensorNodeSnapshot? finalSnapshot;
 
-    if (reading is Map<String, dynamic>) {
-      // TODO: verify keys first
-      finalSnapshot = SensorNodeSnapshot.fromJSON(reading);
-    } else if (reading is String) {
-      // assuming that if the reading variable is a string, it is an mqtt payload
-      Map<String, dynamic> fromStringMap = {};
-      List<String> outerSplit = reading.split(';');
-
-      fromStringMap.addAll({
-        'device_id': outerSplit[1],
-        'timestamp': outerSplit[2],
-      });
-
-      List<String> dataSplit = outerSplit[3].split('&');
-
-      for (String keyValue in dataSplit) {
-        try {
-          List<String> x = keyValue.split(':');
-          fromStringMap.addAll({x[0]: x[1]});
-        } on FormatException catch (e) {
-          _logs.error(message: 'setNewSensorReadings() raised FormatException error -> $e}');
-          break;
-        }
-      }
-
-      // create a new sensor node snapshot object from the new string map
-      finalSnapshot = SensorNodeSnapshot.fromJSON(fromStringMap);
-
-    } else if (reading is SensorNodeSnapshot) {
-      finalSnapshot = reading;
-    }
+    finalSnapshot = SensorNodeSnapshot.dynamicSerializer(data: reading);
 
     if (finalSnapshot == null) {
       return;
@@ -178,7 +223,7 @@ class DevicesProvider extends ChangeNotifier {
 
     // set snapshot
     _sensorNodeSnapshotMap[finalSnapshot.deviceID] = finalSnapshot;
-    // set chartdata
+    // set chart data
     List<SensorNodeSnapshot>? chartDataBuffer = _sensorNodeChartDataMap[finalSnapshot.deviceID];
     if (chartDataBuffer == null) {
       chartDataBuffer = [finalSnapshot];
@@ -189,63 +234,78 @@ class DevicesProvider extends ChangeNotifier {
       chartDataBuffer.add(finalSnapshot);
     }
     _sensorNodeChartDataMap[finalSnapshot.deviceID] = chartDataBuffer;
+
+    // update connection state
+    _sensorStatesMap[finalSnapshot.deviceID]!.updateState({
+      SensorAlertKeys.alertCode.key : SMSensorAlertCodes.connectedState.code.toString(),
+      SensorAlertKeys.timestamp.key : finalSnapshot.timestamp.toString(),
+    });
+
     notifyListeners();
+
+    // store the timer object into the _statesTimerMap
+    // check if a timer for connection state is already present in the map
+    // and cancel if true
+    if (_statesTimerMap[finalSnapshot.deviceID] == null) {
+      _statesTimerMap[finalSnapshot.deviceID] = {};
+    } else if (_statesTimerMap[finalSnapshot.deviceID]![SMSensorAlertCodes.connectionState] != null) {
+      _statesTimerMap[finalSnapshot.deviceID]![SMSensorAlertCodes.connectionState]!.cancel();
+      _statesTimerMap[finalSnapshot.deviceID]![SMSensorAlertCodes.connectionState] = null;
+      _logs.info(message: 'cancelling and removing existing timer in _statesTimerMap');
+    }
+    
+    // timer mechanism that updates 
+    // keep an update time record of the snapshot
+    DateTime updateTime = finalSnapshot.timestamp;
+    Timer timer = Timer(finalSnapshot
+        .timestamp
+        .add(Duration(seconds: 10))//add(SMSensorState.keepStateTime)
+        .difference(DateTime.now()), () {
+      // check whether the update time still matches
+      // the last update time currently in store in the _sensorStatesMap
+      // if so, no updates have been made since the updateTime record has been kept
+      // and assume sensor disconnect
+      if (_sensorStatesMap[finalSnapshot!.deviceID]!.lastUpdate.difference(updateTime) == Duration.zero) {
+        _sensorStatesMap[finalSnapshot.deviceID]!.updateState({
+          SensorAlertKeys.alertCode.key : SMSensorAlertCodes.disconnectedState.code.toString(),
+          SensorAlertKeys.timestamp.key : finalSnapshot.timestamp.toString()
+        });
+        notifyListeners();
+      } else {
+        return;
+      }
+    });
+    // replace timer with the new timer
+    _statesTimerMap[finalSnapshot.deviceID]![SMSensorAlertCodes.connectionState] = timer;
+
     return;
   }
 
-  Future<void> deviceReadings(String deviceID) async {
-    _logs.info(message: 'deviceReadings running');
+  // soil moisture sensor states as map
+  Map<String, SMSensorState> _sensorStatesMap = {}; // ignore: prefer_final_fields
+  Map<String, SMSensorState> get sensorStatesMap => _sensorStatesMap;
 
-    final latestReading = await DatabaseHelper.getAllReadings(deviceID);
+  // internal map of timers for each sensor node, to avoid overhead from timer objects
+  // and to outright cancel timers that are no longer relevant
+  Map<String, Map<SMSensorAlertCodes, Timer?>> _statesTimerMap = {}; // ignore: prefer_final_fields
 
-    if (latestReading == null) {
-      return;
+  void _initSensorStates() {
+    for (String sensorId in _sensorNodeMap.keys) {
+      SMSensorState smStateObj = SMSensorState.initObj(sensorId);
+      _sensorStatesMap[sensorId] = smStateObj;
+      _statesTimerMap = {};
     }
-
-    _sensorNodeSnapshotMap[latestReading.deviceID] = latestReading;
-    notifyListeners();
-
   }
-
-  Future<void> sensorReadings ({required SensorNodeSnapshot? readingsData}) async {
-    _logs.info(message: "sensorReadings initialized");
-
-    _sensorCardReadings =  readingsData;
-
-    notifyListeners();
-  }
-
-  Future<void> sensorNodeAlerts ({required SMAlerts alertMessage}) async {
-    _logs.info(message: "sensorNodeAlerts running");
-
-    List<Map<String, dynamic>>? alertDataSharedPrefs = await _sharedPrefsUtils.getAlertsData();
-    alertDataSharedPrefs ??= [];
-
-    alertDataSharedPrefs.removeWhere((alert) {
-      return alert['device_id'] == alertMessage.deviceID &&
-          (int.parse(alert['alerts']) ~/ 10) == (alertMessage.alerts ~/ 10);
-    });
-
-    alertDataSharedPrefs.add(alertMessage.toJson());
-
-    _logs.info(message: "alertMessage : ${alertMessage.deviceID}");
-    _logs.info(message: "alertDataSharedPrefs : $alertDataSharedPrefs");
-
-    _sharedPrefsUtils.setAlertsData(alertsList: alertDataSharedPrefs);
-
-    _logs.info(message: "sensorNodeAlerts Running");
-
-    _alertCode = alertMessage;
-
-    if(alertMessage.alerts >= 20 && alertMessage.alerts < 30){
-      _humidityAlert =  alertMessage;
-    }else if(alertMessage.alerts >= 30 && alertMessage.alerts < 40){
-      _tempAlert = alertMessage;
-    }else if(alertMessage.alerts >= 40 && alertMessage.alerts < 50){
-      _moistureAlert = alertMessage;
+  
+  void updateSMSensorState(Map<String, dynamic> alertMap) {
+    SMSensorState? smSensorStateObj = _sensorStatesMap[alertMap[SensorAlertKeys.deviceID.key]];
+    if (smSensorStateObj == null) {
+      _logs.warning(message: 'setSMSensorState() -> received sensor alert for'
+          '${alertMap[SensorAlertKeys.deviceID.key]} but not corresponding sensor state object'
+          'in _sensorAlertsMap!');
+    } else {
+      _sensorStatesMap[alertMap[SensorAlertKeys.deviceID.key]]!.updateState(alertMap);
     }
-
-    notifyListeners();
   }
 
   Future<void> sinkNameChange(Map<String,dynamic> updatedSinkData) async {

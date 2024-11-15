@@ -7,11 +7,19 @@ class DeviceUtils {
 
   /// Helper function to map a sink node map into an object
   SinkNode sinkNodeMapToObject(Map<String, dynamic> sinkMap){
-    List<Map<String, dynamic>> sensorNodes = sinkMap['sensor_nodes'];
+    var sensorNodes = sinkMap['sensor_nodes'];
     List<String> sensorNodeIDList = [];
-    for (int i = 0; i < sensorNodes.length; i++){
-      sensorNodeIDList.add((sensorNodes[i]['device_id']).toString());
+
+    if (sensorNodes is List<Map<String, dynamic>>) {
+      for (int i = 0; i < sensorNodes.length; i++){
+        sensorNodeIDList.add((sensorNodes[i]['device_id']).toString().trim());
+      }
+    } else if (sensorNodes is List<String>) {
+      for (String s in sensorNodes) {
+        sensorNodeIDList.add(s.trim());
+      }
     }
+
     Map<String, dynamic> sinkNodeMap = {
       SinkNodeKeys.deviceID.key : sinkMap[SinkNodeKeys.deviceID.key],
       SinkNodeKeys.deviceName.key : sinkMap[SinkNodeKeys.deviceName.key],
@@ -25,10 +33,10 @@ class DeviceUtils {
   /// Helper function to map a sensor node map into an object
   SensorNode sensorNodeMapToObject({required Map<String, dynamic> sensorMap, required String sinkNodeID}){
     Map<String, dynamic> sensorNodeMap = {
-      SensorNodeKeys.deviceID.key : sensorMap['device_id'],
-      SensorNodeKeys.deviceName.key: sensorMap['name'],
-      SensorNodeKeys.latitude.key : sensorMap['latitude'],
-      SensorNodeKeys.longitude.key :sensorMap['longitude'],
+      SensorNodeKeys.deviceID.key : sensorMap[SensorNodeKeys.deviceID.key],
+      SensorNodeKeys.deviceName.key: sensorMap[SensorNodeKeys.deviceName.key],
+      SensorNodeKeys.latitude.key : sensorMap[SensorNodeKeys.latitude.key],
+      SensorNodeKeys.longitude.key :sensorMap[SensorNodeKeys.sinkNode.key],
       SensorNodeKeys.sinkNode.key : sinkNodeID
     };
     return SensorNode.fromJSON(sensorNodeMap);
