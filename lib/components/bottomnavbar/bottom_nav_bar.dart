@@ -1,11 +1,10 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/pages/devices.dart';
-import 'package:smmic/pages/notification.dart';
 import 'package:smmic/pages/settings.dart';
-// import 'package:dartz/dartz.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int? initialIndexPage;
@@ -18,6 +17,12 @@ class BottomNavBar extends StatefulWidget {
 class _BottomNavBarState extends State<BottomNavBar> {
   int _currentIndexPage = 0;
 
+  void setCurrentIndex(int index) {
+    setState(() {
+      _currentIndexPage = index;
+    });
+  }
+  
   final BorderRadius _borderRadius = const BorderRadius.only(
       topLeft: Radius.circular(25),
       topRight: Radius.circular(25)
@@ -53,7 +58,6 @@ class _BottomNavBarState extends State<BottomNavBar> {
   @override
   void initState() {
     super.initState();
-    _currentIndexPage = widget.initialIndexPage ?? 0;
   }
 
   @override
@@ -80,13 +84,13 @@ class _BottomNavBarState extends State<BottomNavBar> {
               clipBehavior: Clip.none,
               alignment: Alignment.center,
               children: [
+                ..._buildIconBg(MediaQuery.of(context).size.width),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     ..._buildIcons()
                   ],
                 ),
-                ..._buildIconBg(MediaQuery.of(context).size.width),
               ],
             ),
           ),
@@ -96,10 +100,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
   }
 
   List<Widget> _buildIconBg(double mediaQWidth) {
-    double mediaQDivided = mediaQWidth / _pages.length;
 
     bool isOdd = _pages.length % 2 == 1;
-
     // too lazy to set logic for even lists
     // for now, this operation will throw an
     // exception with even lists :>>>>>
@@ -113,51 +115,148 @@ class _BottomNavBarState extends State<BottomNavBar> {
       bool right = pageIndex <= _pages.length ~/ 2;
       bool left = pageIndex >= _pages.length ~/ 2;
 
-      return Positioned(
-          top: -14.5,
-          child: GestureDetector(
-            onTap: () {
-              setState(() {
-                _currentIndexPage = page.$1;
-              });
-            },
-            child: ClipRRect(
-              child: Container(
-                margin: EdgeInsets.only(
-                  left: left ? 225 : 0,
-                  right: right ? 225 : 0,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.all(
-                      Radius.circular(400)
-                  ),
-                  color: Colors.black.withOpacity(
-                      _currentIndexPage == page.$1 ? 0.15 : 0
-                  ),
-                ),
-                width: 100,
-                height: 100,
-              ),
-            ),
-          )
+      return OverflowBox(
+        maxHeight: 500,
+        child: IconBg(
+            itemIndex: page.$1,
+            currentIndex: _currentIndexPage,
+            positionIdentifier: (left, right)
+        ),
       );
+
     }).toList();
   }
 
   List<Widget> _buildIcons() {
-    return _pages.map((page) {
-      return Container(
-        child: page.$2,
+    return _pages.indexed.map((page) {
+      return GestureDetector(
+        onTap: () {
+          setCurrentIndex(page.$1);
+        },
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              alignment: Alignment.center,
+              height: 100,
+              width: 112,
+              color: Colors.transparent,
+            ),
+            page.$2.$2
+          ],
+        ),
       );
     }).toList();
   }
 
 }
 
-class CustomBottomNavigationBarItem extends BottomNavigationBarItem {
-  const CustomBottomNavigationBarItem({
+class IconBg extends StatefulWidget {
+  final int itemIndex;
+  final int currentIndex;
+  final (bool, bool) positionIdentifier;
+
+  const IconBg({
     super.key,
-    required super.icon,
-    super.label = ''
+    required this.itemIndex,
+    required this.currentIndex,
+    required this.positionIdentifier
   });
+
+  @override
+  State<IconBg> createState() => _IconBgState();
+}
+
+class _IconBgState extends State<IconBg> with TickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _sizeAnim;
+
+  bool isExpanded = false;
+
+  late ValueNotifier<int> _currentIndexNotifier;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _currentIndexNotifier = ValueNotifier<int>(widget.currentIndex);
+    _currentIndexNotifier.addListener(toggleCircle);
+    
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(
+          milliseconds: 500
+      ),
+    );
+
+    _sizeAnim = Tween<double>(begin: 0, end: 85).animate(
+      CurvedAnimation(
+          parent: _animationController,
+          curve: Curves.easeOutExpo
+      ),
+    );
+  }
+
+  void toggleCircle() {
+    if (_currentIndexNotifier.value == widget.itemIndex) {
+      setState(() {
+        _animationController.duration = const Duration(milliseconds: 500);
+        _animationController.forward();
+        isExpanded = true;
+      });
+    } else {
+      setState(() {
+        _animationController.duration = const Duration(milliseconds: 200);
+        _animationController.reverse();
+        isExpanded = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _currentIndexNotifier.removeListener(toggleCircle);
+    _currentIndexNotifier.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant IconBg oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.currentIndex != oldWidget.currentIndex) {
+      _currentIndexNotifier.value = widget.currentIndex;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    if (widget.currentIndex == 0) {
+      toggleCircle();
+    }
+
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Container(
+          alignment: Alignment.center,
+          margin: widget.positionIdentifier.$1 && widget.positionIdentifier.$2
+              ? null
+              : EdgeInsets.only(
+                  left: widget.positionIdentifier.$1 ? 225 : 0,
+                  right: widget.positionIdentifier.$2 ? 225 : 0,
+                ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(
+                Radius.circular(400)
+            ),
+            color: Colors.lightGreen,
+          ),
+          width: _sizeAnim.value,
+          height: _sizeAnim.value,
+        );
+      },
+    );
+  }
 }
