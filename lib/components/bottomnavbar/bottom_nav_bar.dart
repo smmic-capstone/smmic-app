@@ -2,9 +2,11 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/pages/devices.dart';
 import 'package:smmic/pages/settings.dart';
+import 'package:smmic/providers/theme_provider.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int? initialIndexPage;
@@ -28,32 +30,48 @@ class _BottomNavBarState extends State<BottomNavBar> {
       topRight: Radius.circular(25)
   );
 
-  final List<(Widget, Widget)> _pages = [
-    (
-    const DashBoard(),
-    SvgPicture.asset(
-      'assets/icons/home.svg',
-      clipBehavior: Clip.antiAlias,
-      width: 30,
-      height: 30,
-    )),
-    (
-    const Devices(),
-    SvgPicture.asset(
-      'assets/icons/signal.svg',
-      clipBehavior: Clip.antiAlias,
-      width: 30,
-      height: 30,
-    )),
-    (
-    const Settings(),
-    SvgPicture.asset(
-      'assets/icons/settings.svg',
-      clipBehavior: Clip.antiAlias,
-      width: 32,
-      height: 32,
-    )),
-  ];
+  List<(Widget, Widget)> _pagesGenerator(bool isDark) {
+    List<(Widget, Widget)> pages = [
+      (
+      const DashBoard(),
+      SvgPicture.asset(
+        'assets/icons/home.svg',
+        clipBehavior: Clip.antiAlias,
+        width: 30,
+        height: 30,
+        colorFilter: ColorFilter.mode(
+          isDark ? Colors.white : Colors.black,
+          BlendMode.srcATop
+        ),
+      )),
+      (
+      const Devices(),
+      SvgPicture.asset(
+        'assets/icons/signal.svg',
+        clipBehavior: Clip.antiAlias,
+        width: 30,
+        height: 30,
+        colorFilter: ColorFilter.mode(
+            isDark ? Colors.white : Colors.black,
+            BlendMode.srcATop
+        ),
+      )),
+      (
+      const Settings(),
+      SvgPicture.asset(
+        'assets/icons/settings.svg',
+        clipBehavior: Clip.antiAlias,
+        width: 32,
+        height: 32,
+        colorFilter: ColorFilter.mode(
+            isDark ? Colors.white : Colors.black,
+            BlendMode.srcATop
+        ),
+      )),
+    ];
+
+    return pages;
+  }
 
   @override
   void initState() {
@@ -63,12 +81,17 @@ class _BottomNavBarState extends State<BottomNavBar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: context.watch<UiProvider>().isDark
+          ? const Color.fromRGBO(14, 14, 14, 1)
+          : const Color.fromRGBO(230, 230, 230, 1),
       // appBar: AppBar(),
-      body: _pages[_currentIndexPage].$1,
+      body: _pagesGenerator(context.watch<UiProvider>().isDark)[_currentIndexPage].$1,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           borderRadius: _borderRadius,
-          color: Colors.white,
+          color: context.watch<UiProvider>().isDark
+              ? const Color.fromRGBO(29, 29, 29, 1)
+              : Colors.white,
           boxShadow: const [
             BoxShadow(
               color: Colors.black,
@@ -79,16 +102,16 @@ class _BottomNavBarState extends State<BottomNavBar> {
         ),
         child: ClipRRect(
           child: Container(
-            height: 70,
+            height: 65,
             child: Stack(
               clipBehavior: Clip.none,
               alignment: Alignment.center,
               children: [
-                ..._buildIconBg(MediaQuery.of(context).size.width),
+                ..._buildIconBg(MediaQuery.of(context).size.width, context),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ..._buildIcons()
+                    ..._buildIcons(context)
                   ],
                 ),
               ],
@@ -99,9 +122,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
     );
   }
 
-  List<Widget> _buildIconBg(double mediaQWidth) {
+  List<Widget> _buildIconBg(double mediaQWidth, BuildContext context) {
 
-    bool isOdd = _pages.length % 2 == 1;
+    bool isOdd = _pagesGenerator(context.watch<UiProvider>().isDark).length % 2 == 1;
     // too lazy to set logic for even lists
     // for now, this operation will throw an
     // exception with even lists :>>>>>
@@ -109,11 +132,11 @@ class _BottomNavBarState extends State<BottomNavBar> {
       throw Exception('Page list defined with BottomNavBar must be odd!');
     }
 
-    return _pages.indexed.map((page) {
-
-      int pageIndex = _pages.indexOf(page.$2);
-      bool right = pageIndex <= _pages.length ~/ 2;
-      bool left = pageIndex >= _pages.length ~/ 2;
+    return _pagesGenerator(context.watch<UiProvider>().isDark).indexed.map((page) {
+      int pageIndex = page.$1;
+      int pagesLen = _pagesGenerator(context.watch<UiProvider>().isDark).length;
+      bool right = pageIndex <= pagesLen ~/ 2;
+      bool left = pageIndex >= pagesLen ~/ 2;
 
       return OverflowBox(
         maxHeight: 500,
@@ -127,8 +150,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
     }).toList();
   }
 
-  List<Widget> _buildIcons() {
-    return _pages.indexed.map((page) {
+  List<Widget> _buildIcons(BuildContext context) {
+    return _pagesGenerator(context.watch<UiProvider>().isDark).indexed.map((page) {
       return GestureDetector(
         onTap: () {
           setCurrentIndex(page.$1);
@@ -189,7 +212,7 @@ class _IconBgState extends State<IconBg> with TickerProviderStateMixin {
       ),
     );
 
-    _sizeAnim = Tween<double>(begin: 0, end: 85).animate(
+    _sizeAnim = Tween<double>(begin: 0, end: 100).animate(
       CurvedAnimation(
           parent: _animationController,
           curve: Curves.easeOutExpo
@@ -200,7 +223,7 @@ class _IconBgState extends State<IconBg> with TickerProviderStateMixin {
   void toggleCircle() {
     if (_currentIndexNotifier.value == widget.itemIndex) {
       setState(() {
-        _animationController.duration = const Duration(milliseconds: 500);
+        _animationController.duration = const Duration(milliseconds: 350);
         _animationController.forward();
         isExpanded = true;
       });
@@ -251,7 +274,9 @@ class _IconBgState extends State<IconBg> with TickerProviderStateMixin {
             borderRadius: BorderRadius.all(
                 Radius.circular(400)
             ),
-            color: Colors.lightGreen,
+            color: context.watch<UiProvider>().isDark
+                ? const Color.fromRGBO(234, 234, 234, 0.15)
+                : const Color.fromRGBO(234, 234, 234, 1),
           ),
           width: _sizeAnim.value,
           height: _sizeAnim.value,

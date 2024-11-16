@@ -26,7 +26,7 @@ class UiProvider extends ChangeNotifier {
       primaryColorDark: Colors.white);
 
 //toggle button
-  changTheme() async {
+  changeTheme() async {
     _isDark = !isDark;
     await _saveTheme();
     notifyListeners();
