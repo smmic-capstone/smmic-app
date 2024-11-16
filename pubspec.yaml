@@ -109,15 +109,26 @@ flutter:
     - assets/notibell.png
     - assets/device.png
     - assets/irrigation.png
-    - assets/icons/soil_moisture_normal.svg
-    - assets/icons/soil_moisture_low.svg
-    - assets/icons/soil_moisture_high.svg
-    - assets/icons/temperature_normal.svg
-    - assets/icons/temperature_low.svg
-    - assets/icons/temperature_high.svg
-    - assets/icons/humidity_normal.svg
-    - assets/icons/humidity_low.svg
-    - assets/icons/humidity_high.svg
+    # icons
+    - assets/icons/home.svg
+    - assets/icons/home_bold.svg
+    - assets/icons/settings.svg
+    - assets/icons/settings_bold.svg
+    - assets/icons/signal.svg
+    - assets/icons/signal_bold.svg
+    - assets/icons/clear_day.svg
+    - assets/icons/clear_day2.svg
+    - assets/icons/clear_night.svg
+    - assets/icons/cloudy.svg
+    - assets/icons/clouds_broken.svg
+    - assets/icons/few_clouds_day.svg
+    - assets/icons/few_clouds_night.svg
+    - assets/icons/mist.svg
+    - assets/icons/shower_rain.svg
+    - assets/icons/rain.svg
+    - assets/icons/thunderstorm.svg
+    - assets/icons/snow.svg
+    - assets/icons/disconnected.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
