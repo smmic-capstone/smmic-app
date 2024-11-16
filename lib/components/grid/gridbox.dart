@@ -16,7 +16,7 @@ class _MyGridBoxState extends State<MyGridBox> with AutomaticKeepAliveClientMixi
   final Color _color = const Color.fromARGB(255, 254, 255, 255);
   final List<String> _text = ['NOTIFICATION', 'DEVICE', ' IRRIGATION'];
   final List<Widget> _pages = [
-    const NotifPage(),
+    const Notifications(),
     const Devices(key: PageStorageKey<String>('devicesPage')),
     const Irrigation()
   ];
