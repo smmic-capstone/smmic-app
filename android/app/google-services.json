@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "144766260592",
+    "project_id": "smmic-project",
+    "storage_bucket": "smmic-project.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:144766260592:android:318c745b4c89d0dea4ebb5",
+        "android_client_info": {
+          "package_name": "com.example.smmic"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAaVGtDjXmF-rtYGOe_Lg4ZQGrVNktLJHo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

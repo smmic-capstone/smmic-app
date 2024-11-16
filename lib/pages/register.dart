@@ -25,7 +25,7 @@ class _RegisterState extends State<Register> {
   bool obscurepassword = true;
 
   Future<void> registerUser () async {
-    String baseURL = 'http://127.0.0.1:8000/api';
+    String baseURL = 'http://192.168.1.8:8000/api';
     final String registerURL = '$baseURL/djoser/users/';
 
     try{
