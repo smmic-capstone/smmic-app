@@ -105,7 +105,7 @@ class _AuthGateState extends State<AuthGate> {
     return true;
   }
 
-  Future<void> _loadProviders({
+  Future<void> _loadProviders ({
     required BuildContext context,
   }) async {
     // initiate user data when logged in
@@ -113,6 +113,7 @@ class _AuthGateState extends State<AuthGate> {
     context.read<UserDataProvider>().init();
     context.read<AuthProvider>().init();
     context.read<MqttProvider>().registerContext(context: context);
+    context.read<FcmProvider>().init();
     await Future.delayed(const Duration(seconds: 2));
     return;
   }

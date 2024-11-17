@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +14,7 @@ import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 
 class ApiRequest {
   final Logs _logs = Logs(tag: 'ApiRequest()');
@@ -173,6 +174,7 @@ class ApiRequest {
   // abstract websocket connect function
   // returns the websocket channel instance
   WebSocketChannel? _connectChannel(String route) {
+
     WebSocketChannel? channel;
     try {
       channel = WebSocketChannel.connect(Uri.parse(route));
