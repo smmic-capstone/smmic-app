@@ -61,7 +61,8 @@ class RegisterMultiProviders extends StatelessWidget {
         ChangeNotifierProvider<UiProvider>(create: (_) => UiProvider()),
         ChangeNotifierProvider<DevicesProvider>(create: (_) => DevicesProvider()),
         ChangeNotifierProvider<MqttProvider>(create: (_) => MqttProvider()),
-        ChangeNotifierProvider<ConnectionProvider>(create: (_) => ConnectionProvider())
+        ChangeNotifierProvider<ConnectionProvider>(create: (_) => ConnectionProvider()),
+        ChangeNotifierProvider<FcmProvider>(create: (_) => FcmProvider())
       ],
       builder: (context, child) {
         return SMMICApp(context: context);
@@ -127,17 +128,19 @@ class _AuthGateState extends State<AuthGate> {
 
     for (Function func in initFunctions) {
       if (func is Future<dynamic> Function()) {
+        _logs.warning(message: func.toString());
         await func();
       }  else if (func is Future<dynamic> Function(BuildContext)) {
         if (context.mounted) {
+          _logs.warning(message: func.toString());
           await func(context);
         }
       } else {
         func();
       }
-      //await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(seconds: 1));
     }
-    //await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 2));
     return;
   }
 
@@ -169,9 +172,11 @@ class _AuthGateState extends State<AuthGate> {
                 future: _loadFirstOrderProviders(
                     context: context,
                     initFunctions: [
+                      context.read<FcmProvider>().init,
                       context.read<ConnectionProvider>().init,
                       context.read<AuthProvider>().init,
                       context.read<UserDataProvider>().init,
+                      _apiRequest.openConnection,
                     ]
                 ),
                 builder: (context, snapshot) {
@@ -188,7 +193,7 @@ class _AuthGateState extends State<AuthGate> {
                       context: context
                   );
 
-                  _apiRequest.initSeReadingsWSChannel(
+                  /*_apiRequest.initSeReadingsWSChannel(
                       route: _apiRoutes.seReadingsWs,
                       context: context
                   );
@@ -196,7 +201,7 @@ class _AuthGateState extends State<AuthGate> {
                   _apiRequest.initSeAlertsWSChannel(
                       route: _apiRoutes.seAlertsWs,
                       context: context
-                  );
+                  );*/
 
                   return const Stack(
                     children: [

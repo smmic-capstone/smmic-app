@@ -1,7 +1,7 @@
 /// Defines API constants (routes, configs if any)
 class ApiRoutes {
   //10.0.2.2
-  final String _baseURL = 'http://192.168.1.8:8000/api';
+  final String _baseURL = 'https://goeasyonme.pythonanywhere.com/api';
   final String _loginURL = '/auth/jwt/create/';
   final String _logoutURL = '/blacklist';
   final String _registerURL = '/djoser/users/';
@@ -17,10 +17,9 @@ class ApiRoutes {
   final String _notifications = '/devices/';
 
 
-  ///Django Channels/Websocket URL Connections
-  final String _wsBaseURL = 'ws://192.168.1.8:8000/ws';
-  final String _seReadingsWs = '/SNreadings/';
-  final String _getSMAlerts = '/sm_alerts/';
+  ///Pusher Channels/Websocket URL Connections
+  final String _seReadingsWs = 'sensor_readings';
+  final String _getSMAlerts = 'sensor_alerts';
 
 
 
@@ -58,10 +57,10 @@ class ApiRoutes {
   String get updateSNName => '$_baseURL$_updateSNDeviceName';
 
   ///Get SN Readings
-  String get seReadingsWs => '$_wsBaseURL$_seReadingsWs';
+  String get seReadingsWs => _seReadingsWs;
 
   ///Get SMAlerts
-  String get seAlertsWs => '$_wsBaseURL$_getSMAlerts';
+  String get seAlertsWs => _getSMAlerts;
 
   ///FCM Notifications
   String get deviceNotifications => '$_baseURL$_notifications';
