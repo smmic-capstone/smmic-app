@@ -23,7 +23,8 @@ class AuthService {
   Future<void> login({required String email, required String password}) async {
     _logs.info(message: 'Log in process started');
     final data = await _apiRequest.post(
-        route: _apiRoutes.login, body: {
+        route: _apiRoutes.login,
+        body: {
           'email': email,
           'password': password
         });
@@ -41,9 +42,12 @@ class AuthService {
     Map<String, dynamic> body = data['data'];
 
     TokenStatus refreshStatus = await _authUtils.verifyToken(
-        token: body['refresh'], refresh: true);
+        token: body['refresh'],
+        refresh: true
+    );
     TokenStatus accessStatus = await _authUtils.verifyToken(
-        token: body['access']);
+        token: body['access']
+    );
 
     if (refreshStatus != TokenStatus.valid) {
       //TODO: HANDLE ON LOGIN ERROR

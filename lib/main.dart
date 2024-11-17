@@ -23,7 +23,6 @@ import 'package:firebase_core/firebase_core.dart';
 
 
 final Logs _logs = Logs(tag: 'Main.dart');
-
 ///Code is needed to be here
 ///When app is in background event FCM/Notifs Handler
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -45,31 +44,48 @@ void main() async {
   ///Same function as the top level, background notifs handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   GlobalNavigator().setupLocator();
-  runApp(MultiProvider(
-    providers: [
-      ChangeNotifierProvider<FcmProvider>(create: (_) => FcmProvider()),
-      ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
-      ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
-      ChangeNotifierProvider<UserDataProvider>(create: (_) => UserDataProvider()),
-      ChangeNotifierProvider<UiProvider>(create: (_) => UiProvider()),
-      ChangeNotifierProvider<DevicesProvider>(create: (_) => DevicesProvider()),
-      ChangeNotifierProvider<MqttProvider>(create: (_) => MqttProvider()),
-      ChangeNotifierProvider<ConnectionProvider>(create: (_) => ConnectionProvider())
-    ],
-    child: const MyApp(),
-  ));
+
+  runApp(const RegisterMultiProviders());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class RegisterMultiProviders extends StatelessWidget {
+  const RegisterMultiProviders({super.key});
+  @override
+  Widget build(BuildContext context) {
+    _logs.warning(message: 'RegisterMultiProviders() running');
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<DeviceListOptionsNotifier>(create: (_) => DeviceListOptionsNotifier()),
+        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
+        ChangeNotifierProvider<UserDataProvider>(create: (_) => UserDataProvider()),
+        ChangeNotifierProvider<UiProvider>(create: (_) => UiProvider()),
+        ChangeNotifierProvider<DevicesProvider>(create: (_) => DevicesProvider()),
+        ChangeNotifierProvider<MqttProvider>(create: (_) => MqttProvider()),
+        ChangeNotifierProvider<ConnectionProvider>(create: (_) => ConnectionProvider())
+      ],
+      builder: (context, child) {
+        return SMMICApp(context: context);
+      },
+    );
+  }
+}
+
+class SMMICApp extends StatelessWidget {
+  const SMMICApp({super.key, required this.context});
+
+  final BuildContext context;
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: locator<GlobalNavigator>().navigatorKey,
       debugShowCheckedModeBanner: false,
-      themeMode:
-          context.watch<UiProvider>().isDark ? ThemeMode.dark : ThemeMode.light,
-      darkTheme: context.watch<UiProvider>().isDark
+      themeMode: context.watch<UiProvider>()
+          .isDark
+          ? ThemeMode.dark
+          : ThemeMode.light,
+      darkTheme: context.watch<UiProvider>()
+          .isDark
           ? context.watch<UiProvider>().darkTheme
           : context.watch<UiProvider>().lightTheme,
       theme: ThemeData(
@@ -105,22 +121,28 @@ class _AuthGateState extends State<AuthGate> {
     return true;
   }
 
-  Future<void> _loadProviders ({
+  Future<void> _loadFirstOrderProviders({
     required BuildContext context,
-  }) async {
-    // initiate user data when logged in
-    context.read<ConnectionProvider>().init();
-    context.read<UserDataProvider>().init();
-    context.read<AuthProvider>().init();
-    context.read<MqttProvider>().registerContext(context: context);
-    context.read<FcmProvider>().init();
-    await Future.delayed(const Duration(seconds: 2));
+    required List<Function> initFunctions}) async {
+
+    for (Function func in initFunctions) {
+      if (func is Future<dynamic> Function()) {
+        await func();
+      }  else if (func is Future<dynamic> Function(BuildContext)) {
+        if (context.mounted) {
+          await func(context);
+        }
+      } else {
+        func();
+      }
+      //await Future.delayed(const Duration(seconds: 1));
+    }
+    //await Future.delayed(const Duration(seconds: 2));
     return;
   }
 
   @override
   Widget build(BuildContext context) {
-
     return FutureBuilder(
         future: _authCheck(),
         builder: (context, AsyncSnapshot<bool> authCheckSnapshot) {
@@ -144,12 +166,22 @@ class _AuthGateState extends State<AuthGate> {
             }
 
             return FutureBuilder(
-                future: _loadProviders(context: context),
+                future: _loadFirstOrderProviders(
+                    context: context,
+                    initFunctions: [
+                      context.read<ConnectionProvider>().init,
+                      context.read<AuthProvider>().init,
+                      context.read<UserDataProvider>().init,
+                    ]
+                ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     // TODO   add loading screen
                     return const Center(child: CircularProgressIndicator());
                   }
+
+
+                  context.read<MqttProvider>().registerContext(context: context);
 
                   context.read<DevicesProvider>().init(
                       connectivity: context.read<ConnectionProvider>().connectionStatus,
@@ -168,7 +200,7 @@ class _AuthGateState extends State<AuthGate> {
 
                   return const Stack(
                     children: [
-                      MyBottomNav(indexPage: 0),
+                      BottomNavBar(initialIndexPage: 0),
                     ],
                   );
                 });
