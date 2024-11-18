@@ -34,6 +34,10 @@ class DevicesProvider extends ChangeNotifier {
   Map<String, SensorNode> _sensorNodeMap = {}; // ignore: prefer_final_fields
   Map<String, SensorNode> get sensorNodeMap => _sensorNodeMap;
 
+  // sink node snapshot map
+  Map<String, SinkNodeSnapshot> _sinkNodeSnapshotMap = {}; // ignore: prefer_final_fields
+  Map<String, SinkNodeSnapshot> get sinkNodeSnapshotMap => _sinkNodeSnapshotMap;
+
   // sensor node readings map
   Map<String, SensorNodeSnapshot> _sensorNodeSnapshotMap = {}; // ignore: prefer_final_fields
   Map<String, SensorNodeSnapshot> get sensorNodeSnapshotMap => _sensorNodeSnapshotMap;
@@ -46,7 +50,13 @@ class DevicesProvider extends ChangeNotifier {
     required ConnectivityResult connectivity,
     required BuildContext context}) async {
 
-    _internalContext = context;
+    try {
+      _internalContext = context;
+    } on Exception catch (e) {
+      _logs.warning(message: '$e');
+    } on Error catch (e) {
+      _logs.warning(message: '$e');
+    }
 
     // set device list from the shared preferences
     // TODO: add cross checking with api to verify integrity

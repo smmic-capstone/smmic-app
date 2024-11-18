@@ -101,7 +101,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
           ]
         ),
         child: ClipRRect(
-          child: Container(
+          child: SizedBox(
             height: 65,
             child: Stack(
               clipBehavior: Clip.none,
@@ -271,12 +271,12 @@ class _IconBgState extends State<IconBg> with TickerProviderStateMixin {
                   right: widget.positionIdentifier.$2 ? 225 : 0,
                 ),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.all(
+            borderRadius: const BorderRadius.all(
                 Radius.circular(400)
             ),
             color: context.watch<UiProvider>().isDark
                 ? const Color.fromRGBO(234, 234, 234, 0.15)
-                : const Color.fromRGBO(234, 234, 234, 1),
+                : const Color.fromRGBO(215, 215, 215, 1),
           ),
           width: _sizeAnim.value,
           height: _sizeAnim.value,

@@ -16,12 +16,9 @@ class ApiRoutes {
   ///FCM URL
   final String _notifications = '/devices/';
 
-
   ///Pusher Channels/Websocket URL Connections
   final String _seReadingsWs = 'sensor_readings';
   final String _getSMAlerts = 'sensor_alerts';
-
-
 
   /// Base url for the api
   //String get baseURL => _baseURL;
