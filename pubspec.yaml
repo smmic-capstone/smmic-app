@@ -130,6 +130,7 @@ flutter:
     - assets/icons/thunderstorm.svg
     - assets/icons/snow.svg
     - assets/icons/disconnected.svg
+    - assets/icons/menu.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

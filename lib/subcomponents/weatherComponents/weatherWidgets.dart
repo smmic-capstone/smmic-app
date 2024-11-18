@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/services/api_key.dart';
+import 'package:smmic/utils/logs.dart';
 import 'package:weather/weather.dart';
 
 class WeatherComponentsWidget extends StatefulWidget {
@@ -16,13 +17,13 @@ class WeatherComponentsWidget extends StatefulWidget {
 
 class _WeatherComponentsWidgetState extends State<WeatherComponentsWidget> {
   final WeatherFactory _wf = WeatherFactory(OPENWEATHER_API_KEY);
-
+  final Logs _logs = Logs(tag: 'WeatherWidget');
+  
   Weather? _weather;
 
   @override
   void initState() {
     super.initState();
-    _getWeather();
   }
 
   Future<List<Weather>?> _getWeather() async {
@@ -30,7 +31,7 @@ class _WeatherComponentsWidgetState extends State<WeatherComponentsWidget> {
     try {
       weatherObj = await _wf.fiveDayForecastByCityName("Cagayan de Oro");
     } catch (e) {
-      print("Error fetching weather");
+      _logs.error(message: 'Unable to retrieve weather data -> $e');
     }
     return weatherObj;
   }
@@ -41,11 +42,10 @@ class _WeatherComponentsWidgetState extends State<WeatherComponentsWidget> {
         future: _getWeather(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const CircularProgressIndicator();
+            return _buildRow(null);
           } else if (snapshot.hasData) {
             if (snapshot.data != null) {
-              // TODO: assign to context
-              print(snapshot.data!.first.weatherIcon);
+              // TODO: assign to provider
               return _buildRow(snapshot.data);
             }
           }
@@ -59,43 +59,53 @@ class _WeatherComponentsWidgetState extends State<WeatherComponentsWidget> {
         ? data.take(3).toList().map((weather) => (weather.temperature, weather.date, weather.weatherIcon)).toList()
         : List.generate(3, (_) => (Temperature(00.00), DateTime.now(), 'unavailable'));
 
+    if (weatherSubList.length % 2 == 0) {
+      throw Exception('Weather sublist has to be odd!');
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        ...weatherSubList.map((tuple) => _buildReading(
-            tuple.$1?.celsius ?? 00.00,
-            tuple.$2 ?? DateTime.now(),
-            tuple.$3 ?? '')
+        ...weatherSubList.indexed.map((tuple) => _buildReading(
+            tuple.$2.$1?.celsius ?? 00.00,
+            tuple.$2.$2 ?? DateTime.now(),
+            tuple.$2.$3 ?? '',
+            weatherSubList.length ~/ 2 == tuple.$1
+                ? true
+                : false)
         )
       ],
     );
   }
 
-  Widget _buildReading(double? temperature, DateTime? timestamp, String iconId) {
+  Widget _buildReading(double? temperature, DateTime? timestamp, String iconId, bool isMiddle) {
     int hour = timestamp?.hour ?? DateTime.now().hour;
     String hourStr = '${hour % 12 == 0 ? 12 : hour % 12} ${hour >= 12 ? "PM" : "AM"}';
-    double? temp = temperature;
 
-    return Container(
+    return SizedBox(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            '${(temperature ?? '??').toString().split('.').first}°C',
-            style: const TextStyle(
-              fontSize: 18,
+            '${(temperature ?? '??').toString().split('.').first.substring(0, 2)}°C',
+            style: TextStyle(
+              fontSize: isMiddle ? 22 : 18,
               fontFamily: 'Inter',
               fontWeight: FontWeight.w500,
               color: Colors.white
             ),
           ),
           const SizedBox(height: 10),
-          _generateIcon(iconId, context.watch<UiProvider>().isDark),
+          _generateIcon(
+            sizeMultiplier: isMiddle ? 1.3 : null,
+            iconId,
+            context.watch<UiProvider>().isDark,
+          ),
           const SizedBox(height: 10),
           Text(
             hourStr,
-            style: const TextStyle(
-                fontSize: 18,
+            style: TextStyle(
+                fontSize: isMiddle ? 22 : 18,
                 fontFamily: 'Inter',
                 fontWeight: FontWeight.w500,
                 color: Colors.white
@@ -109,8 +119,10 @@ class _WeatherComponentsWidgetState extends State<WeatherComponentsWidget> {
 // takes the weather icon id from the weather data
 // see https://openweathermap.org/weather-conditions for official docs
 //
-SvgPicture _generateIcon(String iconId, bool darkMode) {
+SvgPicture _generateIcon(String iconId, bool darkMode, {double? sizeMultiplier}) {
   String iconName = 'rain';
+  double finalSize = 30;
+  double sizeModifier =  sizeMultiplier ?? 1;
 
   // daytime colors
   // 0 dark mode, 1 light mode
@@ -126,6 +138,7 @@ SvgPicture _generateIcon(String iconId, bool darkMode) {
 
   Color finalColor = Colors.black;
 
+  // TODO: idea, make this a map for efficiency
   switch (iconId) {
     case '01d':
       iconName = 'clear_day';
@@ -142,9 +155,11 @@ SvgPicture _generateIcon(String iconId, bool darkMode) {
     case '03d':
       iconName = 'cloudy';
       finalColor = dayTime[darkMode ? 0 : 1];
+      finalSize = 25;
     case '03n':
       iconName = 'cloudy';
       finalColor = nightTime[darkMode ? 0 : 1];
+      finalSize = 25;
     case '04d':
       iconName = 'clouds_broken';
       finalColor = dayTime[darkMode ? 0 : 1];
@@ -183,16 +198,18 @@ SvgPicture _generateIcon(String iconId, bool darkMode) {
       finalColor = nightTime[darkMode ? 0 : 1];
     default:
       iconName = 'disconnected';
+      finalColor = const Color.fromRGBO(245, 245, 245, 1);
   }
 
   return SvgPicture.asset(
     'assets/icons/$iconName.svg',
+    clipBehavior: Clip.antiAlias,
     colorFilter: ColorFilter.mode(
         finalColor,
         BlendMode.srcATop
     ),
-    width: 30,
-    height: 30,
+    width: finalSize * sizeModifier,
+    height: finalSize * sizeModifier,
   );}
 
   Widget _buildUi() {
