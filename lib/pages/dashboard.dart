@@ -44,7 +44,7 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
 
   final TextStyle _headerItemsTextStyle = const TextStyle(
     color: Colors.white,
-    fontSize: 20,
+    fontSize: 23,
     fontFamily: 'Inter',
     fontWeight: FontWeight.w500
   );
@@ -252,8 +252,8 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
                       Scaffold.of(context).openDrawer();
                     },
                     child: SvgPicture.asset('assets/icons/menu.svg',
-                      width: 25,
-                      height: 25,
+                      width: 27,
+                      height: 27,
                       colorFilter: const ColorFilter.mode(
                         Colors.white,
                         BlendMode.srcATop,
@@ -293,16 +293,16 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
                     padding: const EdgeInsets.only(bottom: 5),
                     child: context.watch<UiProvider>().isDark
                         ? SvgPicture.asset('assets/icons/clear_night.svg',
-                      width: 24,
-                      height: 24,
+                      width: 27,
+                      height: 27,
                       colorFilter: const ColorFilter.mode(
                           Color.fromRGBO(98, 245, 255, 1),
                           BlendMode.srcATop
                       ),
                     )
                         : SvgPicture.asset('assets/icons/clear_day2.svg',
-                      width: 24,
-                      height: 24,
+                      width: 27,
+                      height: 27,
                       colorFilter: const ColorFilter.mode(
                           Color.fromRGBO(255, 232, 62, 1),
                           BlendMode.srcATop

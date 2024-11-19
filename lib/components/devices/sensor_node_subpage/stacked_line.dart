@@ -54,7 +54,11 @@ class _StackedLineChartState extends State<StackedLineChart> {
               height: 220,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: _buildYAxisLabels(marks: [0, 25, 50, 75, 100], reversed: true, type: 'percentage'),
+                children: _buildYAxisLabels(
+                    marks: [0, 25, 50, 75, 100],
+                    reversed: true,
+                    type: 'percentage'
+                ),
               ),
             ),
             SizedBox(
