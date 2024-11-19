@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -22,7 +24,8 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   late AnimationController _appBarBgAnimController;
   late Animation<double> _appBarBgAnimation ;
-
+  late AnimationController _weatherOpacityAnimationController;
+  late Animation<double> _weatherOpacityAnimation;
 
   // datetime functions, styles
   String _formatTime(DateTime dateTime) {
@@ -41,7 +44,7 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
 
   final TextStyle _headerItemsTextStyle = const TextStyle(
     color: Colors.white,
-    fontSize: 20,
+    fontSize: 23,
     fontFamily: 'Inter',
     fontWeight: FontWeight.w500
   );
@@ -64,22 +67,46 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
       ),
     );
 
+    _weatherOpacityAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(
+        milliseconds: 300
+      )
+    );
+
+    _weatherOpacityAnimation = Tween<double>(begin: 1, end: 0.0).animate(
+      CurvedAnimation(
+          parent: _weatherOpacityAnimationController,
+          curve: Curves.easeOutExpo
+      ),
+    );
+
     super.initState();
   }
 
   void _onScroll() {
     double scrollOffset = _scrollController.offset;
-    if (scrollOffset >= 175) {
+    if (scrollOffset > 175) {
       setState(() {
         _appBarBgAnimController.duration = const Duration(milliseconds: 500);
         _appBarBgAnimController.forward();
+        _weatherOpacityAnimationController.forward();
       });
     } else {
       setState(() {
         _appBarBgAnimController.duration = const Duration(milliseconds: 300);
         _appBarBgAnimController.reverse();
+        _weatherOpacityAnimationController.reverse();
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _weatherOpacityAnimationController.dispose();
+    super.dispose();
   }
 
   @override
@@ -94,17 +121,30 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
           _drawCircle(),
           Stack(
             children: [
-              _weatherWidget(),
+              AnimatedBuilder(
+                  animation: _weatherOpacityAnimation,
+                  builder: (context, child) {
+                    return Opacity(
+                      opacity: _weatherOpacityAnimation.value,
+                      child: _weatherWidget(),
+                    );
+                  }
+              ),
               SingleChildScrollView(
                   controller: _scrollController,
                   child: Column(
                     children: [
-                      const SizedBox(height: 320),
+                      const SizedBox(height: 315),
                       ..._buildSinkCards(context.watch<DevicesProvider>().sinkNodeMap),
+                      const SizedBox(height: 15),
                       ..._buildSinkCards(context.watch<DevicesProvider>().sinkNodeMap),
+                      const SizedBox(height: 15),
                       ..._buildSinkCards(context.watch<DevicesProvider>().sinkNodeMap),
+                      const SizedBox(height: 15),
                       ..._buildSinkCards(context.watch<DevicesProvider>().sinkNodeMap),
+                      const SizedBox(height: 15),
                       ..._buildSinkCards(context.watch<DevicesProvider>().sinkNodeMap),
+                      const SizedBox(height: 15),
                       ..._buildSinkCards(context.watch<DevicesProvider>().sinkNodeMap)
                     ],
                   )
@@ -174,14 +214,23 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
             return Transform.translate(
               // TODO: because offset queries screen width, it might break on other devices
               offset: Offset(((MediaQuery.of(context).size.width - width) / 2) - 20, 0),
-              child: Container(
-                width: width,
-                height: appBarHeight,
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.8),
-                  borderRadius: const BorderRadius.all(Radius.circular(100)),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.all(Radius.circular(100)),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(
+                      sigmaX: 5.0,
+                      sigmaY: 5.0
+                  ),
+                  child: Container(
+                    width: width,
+                    height: appBarHeight,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.8),
+                      borderRadius: const BorderRadius.all(Radius.circular(100)),
+                    ),
+                  ),
                 ),
-              ),
+              )
             );
           },
         ),
@@ -203,8 +252,8 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
                       Scaffold.of(context).openDrawer();
                     },
                     child: SvgPicture.asset('assets/icons/menu.svg',
-                      width: 25,
-                      height: 25,
+                      width: 27,
+                      height: 27,
                       colorFilter: const ColorFilter.mode(
                         Colors.white,
                         BlendMode.srcATop,
@@ -234,27 +283,30 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
                     }
                   }
               ),
-              GestureDetector(
-                onTap: () {
-                  context.read<UiProvider>().changeTheme();
-                },
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 5),
-                  child: context.watch<UiProvider>().isDark
-                      ? SvgPicture.asset('assets/icons/clear_night.svg',
-                    width: 23,
-                    height: 23,
-                    colorFilter: const ColorFilter.mode(
-                        Color.fromRGBO(98, 245, 255, 1),
-                        BlendMode.srcATop
-                    ),
-                  )
-                      : SvgPicture.asset('assets/icons/clear_day2.svg',
-                    width: 23,
-                    height: 23,
-                    colorFilter: const ColorFilter.mode(
-                        Color.fromRGBO(255, 232, 62, 1),
-                        BlendMode.srcATop
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: GestureDetector(
+                  onTap: () {
+                    context.read<UiProvider>().changeTheme();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 5),
+                    child: context.watch<UiProvider>().isDark
+                        ? SvgPicture.asset('assets/icons/clear_night.svg',
+                      width: 27,
+                      height: 27,
+                      colorFilter: const ColorFilter.mode(
+                          Color.fromRGBO(98, 245, 255, 1),
+                          BlendMode.srcATop
+                      ),
+                    )
+                        : SvgPicture.asset('assets/icons/clear_day2.svg',
+                      width: 27,
+                      height: 27,
+                      colorFilter: const ColorFilter.mode(
+                          Color.fromRGBO(255, 232, 62, 1),
+                          BlendMode.srcATop
+                      ),
                     ),
                   ),
                 ),

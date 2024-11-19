@@ -34,9 +34,9 @@ class DevicesProvider extends ChangeNotifier {
   Map<String, SensorNode> _sensorNodeMap = {}; // ignore: prefer_final_fields
   Map<String, SensorNode> get sensorNodeMap => _sensorNodeMap;
 
-  // sink node snapshot map
-  Map<String, SinkNodeSnapshot> _sinkNodeSnapshotMap = {}; // ignore: prefer_final_fields
-  Map<String, SinkNodeSnapshot> get sinkNodeSnapshotMap => _sinkNodeSnapshotMap;
+  // sink node state map
+  Map<String, SinkNodeState> _sinkNodeStateMap = {}; // ignore: prefer_final_fields
+  Map<String, SinkNodeState> get sinkNodeStateMap => _sinkNodeStateMap;
 
   // sensor node readings map
   Map<String, SensorNodeSnapshot> _sensorNodeSnapshotMap = {}; // ignore: prefer_final_fields
@@ -80,7 +80,7 @@ class DevicesProvider extends ChangeNotifier {
     // initially, load readings from the sqlite
     await _loadReadingsFromSqlite();
 
-    _initSensorStates();
+    _initDevicesStates();
 
     notifyListeners();
 
@@ -299,7 +299,13 @@ class DevicesProvider extends ChangeNotifier {
   // and to outright cancel timers that are no longer relevant
   Map<String, Map<SMSensorAlertCodes, Timer?>> _statesTimerMap = {}; // ignore: prefer_final_fields
 
-  void _initSensorStates() {
+  void _initDevicesStates() {
+    for (String sinkId in _sinkNodeMap.keys) {
+      SinkNodeState sinkStateObj = SinkNodeState.initObj(sinkId);
+      _sinkNodeStateMap[sinkId] = sinkStateObj;
+      // TODO: add states timer for sink node?
+      // _statesTimerMap = {};
+    }
     for (String sensorId in _sensorNodeMap.keys) {
       SMSensorState smStateObj = SMSensorState.initObj(sensorId);
       _sensorStatesMap[sensorId] = smStateObj;

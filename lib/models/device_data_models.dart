@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dartz/dartz.dart';
+import 'package:flutter/cupertino.dart';
 
 enum SinkNodeKeys {
   deviceID('device_id'),
@@ -94,21 +95,22 @@ class SinkNode extends Device {
   }
 }
 
-class SinkNodeSnapshot {
+class SinkNodeState {
   final String deviceID;
-  final DateTime timestamp;
-  final double batteryLevel;
-  final int connectedClients;
-  final int totalClients;
-  final int subCount;
-  final double bytesSent;
-  final double bytesReceived;
-  final int messagesSent;
-  final int messagesReceived;
+  DateTime lastTransmission;
+  double batteryLevel;
+  int connectedClients;
+  int totalClients;
+  int subCount;
+  double bytesSent;
+  double bytesReceived;
+  int messagesSent;
+  int messagesReceived;
+  Map<String, ConnectionState> sensorsConnectionStateMap;
 
-  SinkNodeSnapshot._internal({
+  SinkNodeState._internal({
     required this.deviceID,
-    required this.timestamp,
+    required this.lastTransmission,
     required this.batteryLevel,
     required this.connectedClients,
     required this.totalClients,
@@ -116,28 +118,15 @@ class SinkNodeSnapshot {
     required this.bytesSent,
     required this.bytesReceived,
     required this.messagesSent,
-    required this.messagesReceived
+    required this.messagesReceived,
+    this.sensorsConnectionStateMap = const {}
   });
 
-  factory SinkNodeSnapshot.fromJSON(Map<String, dynamic> data) {
-    return SinkNodeSnapshot._internal(
-        deviceID: data[SinkNodeSnapshotKeys.deviceID.key],
-        timestamp: DateTime.parse(data[SinkNodeSnapshotKeys.timestamp.key]),
-        batteryLevel: data[SinkNodeSnapshotKeys.batteryLevel.key],
-        connectedClients: data[SinkNodeSnapshotKeys.connectedClients.key],
-        totalClients: data[SinkNodeSnapshotKeys.totalClients.key],
-        subCount: data[SinkNodeSnapshotKeys.subCount.key],
-        bytesSent: data[SinkNodeSnapshotKeys.bytesSent.key],
-        bytesReceived: data[SinkNodeSnapshotKeys.bytesReceived.key],
-        messagesSent: data[SinkNodeSnapshotKeys.messagesSent.key],
-        messagesReceived: data[SinkNodeSnapshotKeys.messagesReceived.key]
-    );
-  }
-
-  factory SinkNodeSnapshot.placeHolder({required String deviceId}) {
-    return SinkNodeSnapshot._internal(
+  factory SinkNodeState.initObj(String deviceId) {
+    // TODO: load from shared prefs
+    return SinkNodeState._internal(
         deviceID: deviceId,
-        timestamp: DateTime.now(),
+        lastTransmission: DateTime.now(),
         batteryLevel: 0.0,
         connectedClients: 0,
         totalClients: 0,
@@ -147,6 +136,22 @@ class SinkNodeSnapshot {
         messagesSent: 0,
         messagesReceived: 0
     );
+  }
+
+  void updateState(Map<String, dynamic> data) {
+    lastTransmission = DateTime.parse(data[SinkNodeSnapshotKeys.timestamp.key]);
+    batteryLevel = data[SinkNodeSnapshotKeys.batteryLevel.key];
+    connectedClients = data[SinkNodeSnapshotKeys.connectedClients.key];
+    totalClients = data[SinkNodeSnapshotKeys.totalClients.key];
+    subCount = data[SinkNodeSnapshotKeys.subCount.key];
+    bytesSent = data[SinkNodeSnapshotKeys.bytesSent.key];
+    bytesReceived = data[SinkNodeSnapshotKeys.bytesReceived.key];
+    messagesSent = data[SinkNodeSnapshotKeys.messagesSent.key];
+    messagesReceived = data[SinkNodeSnapshotKeys.messagesReceived.key];
+  }
+
+  void setSensorConnectionState(String sensorId, ConnectionState state) {
+    sensorsConnectionStateMap[sensorId] = state;
   }
 
 }
@@ -354,6 +359,7 @@ class SMSensorState {
   /// Initiate the soil moisture sensor state with the default values.
   /// This method **should** only be called with device provider init.
   factory SMSensorState.initObj(String sensorId){
+    // TODO: init from sharedprefs
     return SMSensorState._internal(
         deviceID: sensorId,
         lastUpdate: DateTime.now(),

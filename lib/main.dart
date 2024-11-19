@@ -122,6 +122,7 @@ class _AuthGateState extends State<AuthGate> {
     return true;
   }
 
+  // dynamic function to load first order providers
   Future<void> _loadFirstOrderProviders({
     required BuildContext context,
     required List<Function> initFunctions}) async {
