@@ -14,6 +14,23 @@ import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
+
+
+enum Commands{
+  irrigationOFF(0),
+  irrigationON(1),
+  interval(69);
+  final int command;
+  const Commands(this.command);
+}
+
+enum EventNames{
+  irrigationCommand("irrigation"),
+  intervalCommand("interval");
+  final String events;
+  const EventNames(this.events);
+}
+
 class ApiRequest {
   final Logs _logs = Logs(tag: 'ApiRequest()');
 
@@ -172,6 +189,58 @@ class ApiRequest {
     );
 
     return result;
+  }
+  ///user_commands
+  ///irrigation
+  Future<void> openCommandsConnection() async {
+    await _pusher.init(
+      apiKey: 'd0f649dd91498f8916b8',
+      cluster: 'ap3',
+    );
+
+    try{
+      await _pusher.subscribe(
+          channelName: "user_commands");
+
+      await _pusher.connect();
+
+      _logs.info(message: "WebSocket Connected in user_commands");
+    }catch(e){
+      _logs.warning(message: "WebSocketException: $e");
+    }
+  }
+
+  Future<void> sendCommand({required String eventName,required int code}) async {
+    /*await _pusher.init(
+      apiKey: 'd0f649dd91498f8916b8',
+      cluster: 'ap3',
+    );
+
+    try{
+      await _pusher.subscribe(
+          channelName: "user_commands");
+
+      await _pusher.connect();
+
+      _logs.info(message: "WebSocket Connected in user_commands");
+    }catch(e){
+      _logs.warning(message: "WebSocketException: $e");
+    }*/
+
+    await _pusher.trigger(
+        PusherEvent(channelName: "user_commands",
+            eventName: eventName,
+        data: code
+        )
+    );
+
+     /*_pusher.trigger(PusherEvent(
+        channelName: "user_commands",
+        eventName: eventName,
+        data: {
+          "message" : code
+        }),
+    );*/
   }
 
   //Open connection to Channels
