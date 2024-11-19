@@ -4,6 +4,7 @@ import 'package:smmic/pages/accountinfo.dart';
 import 'package:smmic/pages/lab.dart';
 import 'package:smmic/pages/local_connect.dart';
 import 'package:smmic/pages/settings.dart';
+import 'package:smmic/utils/api.dart';
 
 class ComponentDrawer extends StatefulWidget {
   const ComponentDrawer({super.key});
@@ -13,6 +14,8 @@ class ComponentDrawer extends StatefulWidget {
 }
 
 class ComponentDrawerState extends State<ComponentDrawer> {
+  final ApiRequest _apiRequest = ApiRequest();
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -88,6 +91,18 @@ class ComponentDrawerState extends State<ComponentDrawer> {
             child: const ListTile(
               leading: Icon(Icons.qr_code),
               title: Text('QR'),
+            ),
+          ),
+          GestureDetector(
+            onTap: (){
+              print("Hello World");
+              _apiRequest.sendCommand(
+                  eventName: EventNames.irrigationCommand.events,
+                  code: Commands.irrigationON.command);
+            },
+            child: const ListTile(
+              leading: Icon(Icons.water_drop_outlined),
+              title: Text('Send Pusher Command'),
             ),
           )
         ],
