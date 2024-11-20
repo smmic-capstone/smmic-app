@@ -24,7 +24,7 @@ class _SettingsState extends State<Settings> {
               title: const Text('Dard Mode'),
               trailing: Switch(
                   value: notifier.isDark,
-                  onChanged: (value) => notifier.changTheme()),
+                  onChanged: (value) => notifier.changeTheme()),
             ),
           ],
         );
