@@ -13,13 +13,35 @@ import 'package:smmic/providers/connections_provider.dart';
 import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/logs.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
+
+enum Commands {
+  irrigationOFF(0),
+  irrigationON(1),
+  interval(69);
+
+  final int command;
+  const Commands(this.command);
+}
+
+enum EventNames {
+  irrigationCommand("irrigation"),
+  intervalCommand("interval");
+
+  final String events;
+  const EventNames(this.events);
+}
 
 class ApiRequest {
   final Logs _logs = Logs(tag: 'ApiRequest()');
 
   // dependencies / helpers
   final ApiRoutes _apiRoutes = ApiRoutes();
+  final PusherChannelsFlutter _pusher = PusherChannelsFlutter();
+
+  late BuildContext _internalBuildContext;
+
+  PusherChannelsFlutter get pusher => _pusher;
 
   // connections that are used to connect to the api / mqtt network
   final List<ConnectivityResult> _sourceConnections = [
@@ -155,188 +177,156 @@ class ApiRequest {
     return result;
   }
 
-  // abstract websocket connect function
-  // returns the websocket channel instance
-  WebSocketChannel? _connectChannel(String route) {
-    WebSocketChannel? channel;
+  ///user_commands
+  ///irrigation
+  Future<void> openCommandsConnection() async {
+    await _pusher.init(
+      apiKey: 'd0f649dd91498f8916b8',
+      cluster: 'ap3',
+    );
+
     try {
-      channel = WebSocketChannel.connect(Uri.parse(route));
-      return channel;
-    } on WebSocketChannelException catch (e) {
-      _logs.warning(
-          message:
-              '_connectChannel() called WebSocketChannelException : $route -> $e');
-    } on Exception catch (e) {
-      _logs.warning(
-          message:
-              '_connectChannel() unhandled unexpected exception raised : $route -> $e');
+      await _pusher.subscribe(channelName: "user_commands");
+
+      await _pusher.connect();
+
+      _logs.info(message: "WebSocket Connected in user_commands");
+    } catch (e) {
+      _logs.warning(message: "WebSocketException: $e");
     }
-    return channel;
   }
 
-  // abstract websocket connection manager
-  void _wsConnectionManager(
-      BuildContext context,
-      String route,
-      WebSocketChannel channel,
-      void Function(WebSocketChannel, BuildContext) listener) async {
-    WebSocketChannel wsChannel = channel;
-    listener(wsChannel, context);
+  Future<void> sendCommand(
+      {required String eventName, required int code}) async {
+    /*await _pusher.init(
+      apiKey: 'd0f649dd91498f8916b8',
+      cluster: 'ap3',
+    );
 
-    // listen to the connectivity stream for updates
-    // on available connections
-    Stream<List<ConnectivityResult>> connectivityStream =
-        context.read<ConnectionProvider>().connectivityStream;
-    connectivityStream.listen((List<ConnectivityResult> connection) {
-      // when the stream updates, check the list of connectivity result for
-      // presence of any of the source connections
-      // if it contains at least one, allow connect attempt of ws
-      bool sourceAvailable = false;
-      for (ConnectivityResult source in _sourceConnections) {
-        if (connection.contains(source)) {
-          sourceAvailable = true;
-          break;
-        }
-      }
+    try{
+      await _pusher.subscribe(
+          channelName: "user_commands");
 
-      WsConnectionStatus? connectionStatus;
+      await _pusher.connect();
 
-      if (route == _apiRoutes.seReadingsWs) {
-        connectionStatus =
-            context.read<ConnectionProvider>().seReadingsWsConnectionStatus;
-      } else if (route == _apiRoutes.seAlertsWs) {
-        connectionStatus =
-            context.read<ConnectionProvider>().seAlertsWsConnectionStatus;
-      }
+      _logs.info(message: "WebSocket Connected in user_commands");
+    }catch(e){
+      _logs.warning(message: "WebSocketException: $e");
+    }*/
 
-      // check the connection status
-      if (!sourceAvailable &&
-          connectionStatus == WsConnectionStatus.connected) {
-        wsChannel.sink.close();
-        return;
-      } else if (!sourceAvailable) {
-        wsChannel.sink.close();
-        return;
-      }
+    await _pusher.trigger(PusherEvent(
+        channelName: "user_commands", eventName: eventName, data: code));
 
-      try {
-        wsChannel = WebSocketChannel.connect(Uri.parse(route));
-
-        if (route == _apiRoutes.seReadingsWs) {
-          context
-              .read<ConnectionProvider>()
-              .sensorWsConnectStatus(WsConnectionStatus.connected);
-        } else if (route == _apiRoutes.seAlertsWs) {
-          context
-              .read<ConnectionProvider>()
-              .alertWsConnectStatus(WsConnectionStatus.connected);
-        }
-      } on WebSocketChannelException catch (e) {
-        _logs.warning(
-            message:
-                'connectSeReadingsChannel() called WebSocketChannelException : $route -> $e');
-      } on Exception catch (e) {
-        _logs.warning(
-            message:
-                'connectSeReadingsChannel() unhandled unexpected exception raised : $route -> $e');
-      }
-
-      listener(wsChannel, context);
-    });
+    /*_pusher.trigger(PusherEvent(
+        channelName: "user_commands",
+        eventName: eventName,
+        data: {
+          "message" : code
+        }),
+    );*/
   }
 
-  /// Initialize connection with the sensor readings WebSocket
-  void initSeReadingsWSChannel(
-      {required String route, required BuildContext context}) {
-    // attempt connection with the websocket
-    WebSocketChannel? seReadingsWebSocket = _connectChannel(route);
-    if (seReadingsWebSocket == null) {
-      return;
-    }
+  //Open connection to Channels
+  Future<void> openConnection(BuildContext context) async {
+    _internalBuildContext = context;
 
-    context
-        .read<ConnectionProvider>()
-        .sensorWsConnectStatus(WsConnectionStatus.connected);
-    _wsConnectionManager(
-        context, route, seReadingsWebSocket, _seReadingsWsListener);
-    return;
+    await _pusher.init(
+      apiKey: 'd0f649dd91498f8916b8',
+      cluster: 'ap3',
+    );
+    try {
+      await _pusher.subscribe(
+          channelName: _apiRoutes.seReadingsWs,
+          onEvent: (dynamic data) {
+            _seReadingsWsListener(data as PusherEvent);
+          });
+
+      await _pusher.subscribe(
+          channelName: _apiRoutes.seAlertsWs,
+          onEvent: (dynamic data) {
+            _seAlertsWsListener(data as PusherEvent);
+          });
+
+      await _pusher.connect();
+
+      _logs.info(message: "WebSocket Connected");
+    } catch (e) {
+      _logs.warning(message: "WebSocketException: $e");
+    }
   }
 
   // the internal websocket listener wrapper function for
   // the sensor readings websocket
-  void _seReadingsWsListener(WebSocketChannel channel, BuildContext context) {
-    channel.stream.listen((data) {
-      final Map<String, dynamic> decodedData = jsonDecode(data);
-      final SensorNodeSnapshot snapshotObj =
-          SensorNodeSnapshot.fromJSON(decodedData['message']);
+  void _seReadingsWsListener(PusherEvent data) {
+    final Map<String, dynamic> decodedData = jsonDecode(data.data);
 
-      // store data to sqlite database
-      DatabaseHelper.readingsLimit(snapshotObj.deviceID);
-      DatabaseHelper.addReadings(snapshotObj);
+    final SensorNodeSnapshot snapshotObj =
+        SensorNodeSnapshot.fromJSON(decodedData['message']);
+    _logs.warning(message: "snapshotObj: $snapshotObj");
+    // store data to sqlite database
+    DatabaseHelper.readingsLimit(snapshotObj.deviceID);
+    DatabaseHelper.addReadings(snapshotObj);
 
-      // pass to stream controller
-      // streamController.add(snapshotObj);
-      context.read<DevicesProvider>().setNewSensorSnapshot(snapshotObj);
-    }, onError: (err) {
+    // pass to stream controller
+    // streamController.add(snapshotObj);
+    _internalBuildContext
+        .read<DevicesProvider>()
+        .setNewSensorSnapshot(snapshotObj);
+
+    /*channel.sink.close();
+      _logs.warning(message: '_seReadingsWsListener() error in stream.listen : $err');
+      context.read<ConnectionProvider>().sensorWsConnectStatus(WsConnectionStatus.disconnected);
+
+
       channel.sink.close();
-      _logs.warning(
-          message: '_seReadingsWsListener() error in stream.listen : $err');
-      context
-          .read<ConnectionProvider>()
-          .sensorWsConnectStatus(WsConnectionStatus.disconnected);
-    }, onDone: () {
-      channel.sink.close();
-      context
-          .read<ConnectionProvider>()
-          .sensorWsConnectStatus(WsConnectionStatus.disconnected);
-    });
+      context.read<ConnectionProvider>().sensorWsConnectStatus(WsConnectionStatus.disconnected);*/
   }
 
   /// Initialize connection with the sensor node alert WebSocket
-  void initSeAlertsWSChannel(
-      {required String route, required BuildContext context}) {
+  /*Future<void> initSeAlertsWSChannel() async {
     // attempt websocket connection
-    WebSocketChannel? seAlertsWebSocket = _connectChannel(route);
+    void onEventCallback(PusherEvent data){
+      _seAlertsWsListener(data, context);
+    }
+
+    PusherChannel? seAlertsWebSocket = await _connectChannel(_apiRoutes.seAlertsWs, onEventCallback);
     if (seAlertsWebSocket == null) {
       return;
     }
 
-    context
-        .read<ConnectionProvider>()
-        .alertWsConnectStatus(WsConnectionStatus.connected);
-    _wsConnectionManager(
-        context, route, seAlertsWebSocket, _seAlertsWsListener);
+    */ /*context.read<ConnectionProvider>().alertWsConnectStatus(WsConnectionStatus.connected);*/ /*
+    */ /*_wsConnectionManager(context, route, seAlertsWebSocket, _seAlertsWsListener);*/ /*
     return;
-  }
+  }*/
 
   // listener wrapper function for the sensor node alerts websocket
-  void _seAlertsWsListener(WebSocketChannel channel, BuildContext context) {
-    channel.stream.listen((data) {
-      final Map<String, dynamic> decodedData = jsonDecode(data);
-      final SensorNodeSnapshot snapshotObj =
-          SensorNodeSnapshot.fromJSON(decodedData['message']);
+  void _seAlertsWsListener(PusherEvent data) {
+    final Map<String, dynamic> decodedData = jsonDecode(data.data);
+    final SensorNodeSnapshot snapshotObj =
+        SensorNodeSnapshot.fromJSON(decodedData['message']);
 
-      // store data to sqlite
-      DatabaseHelper.readingsLimit(snapshotObj.deviceID);
-      DatabaseHelper.addReadings(snapshotObj);
+    // store data to sqlite
+    DatabaseHelper.readingsLimit(snapshotObj.deviceID);
+    DatabaseHelper.addReadings(snapshotObj);
 
-      // pass to stream controller
-      //streamController.add(alertObj);
+    // pass to stream controller
+    //streamController.add(alertObj);
 
-      context.read<DevicesProvider>().setNewSensorSnapshot(snapshotObj);
-      context.read<DevicesProvider>().updateSMSensorState(decodedData);
-    }, onError: (err) {
-      channel.sink.close();
-      _logs.warning(
-          message: '_seAlertsWsListener() error in stream.listen : $err');
-      context
-          .read<ConnectionProvider>()
+    _internalBuildContext
+        .read<DevicesProvider>()
+        .setNewSensorSnapshot(snapshotObj);
+    _internalBuildContext
+        .read<DevicesProvider>()
+        .updateSMSensorState(decodedData['message']);
+
+    /* channel.sink.close();
+      _logs.warning(message: '_seAlertsWsListener() error in stream.listen : $err');
+      context.read<ConnectionProvider>()
           .alertWsConnectStatus(WsConnectionStatus.disconnected);
-    }, onDone: () {
+
+
       channel.sink.close();
-      context
-          .read<ConnectionProvider>()
-          .alertWsConnectStatus(WsConnectionStatus.disconnected);
-    });
+      context.read<ConnectionProvider>()
+          .alertWsConnectStatus(WsConnectionStatus.disconnected);*/
   }
 }
