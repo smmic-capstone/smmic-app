@@ -7,6 +7,8 @@ import 'package:smmic/providers/theme_provider.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:smmic/utils/logs.dart';
 
+import '../subcomponents/login/textfield.dart';
+
 class LocalConnect extends StatefulWidget {
   const LocalConnect({super.key});
 
@@ -21,6 +23,8 @@ class _LocalConnectState extends State<LocalConnect> {
   // mqtt setup
   final mqttClient = MqttServerClient('10.0.2.2', '');
 
+  TextEditingController hostController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -31,49 +35,65 @@ class _LocalConnectState extends State<LocalConnect> {
     double w = MediaQuery.of(context).size.width;
     double h = MediaQuery.of(context).size.height;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Connect Locally'),
-        centerTitle: true,
-      ),
-      body: Container(
-          color: context.watch<UiProvider>().isDark ? Colors.black : Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 30),
-          alignment: Alignment.center,
-          child: Container(
-            width: 0.90 * w,
-            color: Colors.red,
-            child: Column(
-              children: [
-                ElevatedButton(
-                    onPressed: () async {
-                      MqttConnectionState connectionState = context.read<MqttProvider>().connectionState;
-                      if (connectionState == MqttConnectionState.connected){
-                        context.read<MqttProvider>().disconnectClient();
-                      }
-                      else if ([MqttConnectionState.disconnected, MqttConnectionState.faulted].contains(connectionState)) {
-                        Exception? err = await context.read<MqttProvider>().initClient(
-                            clientIdentifier: '',
-                        );
-                        if (err != null && context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Unable to connect to broker, try again later'))
-                          );
+        appBar: AppBar(
+          title: const Text('Connect Locally'),
+          centerTitle: true,
+        ),
+        body: Container(
+            color: context.watch<UiProvider>().isDark
+                ? Colors.black
+                : Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            alignment: Alignment.center,
+            child: Container(
+              width: 0.90 * w,
+              color: Colors.red,
+              child: Column(
+                children: [
+                  ElevatedButton(
+                      onPressed: () async {
+                        MqttConnectionState connectionState =
+                            context.read<MqttProvider>().connectionState;
+                        if (connectionState == MqttConnectionState.connected) {
+                          context.read<MqttProvider>().disconnectClient();
+                        } else if ([
+                          MqttConnectionState.disconnected,
+                          MqttConnectionState.faulted
+                        ].contains(connectionState)) {
+                          Exception? err = await context
+                              .read<MqttProvider>()
+                              .initClient(
+                                  clientIdentifier: '',
+                                  host: hostController.text);
+                          if (err != null && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Unable to connect to broker, try again later')));
+                          }
                         }
-                      }
+                      },
+                      child: Text(
+                        _connectButtonState(
+                            context.watch<MqttProvider>().connectionState),
+                        style: _connectButtonTextStyle(
+                            context.watch<MqttProvider>().connectionState,
+                            context.watch<UiProvider>().isDark),
+                      )),
+                  MyTextField(
+                    obscureText: false,
+                    controller: hostController,
+                    hintText: "Host",
+                    suffixIcon: const Padding(
+                        padding: EdgeInsets.only(right: 15),
+                        child: Icon(Icons.construction_rounded)),
+                    validator: (value) {
+                      return null;
                     },
-                    child: Text(
-                      _connectButtonState(context.watch<MqttProvider>().connectionState),
-                      style: _connectButtonTextStyle(
-                          context.watch<MqttProvider>().connectionState,
-                          context.watch<UiProvider>().isDark
-                      ),
-                    )
-                )
-              ],
-            ),
-          )
-      )
-    );
+                  )
+                ],
+              ),
+            )));
   }
 
   String _connectButtonState(MqttConnectionState connState) {
@@ -88,13 +108,16 @@ class _LocalConnectState extends State<LocalConnect> {
     return buttonText;
   }
 
-  TextStyle _connectButtonTextStyle(MqttConnectionState connState, bool isDark) {
+  TextStyle _connectButtonTextStyle(
+      MqttConnectionState connState, bool isDark) {
     TextStyle style = const TextStyle();
     if (connState == MqttConnectionState.connecting) {
       double opacity = 0.4;
-      style = TextStyle(color: isDark ? Colors.white.withOpacity(opacity) : Colors.black.withOpacity(opacity));
+      style = TextStyle(
+          color: isDark
+              ? Colors.white.withOpacity(opacity)
+              : Colors.black.withOpacity(opacity));
     }
     return style;
   }
-
 }

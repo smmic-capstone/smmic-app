@@ -15,18 +15,19 @@ import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 
-
-enum Commands{
+enum Commands {
   irrigationOFF(0),
   irrigationON(1),
   interval(69);
+
   final int command;
   const Commands(this.command);
 }
 
-enum EventNames{
+enum EventNames {
   irrigationCommand("irrigation"),
   intervalCommand("interval");
+
   final String events;
   const EventNames(this.events);
 }
@@ -64,13 +65,8 @@ class ApiRequest {
 
     try {
       res = await method.fold(
-          (method1) => method1(
-              Uri.parse(route),
-              headers: headers,
-              body: body),
-          (method2) => method2(
-            Uri.parse(route),
-            headers: headers),
+        (method1) => method1(Uri.parse(route), headers: headers, body: body),
+        (method2) => method2(Uri.parse(route), headers: headers),
       );
 
       if (res == null) {
@@ -82,22 +78,26 @@ class ApiRequest {
 
       switch (statusCode) {
         case (500):
-          _logs.error(message:'post() $route, returned with error $statusCode');
-          finalRes.addAll({'error' : statusCode});
+          _logs.error(
+              message: 'post() $route, returned with error $statusCode');
+          finalRes.addAll({'error': statusCode});
           break;
 
         case (400):
-          _logs.warning(message:'post() $route, returned with error $statusCode');
-          finalRes.addAll({'error' : statusCode});
+          _logs.warning(
+              message: 'post() $route, returned with error $statusCode');
+          finalRes.addAll({'error': statusCode});
           break;
 
         case (401):
-          _logs.warning(message:'post() $route, returned with error $statusCode');
-          finalRes.addAll({'error' : statusCode});
+          _logs.warning(
+              message: 'post() $route, returned with error $statusCode');
+          finalRes.addAll({'error': statusCode});
           break;
 
         case (200):
-          _logs.success(message:'post() $route, returned with data $statusCode');
+          _logs.success(
+              message: 'post() $route, returned with data $statusCode');
           break;
       }
 
@@ -106,49 +106,41 @@ class ApiRequest {
         'body': resBody,
         'data': jsonDecode(resBody)
       });
-
     } on http.ClientException catch (e) {
       _logs.warning(message: 'request() raised ClientException -> $e');
-      finalRes.addAll({
-        'status_code': 0
-      });
-
+      finalRes.addAll({'status_code': 0});
     } catch (e) {
-      _logs.warning(message:'post() unhandled unexpected post() error (statusCode: $statusCode, body: $resBody)');
+      _logs.warning(
+          message:
+              'post() unhandled unexpected post() error (statusCode: $statusCode, body: $resBody)');
     }
 
     return finalRes;
   }
 
   /// Get request for api, returns a the response status code and the body if available
-  Future<dynamic> get({
-    required String route,
-    Map<String,String>? headers }) async {
-
+  Future<dynamic> get(
+      {required String route, Map<String, String>? headers}) async {
     _logs.info(message: 'get() $route, headers: ${headers ?? 'none'}');
 
     Map<String, dynamic> result = await _request(
-        route: route,
-        method: right(http.get),
-        headers: headers,
+      route: route,
+      method: right(http.get),
+      headers: headers,
     );
 
     return result;
   }
 
-  Future<Map<String, dynamic>> post({
-    required String route,
-    Map<String, String>? headers,
-    Object? body }) async {
-
-    _logs.info(message: 'post() -> route: $route, headers: $headers, body: $body');
+  Future<Map<String, dynamic>> post(
+      {required String route,
+      Map<String, String>? headers,
+      Object? body}) async {
+    _logs.info(
+        message: 'post() -> route: $route, headers: $headers, body: $body');
 
     Map<String, dynamic> result = await _request(
-        route: route,
-        method: left(http.post),
-        headers: headers,
-        body: body
-    );
+        route: route, method: left(http.post), headers: headers, body: body);
 
     return result;
   }
@@ -157,17 +149,12 @@ class ApiRequest {
       {required String route,
       Map<String, String>? headers,
       Object? body}) async {
-
     _logs.info(
         message:
-          'put() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
+            'put() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
 
     Map<String, dynamic> result = await _request(
-        route: route,
-        method: left(http.put),
-        headers: headers,
-        body: body
-    );
+        route: route, method: left(http.put), headers: headers, body: body);
 
     return result;
   }
@@ -176,20 +163,16 @@ class ApiRequest {
       {required String route,
       Map<String, String>? headers,
       Object? body}) async {
-
     _logs.info(
         message:
-          'patch() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
+            'patch() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
 
     Map<String, dynamic> result = await _request(
-        route: route,
-        method: left(http.patch),
-        headers: headers,
-        body: body
-    );
+        route: route, method: left(http.patch), headers: headers, body: body);
 
     return result;
   }
+
   ///user_commands
   ///irrigation
   Future<void> openCommandsConnection() async {
@@ -198,19 +181,19 @@ class ApiRequest {
       cluster: 'ap3',
     );
 
-    try{
-      await _pusher.subscribe(
-          channelName: "user_commands");
+    try {
+      await _pusher.subscribe(channelName: "user_commands");
 
       await _pusher.connect();
 
       _logs.info(message: "WebSocket Connected in user_commands");
-    }catch(e){
+    } catch (e) {
       _logs.warning(message: "WebSocketException: $e");
     }
   }
 
-  Future<void> sendCommand({required String eventName,required int code}) async {
+  Future<void> sendCommand(
+      {required String eventName, required int code}) async {
     /*await _pusher.init(
       apiKey: 'd0f649dd91498f8916b8',
       cluster: 'ap3',
@@ -227,14 +210,10 @@ class ApiRequest {
       _logs.warning(message: "WebSocketException: $e");
     }*/
 
-    await _pusher.trigger(
-        PusherEvent(channelName: "user_commands",
-            eventName: eventName,
-        data: code
-        )
-    );
+    await _pusher.trigger(PusherEvent(
+        channelName: "user_commands", eventName: eventName, data: code));
 
-     /*_pusher.trigger(PusherEvent(
+    /*_pusher.trigger(PusherEvent(
         channelName: "user_commands",
         eventName: eventName,
         data: {
@@ -244,55 +223,59 @@ class ApiRequest {
   }
 
   //Open connection to Channels
-  Future<void> openConnection(BuildContext context) async{
+  Future<void> openConnection(BuildContext context) async {
     _internalBuildContext = context;
 
     await _pusher.init(
-        apiKey: 'd0f649dd91498f8916b8',
-        cluster: 'ap3',
+      apiKey: 'd0f649dd91498f8916b8',
+      cluster: 'ap3',
     );
-    try{
-      await _pusher.subscribe(channelName: _apiRoutes.seReadingsWs, onEvent: (dynamic data){
-        _seReadingsWsListener(data as PusherEvent);
-      });
+    try {
+      await _pusher.subscribe(
+          channelName: _apiRoutes.seReadingsWs,
+          onEvent: (dynamic data) {
+            _seReadingsWsListener(data as PusherEvent);
+          });
 
-      await _pusher.subscribe(channelName: _apiRoutes.seAlertsWs,onEvent: (dynamic data){
-        _seAlertsWsListener(data as PusherEvent);
-      });
+      await _pusher.subscribe(
+          channelName: _apiRoutes.seAlertsWs,
+          onEvent: (dynamic data) {
+            _seAlertsWsListener(data as PusherEvent);
+          });
 
       await _pusher.connect();
 
       _logs.info(message: "WebSocket Connected");
-    }catch(e){
+    } catch (e) {
       _logs.warning(message: "WebSocketException: $e");
     }
   }
 
   // the internal websocket listener wrapper function for
   // the sensor readings websocket
-  void _seReadingsWsListener(PusherEvent data)  {
-      final Map<String, dynamic> decodedData = jsonDecode(data.data);
+  void _seReadingsWsListener(PusherEvent data) {
+    final Map<String, dynamic> decodedData = jsonDecode(data.data);
 
-      final SensorNodeSnapshot snapshotObj = SensorNodeSnapshot.fromJSON(decodedData['message']);
-      _logs.warning(message: "snapshotObj: $snapshotObj");
-      // store data to sqlite database
-      DatabaseHelper.readingsLimit(snapshotObj.deviceID);
-      DatabaseHelper.addReadings(snapshotObj);
+    final SensorNodeSnapshot snapshotObj =
+        SensorNodeSnapshot.fromJSON(decodedData['message']);
+    _logs.warning(message: "snapshotObj: $snapshotObj");
+    // store data to sqlite database
+    DatabaseHelper.readingsLimit(snapshotObj.deviceID);
+    DatabaseHelper.addReadings(snapshotObj);
 
-      // pass to stream controller
-      // streamController.add(snapshotObj);
-      _internalBuildContext.read<DevicesProvider>().setNewSensorSnapshot(snapshotObj);
+    // pass to stream controller
+    // streamController.add(snapshotObj);
+    _internalBuildContext
+        .read<DevicesProvider>()
+        .setNewSensorSnapshot(snapshotObj);
 
-
-      /*channel.sink.close();
+    /*channel.sink.close();
       _logs.warning(message: '_seReadingsWsListener() error in stream.listen : $err');
       context.read<ConnectionProvider>().sensorWsConnectStatus(WsConnectionStatus.disconnected);
 
 
       channel.sink.close();
       context.read<ConnectionProvider>().sensorWsConnectStatus(WsConnectionStatus.disconnected);*/
-
-
   }
 
   /// Initialize connection with the sensor node alert WebSocket
@@ -307,29 +290,32 @@ class ApiRequest {
       return;
     }
 
-    *//*context.read<ConnectionProvider>().alertWsConnectStatus(WsConnectionStatus.connected);*//*
-    *//*_wsConnectionManager(context, route, seAlertsWebSocket, _seAlertsWsListener);*//*
+    */ /*context.read<ConnectionProvider>().alertWsConnectStatus(WsConnectionStatus.connected);*/ /*
+    */ /*_wsConnectionManager(context, route, seAlertsWebSocket, _seAlertsWsListener);*/ /*
     return;
   }*/
 
   // listener wrapper function for the sensor node alerts websocket
   void _seAlertsWsListener(PusherEvent data) {
+    final Map<String, dynamic> decodedData = jsonDecode(data.data);
+    final SensorNodeSnapshot snapshotObj =
+        SensorNodeSnapshot.fromJSON(decodedData['message']);
 
-      final Map<String, dynamic> decodedData = jsonDecode(data.data);
-      final SensorNodeSnapshot snapshotObj = SensorNodeSnapshot.fromJSON(decodedData['message']);
+    // store data to sqlite
+    DatabaseHelper.readingsLimit(snapshotObj.deviceID);
+    DatabaseHelper.addReadings(snapshotObj);
 
-      // store data to sqlite
-      DatabaseHelper.readingsLimit(snapshotObj.deviceID);
-      DatabaseHelper.addReadings(snapshotObj);
+    // pass to stream controller
+    //streamController.add(alertObj);
 
-      // pass to stream controller
-      //streamController.add(alertObj);
+    _internalBuildContext
+        .read<DevicesProvider>()
+        .setNewSensorSnapshot(snapshotObj);
+    _internalBuildContext
+        .read<DevicesProvider>()
+        .updateSMSensorState(decodedData['message']);
 
-      _internalBuildContext.read<DevicesProvider>().setNewSensorSnapshot(snapshotObj);
-      _internalBuildContext.read<DevicesProvider>().updateSMSensorState(decodedData['message']);
-
-
-     /* channel.sink.close();
+    /* channel.sink.close();
       _logs.warning(message: '_seAlertsWsListener() error in stream.listen : $err');
       context.read<ConnectionProvider>()
           .alertWsConnectStatus(WsConnectionStatus.disconnected);
@@ -338,8 +324,5 @@ class ApiRequest {
       channel.sink.close();
       context.read<ConnectionProvider>()
           .alertWsConnectStatus(WsConnectionStatus.disconnected);*/
-
-
   }
-
 }
