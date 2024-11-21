@@ -49,18 +49,14 @@ class ApiRequest {
     ConnectivityResult.wifi
   ];
 
-  Future<Map<String, dynamic>> _request(
-      {required String route,
-      required Either<
-              Future<http.Response> Function(Uri,
-                  {Object? body,
-                  Encoding? encoding,
-                  Map<String, String>? headers}),
-              Future<http.Response> Function(Uri,
-                  {Map<String, String>? headers})>
-          method,
-      Map<String, String>? headers,
-      Object? body}) async {
+  Future<Map<String, dynamic>> _request({
+    required String route,
+    required Either<
+      Future<http.Response>Function(Uri, {Object? body, Encoding? encoding, Map<String, String>? headers}),
+      Future<http.Response>Function(Uri, {Map<String, String>? headers})> method,
+    Map<String, String>? headers,
+    Object? body}) async {
+
     http.Response? res;
     int? statusCode;
     String? resBody;
