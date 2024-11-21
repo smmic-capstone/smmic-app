@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/providers/devices_provider.dart';
@@ -46,8 +47,8 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
 
   @override
   Widget build(BuildContext context) {
-    SinkNodeState sinkState = context.watch<DevicesProvider>().sinkNodeStateMap[widget.deviceInfo.deviceID]!;
-
+    SinkNodeState sinkState = context.watch<DevicesProvider>()
+        .sinkNodeStateMap[widget.deviceInfo.deviceID]!;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 25),
       child: Stack(
@@ -57,7 +58,7 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
             padding: const EdgeInsets.all(40),
             child: Column(
               children: [
-                _skNameAndSignalIcon(),
+                _skNameAndSignalIcon(sinkState.lastTransmission),
                 const SizedBox(height: 35),
                 Row(
                   children: [
@@ -77,7 +78,7 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _bytesDisplayAndBackIcon(sinkState.bytesSent),
+                    _bytesSentAndReceived(sinkState.bytesSent, sinkState.bytesReceived),
                     // SvgPicture.asset(
                     //   'assets/icons/signal.svg',
                     //   width: 28,
@@ -103,27 +104,50 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
     );
   }
 
-  Widget _skNameAndSignalIcon() {
+  Widget _skNameAndSignalIcon(DateTime lastTransmission) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          widget.deviceInfo.deviceName,
-          style: const TextStyle(
-              color: Colors.white,
-              fontFamily: 'Inter',
-              fontSize: 40
+        SizedBox(
+          width: 225,
+          child: Text(
+            softWrap: true,
+            widget.deviceInfo.deviceName,
+            style: const TextStyle(
+                color: Colors.white,
+                fontFamily: 'Inter',
+                fontSize: 40
+            ),
           ),
         ),
-        SvgPicture.asset(
-          'assets/icons/signal.svg',
-          width: 28,
-          height: 28,
-          colorFilter: const ColorFilter.mode(
-            Colors.white,
-            BlendMode.srcATop
-          ),
-        )
+        const SizedBox(height: 15),
+        Column(
+          children: [
+            const SizedBox(height: 15),
+            StreamBuilder(
+                stream: _timeTickerSeconds(),
+                builder: (context, snapshot) {
+                  Color iconColor = Colors.white.withOpacity(0.6);
+                  if (snapshot.hasData) {
+                    if (snapshot.data!.compareTo(
+                        lastTransmission.add(const Duration(hours: 10))) == -1) {
+                      iconColor = const Color.fromRGBO(23, 255, 50, 1);
+                    }
+                  }
+                  return SvgPicture.asset(
+                    'assets/icons/signal.svg',
+                    width: 28,
+                    height: 28,
+                    colorFilter: ColorFilter.mode(
+                        iconColor,
+                        BlendMode.srcATop
+                    ),
+                  );
+                }
+            )
+          ],
+        ),
       ],
     );
   }
@@ -216,14 +240,14 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
     return finalString;
   }
 
-  Widget _bytesDisplayAndBackIcon(double bytesSent) {
+  Widget _bytesSentAndReceived(int bytesSent, int bytesReceived) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         RichText(
           text: TextSpan(
-              text: bytesSent.toInt().toString(),
+              text: NumberFormat('#,##0').format(bytesSent + bytesReceived),
               style: const TextStyle(
                   fontSize: 30,
                   fontFamily: 'Inter',
@@ -258,7 +282,7 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaY: 10, sigmaX: 10),
         child: Container(
-          height: 315,
+          height: widget.deviceInfo.deviceName.length > 9 ? 375 : 315,
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.65),
             borderRadius: const BorderRadius.all(

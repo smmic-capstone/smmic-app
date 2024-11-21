@@ -13,6 +13,10 @@ class ApiRoutes {
   final String _updateSKDeviceName = '/updateuserSKdevicesname/';
   final String _updateSNDeviceName = '/updateuserSNdevicesname/';
 
+  // readings endpoint
+  final String _getSensorReadings = '/getSNreadings';
+  final String _getSinkReadings = '/getSKreadings';
+
   ///FCM URL
   final String _notifications = '/devices/';
 
@@ -61,4 +65,7 @@ class ApiRoutes {
 
   ///FCM Notifications
   String get deviceNotifications => '$_baseURL$_notifications';
+
+  String get getSensorReadings => '$_baseURL$_getSensorReadings';
+  String get getSinkReadings => '$_baseURL$_getSinkReadings';
 }

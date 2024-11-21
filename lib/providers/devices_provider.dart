@@ -81,11 +81,39 @@ class DevicesProvider extends ChangeNotifier {
     _initDevicesStates();
 
     notifyListeners();
+    _loadSinkReadingsFromApi();
 
     // set *updated* list to shared preferences
     await _setToSharedPrefs();
   }
-  
+
+  Future<void> _loadSinkReadingsFromApi() async {
+    Map<String, List<Map<String, dynamic>>> readings = await _devicesServices
+        .getSinkBatchSnapshots(_sinkNodeMap.keys.toList());
+    for (String sinkId in readings.keys) {
+      if (readings[sinkId]!.isEmpty) {
+        continue;
+      }
+      if (_sinkNodeStateMap[sinkId] == null) {
+        _logs.warning(message: 'sink node state data received for sink node'
+            '$sinkId but no SinkNodeState object was present in _sinkNodeStateMap');
+        _sinkNodeStateMap[sinkId] = SinkNodeState.fromJSON(
+            readings[sinkId]!.first,
+            sinkId
+        );
+      } else {
+        int comparison = DateTime.parse(readings[sinkId]!.first['timestamp'])
+            .compareTo(_sinkNodeStateMap[sinkId]!.lastTransmission);
+        _sinkNodeStateMap[sinkId]!.updateState(readings[sinkId]!.first);
+        if (comparison == 1) {
+          _sinkNodeStateMap[sinkId]!.updateState(readings[sinkId]!.first);
+        }
+      }
+      notifyListeners();
+    }
+    //TODO: share reading to sqlite database
+  }
+
   /// Set current SinkNode and Sensor Node *objects* map
   /// to shared preferences as `List<String>`
   Future<bool> _setToSharedPrefs() async {

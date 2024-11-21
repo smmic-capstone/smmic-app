@@ -136,16 +136,6 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
                     children: [
                       const SizedBox(height: 315),
                       ..._buildSinkCards(context.watch<DevicesProvider>().sinkNodeMap),
-                      const SizedBox(height: 15),
-                      ..._buildSinkCards(context.watch<DevicesProvider>().sinkNodeMap),
-                      const SizedBox(height: 15),
-                      ..._buildSinkCards(context.watch<DevicesProvider>().sinkNodeMap),
-                      const SizedBox(height: 15),
-                      ..._buildSinkCards(context.watch<DevicesProvider>().sinkNodeMap),
-                      const SizedBox(height: 15),
-                      ..._buildSinkCards(context.watch<DevicesProvider>().sinkNodeMap),
-                      const SizedBox(height: 15),
-                      ..._buildSinkCards(context.watch<DevicesProvider>().sinkNodeMap)
                     ],
                   )
               )
@@ -165,9 +155,16 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
   }
 
   List<Widget> _buildSinkCards(Map<String, SinkNode> sinkNodeMap) {
-    return sinkNodeMap.keys.map((id) {
-      return SinkNodeCard(
-          deviceInfo: sinkNodeMap[id]!
+    return sinkNodeMap.keys.indexed.map((id) {
+      return Container(
+        margin: EdgeInsets.only(
+            bottom: (id.$1 + 1 == sinkNodeMap.keys.length)
+                ? 25
+                : 15
+        ),
+        child: SinkNodeCard(
+            deviceInfo: sinkNodeMap[id.$2]!
+        ),
       );
     }).toList();
   }
