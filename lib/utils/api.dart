@@ -106,9 +106,11 @@ class ApiRequest {
         'body': resBody,
         'data': jsonDecode(resBody)
       });
+
     } on http.ClientException catch (e) {
       _logs.warning(message: 'request() raised ClientException -> $e');
       finalRes.addAll({'status_code': 0});
+
     } catch (e) {
       _logs.warning(
           message:

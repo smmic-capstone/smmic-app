@@ -1,5 +1,7 @@
 library devices_services;
 
+import 'dart:convert';
+
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/providers/auth_provider.dart';
@@ -72,10 +74,26 @@ class DevicesServices {
     return _sensorNodeDataServices.getSnapshot(id);
   }
 
-  /// Returns sink node snapshot data (`deviceID`, `batteryLevel`)
-  // SinkNodeSnapshot getSinkSnapshot({required String id}){
-  //   return _sinkNodeDataServices.getSnapshot(id);
-  // }
+  Future<Map<String, List<Map<String, dynamic>>>> getSinkBatchSnapshots(List<String> sinkIds) async {
+    Map<String, List<Map<String, dynamic>>> finalMap = {};
+    for (String sinkId in sinkIds) {
+      Map<String, dynamic> res = await _apiRequest.get(
+          route: _apiRoutes.getSinkReadings,
+          headers: {'Sink': sinkId}
+      );
+      if (res.containsKey('error')) {
+        _logs.warning(message: 'request for $sinkId returned with error ->'
+            'code: ${res['status_code']}, body: ${res['body']}');
+      } else {
+        List<Map<String, dynamic>> castedList = [];
+        for (dynamic item in res['data']) {
+          castedList.add(item as Map<String, dynamic>);
+        }
+        finalMap[sinkId] = castedList;
+      }
+    }
+    return finalMap;
+  }
 
   List<SensorNodeSnapshot> getSensorTimeSeries({required String id}) {
     return _sensorNodeDataServices.getTimeSeries(id);

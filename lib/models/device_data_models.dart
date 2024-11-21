@@ -102,8 +102,8 @@ class SinkNodeState {
   int connectedClients;
   int totalClients;
   int subCount;
-  double bytesSent;
-  double bytesReceived;
+  int bytesSent;
+  int bytesReceived;
   int messagesSent;
   int messagesReceived;
   Map<String, ConnectionState> sensorsConnectionStateMap;
@@ -138,9 +138,33 @@ class SinkNodeState {
     );
   }
 
+  //{"battery_level":"0.0000000",
+  // "timestamp":"2024-11-20T17:02:01.747699+08:00",
+  // "connected_clients":2,
+  // "total_clients":2,
+  // "sub_count":15,
+  // "bytes_sent":219776,
+  // "bytes_received":199719,
+  // "messages_sent":3448,
+  // "messages_received":3487}
+  factory SinkNodeState.fromJSON(Map<String, dynamic> data, String sinkId) {
+    return SinkNodeState._internal(
+        deviceID: sinkId,
+        lastTransmission: DateTime.parse(data[SinkNodeSnapshotKeys.timestamp.key]),
+        batteryLevel: data[SinkNodeSnapshotKeys.batteryLevel.key],
+        connectedClients: data[SinkNodeSnapshotKeys.connectedClients.key],
+        totalClients: data[SinkNodeSnapshotKeys.totalClients.key],
+        subCount: data[SinkNodeSnapshotKeys.subCount.key],
+        bytesSent: data[SinkNodeSnapshotKeys.bytesSent.key],
+        bytesReceived: data[SinkNodeSnapshotKeys.bytesReceived.key],
+        messagesSent: data[SinkNodeSnapshotKeys.messagesSent.key],
+        messagesReceived: data[SinkNodeSnapshotKeys.messagesReceived.key]
+    );
+  }
+
   void updateState(Map<String, dynamic> data) {
     lastTransmission = DateTime.parse(data[SinkNodeSnapshotKeys.timestamp.key]);
-    batteryLevel = data[SinkNodeSnapshotKeys.batteryLevel.key];
+    batteryLevel = double.parse(data[SinkNodeSnapshotKeys.batteryLevel.key]);
     connectedClients = data[SinkNodeSnapshotKeys.connectedClients.key];
     totalClients = data[SinkNodeSnapshotKeys.totalClients.key];
     subCount = data[SinkNodeSnapshotKeys.subCount.key];
