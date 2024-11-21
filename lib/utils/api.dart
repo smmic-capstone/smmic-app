@@ -47,7 +47,7 @@ class ApiRequest {
     ConnectivityResult.mobile,
     ConnectivityResult.wifi
   ];
-  
+
   Future<Map<String, dynamic>> _request({
     required String route,
     required Either<

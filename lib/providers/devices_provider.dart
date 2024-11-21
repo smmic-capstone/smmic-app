@@ -46,9 +46,7 @@ class DevicesProvider extends ChangeNotifier {
   Map<String, List<SensorNodeSnapshot>> _sensorNodeChartDataMap = {}; // ignore: prefer_final_fields
   Map<String, List<SensorNodeSnapshot>> get sensorNodeChartDataMap => _sensorNodeChartDataMap;
 
-  Future<void> init({
-    required ConnectivityResult connectivity,
-    required BuildContext context}) async {
+  Future<void> init({required ConnectivityResult connectivity, required BuildContext context}) async {
 
     try {
       _internalContext = context;
@@ -87,11 +85,10 @@ class DevicesProvider extends ChangeNotifier {
     // set *updated* list to shared preferences
     await _setToSharedPrefs();
   }
-
+  
   /// Set current SinkNode and Sensor Node *objects* map
   /// to shared preferences as `List<String>`
   Future<bool> _setToSharedPrefs() async {
-
     List<String> sinkNodeIds = _sinkNodeMap.keys.toList();
     List<Map<String, dynamic>> sinkNodeMapList = [];
     for (String id in sinkNodeIds) {
@@ -128,11 +125,13 @@ class DevicesProvider extends ChangeNotifier {
   /// Load initial readings and chart data from the sqlite local storage
   Future<bool> _loadReadingsFromSqlite() async {
     for (String seId in _sensorNodeMap.keys) {
-      SensorNodeSnapshot? fromSQFLiteSnapshot = await DatabaseHelper.getAllReadings(_sensorNodeMap[seId]!.deviceID);
+      SensorNodeSnapshot? fromSQFLiteSnapshot = await DatabaseHelper
+          .getAllReadings(_sensorNodeMap[seId]!.deviceID);
       if (fromSQFLiteSnapshot != null){
         _sensorNodeSnapshotMap[_sensorNodeMap[seId]!.deviceID] = fromSQFLiteSnapshot;
       }
-      List<SensorNodeSnapshot>? fromSQFLiteChartData = await DatabaseHelper.chartReadings(_sensorNodeMap[seId]!.deviceID);
+      List<SensorNodeSnapshot>? fromSQFLiteChartData = await DatabaseHelper
+          .chartReadings(_sensorNodeMap[seId]!.deviceID);
       if (fromSQFLiteChartData != null) {
         _sensorNodeChartDataMap[_sensorNodeMap[seId]!.deviceID] = fromSQFLiteChartData;
       }
@@ -207,21 +206,7 @@ class DevicesProvider extends ChangeNotifier {
     return true;
   }
 
-  // maps the payload from sensor devices
-  // assuming that the shape of the payload (as a string) is:
-  // ...
-  // sensor_type;
-  // device_id;
-  // timestamp;
-  // reading:value&
-  // reading:value&
-  // reading:value&
-  // reading:value&
-  // ...
-  //
-  /// Set a new sensor snapshot from any of the following type:
-  /// `Map<String, dynamic>`, `String`, `SensorNodeSnapshot` and
-  /// update chart data.
+  // set a new sensor snapshot data
   void setNewSensorSnapshot(var reading) {
     SensorNodeSnapshot? finalSnapshot;
 
@@ -231,19 +216,54 @@ class DevicesProvider extends ChangeNotifier {
       return;
     }
 
-    // set snapshot
-    _sensorNodeSnapshotMap[finalSnapshot.deviceID] = finalSnapshot;
+    // check if new snapshot is newer than current snapshot
+    // if there is already one
+    if (_sensorNodeSnapshotMap[finalSnapshot.deviceID] != null) {
+      int comparisonResult = finalSnapshot.timestamp.compareTo(
+        _sensorNodeSnapshotMap[finalSnapshot.deviceID]!.timestamp
+      );
+      switch (comparisonResult) {
+        case 0:
+          _logs.warning(message: 'new sensor node snapshot has'
+              'the same date as current snapshot object in sensorSnapshotMap');
+          break;
+        case 1:
+          _sensorNodeSnapshotMap[finalSnapshot.deviceID] = finalSnapshot;
+          break;
+        case -1:
+          break;
+      }
+    } else {
+      _sensorNodeSnapshotMap[finalSnapshot.deviceID] = finalSnapshot;
+    }
+
     // set chart data
     List<SensorNodeSnapshot>? chartDataBuffer = _sensorNodeChartDataMap[finalSnapshot.deviceID];
+    // the chart data is a list that stores sensor snapshot objects
+    // sorted by timestamp (in ascending order from index 0)
     if (chartDataBuffer == null) {
       chartDataBuffer = [finalSnapshot];
-    } else if (chartDataBuffer.length == 6){
-      chartDataBuffer.removeAt(0);
-      chartDataBuffer.add(finalSnapshot);
+      _sensorNodeChartDataMap[finalSnapshot.deviceID] = chartDataBuffer;
     } else {
-      chartDataBuffer.add(finalSnapshot);
+      chartDataBuffer = chartDataBuffer.reversed.toList();
+      for ((int, SensorNodeSnapshot) snapshot in chartDataBuffer.indexed) {
+        int comparisonRes = finalSnapshot.timestamp.compareTo(
+          snapshot.$2.timestamp
+        );
+        if (comparisonRes == 1){
+          // if greater than or equal to six, replace item
+          // if not, *and assuming that it is less*
+          // insert item
+          if (chartDataBuffer.length >= 6){
+            chartDataBuffer[snapshot.$1] = finalSnapshot;
+          } else {
+            chartDataBuffer.insert(snapshot.$1, finalSnapshot);
+          }
+          _sensorNodeChartDataMap[finalSnapshot.deviceID] = chartDataBuffer.reversed.toList();
+          break;
+        }
+      }
     }
-    _sensorNodeChartDataMap[finalSnapshot.deviceID] = chartDataBuffer;
 
     // update connection state
     _sensorStatesMap[finalSnapshot.deviceID]!.updateState({
@@ -263,13 +283,13 @@ class DevicesProvider extends ChangeNotifier {
       _statesTimerMap[finalSnapshot.deviceID]![SMSensorAlertCodes.connectionState] = null;
       _logs.info(message: 'cancelling and removing existing timer in _statesTimerMap');
     }
-    
-    // timer mechanism that updates 
+
+    // timer mechanism that updates
     // keep an update time record of the snapshot
     DateTime updateTime = finalSnapshot.timestamp;
     Timer timer = Timer(finalSnapshot
         .timestamp
-        .add(Duration(seconds: 10))//add(SMSensorState.keepStateTime)
+        .add(const Duration(seconds: 10))//add(SMSensorState.keepStateTime)
         .difference(DateTime.now()), () {
       // check whether the update time still matches
       // the last update time currently in store in the _sensorStatesMap

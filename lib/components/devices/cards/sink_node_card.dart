@@ -5,10 +5,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/providers/devices_provider.dart';
-import 'package:smmic/providers/theme_provider.dart';
-import 'package:smmic/subcomponents/devices/battery_level.dart';
-import 'package:smmic/subcomponents/devices/device_dialog.dart';
-import 'package:smmic/subcomponents/devices/device_name.dart';
 
 class SinkNodeCard extends StatefulWidget {
   const SinkNodeCard({
@@ -228,12 +224,12 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
         RichText(
           text: TextSpan(
               text: bytesSent.toInt().toString(),
-              style: TextStyle(
+              style: const TextStyle(
                   fontSize: 30,
                   fontFamily: 'Inter',
                   fontWeight: FontWeight.w500
               ),
-              children: [
+              children: const [
                 TextSpan(
                     text: ' bytes',
                     style: TextStyle(
