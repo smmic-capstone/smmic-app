@@ -12,7 +12,7 @@ import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/providers/connections_provider.dart';
 import 'package:smmic/providers/devices_provider.dart';
-import 'package:smmic/pusher/pusherauth.dart';
+import 'package:smmic/pusher/pusherservices.dart';
 import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
@@ -36,7 +36,7 @@ enum EventNames {
 
 class ApiRequest {
   final Logs _logs = Logs(tag: 'ApiRequest()');
-  final PusherAuth _pusherAuth = PusherAuth();
+  final PusherServices _pusherAuth = PusherServices();
 
   // dependencies / helpers
   final ApiRoutes _apiRoutes = ApiRoutes();
@@ -235,13 +235,20 @@ class ApiRequest {
     return jsonResponse;
   }
 
-  Future<void> sendCommand({required String eventName}) async {
+  Future<void> sendIntervalCommand({required String eventName, /*required String/int command code?*/ }) async {
     await _pusher.trigger(PusherEvent(
         channelName: "private-user_commands",
         eventName: eventName,
         data: "what the fuck?",)
     );
+  }
 
+  Future<void> sendIrrigationCommand({required String eventName, required String commands}) async {
+    await _pusher.trigger(PusherEvent(
+        channelName: _apiRoutes.commands,
+        eventName: eventName,
+        data: commands
+    ));
   }
 
   Future<String?> _waitForSocketID() async {
