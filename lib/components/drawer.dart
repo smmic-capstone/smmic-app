@@ -114,7 +114,7 @@ class ComponentDrawerState extends State<ComponentDrawer> {
               print("Hello World z");
               _apiRequest.sendIrrigationCommand(
                   eventName: EventNames.irrigationCommand.events,
-              commands: Commands.irrigationON.toString());
+              commands: Commands.irrigationON.command);
             },
             child: const ListTile(
               leading: Icon(Icons.water_drop_outlined),

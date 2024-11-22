@@ -18,11 +18,11 @@ import 'package:smmic/utils/logs.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 
 enum Commands {
-  irrigationOFF(0),
-  irrigationON(1),
-  interval(69);
+  irrigationOFF("0"),
+  irrigationON("1"),
+  interval("69");
 
-  final int command;
+  final String command;
   const Commands(this.command);
 }
 
