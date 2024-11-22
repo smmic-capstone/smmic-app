@@ -1,6 +1,10 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:jwt_decode/jwt_decode.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/constants/api.dart';
+import 'package:smmic/pages/login.dart';
 import 'package:smmic/providers/auth_provider.dart'; //Token status
 import 'package:http/http.dart' as http;
 import 'package:smmic/utils/api.dart';
@@ -98,5 +102,29 @@ class AuthUtils {
     Map<String, dynamic> body = data['data'];
     await _sharedPrefsUtils.setTokens(tokens: {Tokens.access: body['access']});
     return body['access'];
+  }
+
+  Future<void> logoutUser(BuildContext context) async {
+    SharedPreferences _sharedPreferences = await SharedPreferences.getInstance();
+
+    String? refreshToken = _sharedPreferences.getString('refresh');
+
+    final logoutResponse = await _apiRequest.post(
+        route: _apiRoutes.logout,
+        body: {
+          'refresh_token' : refreshToken
+        });
+
+    if (logoutResponse['status_code'] == 205 && context.mounted){
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage() ));
+    }
+  }
+
+  Future<String?> getRefreshToken() async {
+    SharedPreferences _sharedPreferences = await SharedPreferences.getInstance();
+
+    String? refreshToken = _sharedPreferences.getString('refresh');
+
+    return refreshToken;
   }
 }

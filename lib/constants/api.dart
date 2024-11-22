@@ -1,17 +1,18 @@
 /// Defines API constants (routes, configs if any)
 class ApiRoutes {
   //10.0.2.2
-  final String _baseURL = 'https://goeasyonme.pythonanywhere.com/api';
+  final String _baseURL = 'http://goeasyonme.pythonanywhere.com/api';
   final String _loginURL = '/auth/jwt/create/';
-  final String _logoutURL = '/blacklist';
+  final String _logoutURL = '/blacklist/';
   final String _registerURL = '/djoser/users/';
   final String _getUserURL = '/djoser/users/me/';
   final String _verifyTokenURL = '/auth/jwt/verify';
   final String _refreshAccessURL = '/auth/jwt/refresh';
-  final String _getDevicesURL = '/getuserSKdevices';
+  final String _getDevicesURL = '/getuserSKdevices/';
   final String _updateUserData = '/updateuserdetails/';
   final String _updateSKDeviceName = '/updateuserSKdevicesname/';
   final String _updateSNDeviceName = '/updateuserSNdevicesname/';
+  final String _pusherAuth = '/pusher/user-auth/';
 
   ///FCM URL
   final String _notifications = '/devices/';
@@ -19,6 +20,7 @@ class ApiRoutes {
   ///Pusher Channels/Websocket URL Connections
   final String _seReadingsWs = 'sensor_readings';
   final String _getSMAlerts = 'sensor_alerts';
+  final String _getSendCommands = 'private-user_commands';
 
   /// Base url for the api
   //String get baseURL => _baseURL;
@@ -58,6 +60,12 @@ class ApiRoutes {
 
   ///Get SMAlerts
   String get seAlertsWs => _getSMAlerts;
+
+  ///PusherAuthentication
+  String get pusherAuth => '$_baseURL$_pusherAuth';
+
+  ///Get sendCommands
+  String get commands => _getSendCommands;
 
   ///FCM Notifications
   String get deviceNotifications => '$_baseURL$_notifications';
