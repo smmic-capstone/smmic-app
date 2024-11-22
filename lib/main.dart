@@ -177,7 +177,6 @@ class _AuthGateState extends State<AuthGate> {
                       context.read<AuthProvider>().init,
                       context.read<UserDataProvider>().init,
                       _apiRequest.openConnection,
-                      _apiRequest.openCommandsConnection,
                     ]
                 ),
                 builder: (context, snapshot) {

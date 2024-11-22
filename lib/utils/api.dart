@@ -7,10 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/providers/connections_provider.dart';
 import 'package:smmic/providers/devices_provider.dart';
+import 'package:smmic/pusher/pusherauth.dart';
 import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
@@ -25,8 +27,8 @@ enum Commands {
 }
 
 enum EventNames {
-  irrigationCommand("irrigation"),
-  intervalCommand("interval");
+  irrigationCommand("client-irrigation"),
+  intervalCommand("client-interval");
 
   final String events;
   const EventNames(this.events);
@@ -34,6 +36,7 @@ enum EventNames {
 
 class ApiRequest {
   final Logs _logs = Logs(tag: 'ApiRequest()');
+  final PusherAuth _pusherAuth = PusherAuth();
 
   // dependencies / helpers
   final ApiRoutes _apiRoutes = ApiRoutes();
@@ -175,82 +178,88 @@ class ApiRequest {
     return result;
   }
 
-  ///user_commands
-  ///irrigation
-  Future<void> openCommandsConnection() async {
-    await _pusher.init(
-      apiKey: 'd0f649dd91498f8916b8',
-      cluster: 'ap3',
-    );
-
-    try {
-      await _pusher.subscribe(channelName: "user_commands");
-
-      await _pusher.connect();
-
-      _logs.info(message: "WebSocket Connected in user_commands");
-    } catch (e) {
-      _logs.warning(message: "WebSocketException: $e");
-    }
-  }
-
-  Future<void> sendCommand(
-      {required String eventName, required int code}) async {
-    /*await _pusher.init(
-      apiKey: 'd0f649dd91498f8916b8',
-      cluster: 'ap3',
-    );
-
-    try{
-      await _pusher.subscribe(
-          channelName: "user_commands");
-
-      await _pusher.connect();
-
-      _logs.info(message: "WebSocket Connected in user_commands");
-    }catch(e){
-      _logs.warning(message: "WebSocketException: $e");
-    }*/
-
-    await _pusher.trigger(PusherEvent(
-        channelName: "user_commands", eventName: eventName, data: code));
-
-    /*_pusher.trigger(PusherEvent(
-        channelName: "user_commands",
-        eventName: eventName,
-        data: {
-          "message" : code
-        }),
-    );*/
-  }
 
   //Open connection to Channels
   Future<void> openConnection(BuildContext context) async {
     _internalBuildContext = context;
+    _logs.warning(message: "openConnection running");
 
-    await _pusher.init(
-      apiKey: 'd0f649dd91498f8916b8',
-      cluster: 'ap3',
-    );
     try {
+      await _pusher.init(
+          apiKey: 'd0f649dd91498f8916b8',
+          cluster: 'ap3',
+          onAuthorizer: onAuthorizer
+      );
+
+      await _pusher.connect();
+
+      ///Pusher commands channels
+      await _pusher.subscribe(
+          channelName: _apiRoutes.commands);
+
+      ///Pusher readings channels
       await _pusher.subscribe(
           channelName: _apiRoutes.seReadingsWs,
           onEvent: (dynamic data) {
             _seReadingsWsListener(data as PusherEvent);
           });
 
+      ///Pusher alerts channels
       await _pusher.subscribe(
           channelName: _apiRoutes.seAlertsWs,
           onEvent: (dynamic data) {
             _seAlertsWsListener(data as PusherEvent);
           });
 
-      await _pusher.connect();
+      _logs.warning(message:"pusher connection state ${_pusher.connectionState}");
 
-      _logs.info(message: "WebSocket Connected");
     } catch (e) {
       _logs.warning(message: "WebSocketException: $e");
     }
+    _logs.warning(message:"pusher connection state ${_pusher.connectionState}");
+  }
+
+  dynamic onAuthorizer(String channelName, String socketId, dynamic options) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    String? accessToken =  sharedPreferences.getString('access');
+    String authURL = _apiRoutes.pusherAuth;
+    final response = await post(route: authURL,
+        headers: {
+      'Authorization' : 'Bearer $accessToken'
+    }, body: {
+      'socket_id' : socketId,
+      'channel_name' : channelName,
+    });
+    final jsonResponse = jsonDecode(response['body']);
+    _logs.warning(message: "$jsonResponse");
+    return jsonResponse;
+  }
+
+  Future<void> sendCommand({required String eventName}) async {
+    await _pusher.trigger(PusherEvent(
+        channelName: "private-user_commands",
+        eventName: eventName,
+        data: "what the fuck?",)
+    );
+
+  }
+
+  Future<String?> _waitForSocketID() async {
+    // Wait and check connection state periodically
+    const int maxRetries = 5;
+    const Duration retryDelay = Duration(seconds: 1);
+
+    for (int i = 0; i < maxRetries; i++) {
+      if (_pusher.connectionState == "CONNECTED") {
+        // Return the socket ID when connected
+        return await _pusher.getSocketId();
+      }
+      await Future.delayed(retryDelay);
+    }
+
+    // Return null if socket ID isn't retrieved within the retries
+    _logs.warning(message: "Failed to retrieve socket ID after retries.");
+    return null;
   }
 
   // the internal websocket listener wrapper function for

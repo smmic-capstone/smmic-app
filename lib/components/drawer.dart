@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smmic/constants/api.dart';
 import 'package:smmic/pages/QRcode.dart';
 import 'package:smmic/pages/accountinfo.dart';
 import 'package:smmic/pages/lab.dart';
 import 'package:smmic/pages/local_connect.dart';
 import 'package:smmic/pages/settings.dart';
 import 'package:smmic/utils/api.dart';
+import 'package:smmic/utils/auth_utils.dart';
 
 class ComponentDrawer extends StatefulWidget {
   const ComponentDrawer({super.key});
@@ -14,10 +17,12 @@ class ComponentDrawer extends StatefulWidget {
 }
 
 class ComponentDrawerState extends State<ComponentDrawer> {
+  final AuthUtils _authUtils = AuthUtils();
   final ApiRequest _apiRequest = ApiRequest();
 
   @override
   Widget build(BuildContext context) {
+
     return Drawer(
       child: ListView(
         children: [
@@ -97,12 +102,20 @@ class ComponentDrawerState extends State<ComponentDrawer> {
             onTap: (){
               print("Hello World");
               _apiRequest.sendCommand(
-                  eventName: EventNames.irrigationCommand.events,
-                  code: Commands.irrigationON.command);
+                  eventName: EventNames.irrigationCommand.events);
             },
             child: const ListTile(
               leading: Icon(Icons.water_drop_outlined),
               title: Text('Send Pusher Command'),
+            ),
+          ),
+          GestureDetector(
+            onTap: (){
+              _authUtils.logoutUser(context);
+            },
+            child: const ListTile(
+              leading: Icon(Icons.power_settings_new),
+              title: Text("Logout"),
             ),
           )
         ],
