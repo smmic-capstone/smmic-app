@@ -101,12 +101,24 @@ class ComponentDrawerState extends State<ComponentDrawer> {
           GestureDetector(
             onTap: (){
               print("Hello World");
-              _apiRequest.sendCommand(
+              _apiRequest.sendIntervalCommand(
                   eventName: EventNames.irrigationCommand.events);
             },
             child: const ListTile(
               leading: Icon(Icons.water_drop_outlined),
-              title: Text('Send Pusher Command'),
+              title: Text('Send Interval Command'),
+            ),
+          ),
+          GestureDetector(
+            onTap: (){
+              print("Hello World z");
+              _apiRequest.sendIrrigationCommand(
+                  eventName: EventNames.irrigationCommand.events,
+              commands: Commands.irrigationON.toString());
+            },
+            child: const ListTile(
+              leading: Icon(Icons.water_drop_outlined),
+              title: Text('Send Irrigation Command'),
             ),
           ),
           GestureDetector(
