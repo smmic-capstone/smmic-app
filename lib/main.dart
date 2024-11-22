@@ -128,12 +128,11 @@ class _AuthGateState extends State<AuthGate> {
     required List<Function> initFunctions}) async {
 
     for (Function func in initFunctions) {
+      _logs.warning(message: func.toString());
       if (func is Future<dynamic> Function()) {
-        _logs.warning(message: func.toString());
         await func();
       }  else if (func is Future<dynamic> Function(BuildContext)) {
         if (context.mounted) {
-          _logs.warning(message: func.toString());
           await func(context);
         }
       } else {

@@ -41,15 +41,13 @@ class _WeatherComponentsWidgetState extends State<WeatherComponentsWidget> {
     return FutureBuilder<List<Weather>?>(
         future: _getWeather(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return _buildRow(null);
-          } else if (snapshot.hasData) {
+          if (snapshot.hasData) {
             if (snapshot.data != null) {
               // TODO: assign to provider
               return _buildRow(snapshot.data);
             }
           }
-          return Text('cant get data????');
+          return _buildRow(null);
         }
     );
   }

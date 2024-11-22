@@ -52,18 +52,14 @@ class ApiRequest {
     ConnectivityResult.wifi
   ];
 
-  Future<Map<String, dynamic>> _request(
-      {required String route,
-      required Either<
-              Future<http.Response> Function(Uri,
-                  {Object? body,
-                  Encoding? encoding,
-                  Map<String, String>? headers}),
-              Future<http.Response> Function(Uri,
-                  {Map<String, String>? headers})>
-          method,
-      Map<String, String>? headers,
-      Object? body}) async {
+  Future<Map<String, dynamic>> _request({
+    required String route,
+    required Either<
+      Future<http.Response>Function(Uri, {Object? body, Encoding? encoding, Map<String, String>? headers}),
+      Future<http.Response>Function(Uri, {Map<String, String>? headers})> method,
+    Map<String, String>? headers,
+    Object? body}) async {
+
     http.Response? res;
     int? statusCode;
     String? resBody;
@@ -113,9 +109,11 @@ class ApiRequest {
         'body': resBody,
         'data': jsonDecode(resBody)
       });
+
     } on http.ClientException catch (e) {
       _logs.warning(message: 'request() raised ClientException -> $e');
       finalRes.addAll({'status_code': 0});
+
     } catch (e) {
       _logs.warning(
           message:
