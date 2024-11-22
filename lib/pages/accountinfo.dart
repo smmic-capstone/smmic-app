@@ -104,7 +104,7 @@ class _ManageAccount extends State<ManageAccount> {
                             if (_userAccess == null) {
                               context.read<AuthProvider>().accessStatus ==
                                   TokenStatus.invalid;
-                              _globalNavigator.forceLoginDialog();
+                              _globalNavigator.forceLoginDialog(origin: _logs.tag);
                             } else {
                               Map<String, dynamic> uData = {
                                 'UID': _userAccess.userID,

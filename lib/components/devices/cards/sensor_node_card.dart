@@ -28,6 +28,13 @@ class SensorNodeCard extends StatefulWidget {
 
 class _SensorNodeCardState extends State<SensorNodeCard> {
 
+  Stream<DateTime> _timeTickerSeconds() async* {
+    while (true) {
+      yield DateTime.now();
+      await Future.delayed(const Duration(seconds: 1));
+    }
+  }
+
   final ApiRequest _apiRequest = ApiRequest();
   final ApiRoutes _apiRoutes = ApiRoutes();
   final Logs _logs = Logs(tag: 'Sensor Node Card()');
@@ -41,6 +48,13 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
   SensorNodeSnapshot? cardReadings;
   SensorNodeSnapshot? sqlCardReadings;
   SMSensorState? alertsStreamData;
+
+  // Stream<DateTime> _timeTickerSeconds() async* {
+  //   while (true) {
+  //     yield DateTime.now();
+  //     await Future.delayed(const Duration(seconds: 1));
+  //   }
+  // }
 
   @override
   void initState(){

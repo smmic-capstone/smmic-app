@@ -184,6 +184,11 @@ class ApiRequest {
     _internalBuildContext = context;
     _logs.warning(message: "openConnection running");
 
+    await _pusher.init(
+      apiKey: 'd0f649dd91498f8916b8',
+      cluster: 'ap3',
+    );
+
     try {
       await _pusher.init(
           apiKey: 'd0f649dd91498f8916b8',
@@ -211,7 +216,14 @@ class ApiRequest {
             _seAlertsWsListener(data as PusherEvent);
           });
 
-      _logs.warning(message:"pusher connection state ${_pusher.connectionState}");
+      await _pusher.subscribe(
+          channelName: _apiRoutes.sinkReadingsWs,
+          onEvent: (dynamic data) {
+            _sinkSnapshotListener(data as PusherEvent);
+          }
+      );
+
+      await _pusher.connect();
 
     } catch (e) {
       _logs.warning(message: "WebSocketException: $e");
@@ -342,5 +354,12 @@ class ApiRequest {
       channel.sink.close();
       context.read<ConnectionProvider>()
           .alertWsConnectStatus(WsConnectionStatus.disconnected);*/
+  }
+
+  void _sinkSnapshotListener(PusherEvent data) {
+    final Map<String, dynamic> decodedData = jsonDecode(data.data);
+    final Map<String, dynamic> sinkSnapshotMap = decodedData['message'];
+    _logs.warning(message: sinkSnapshotMap.toString());
+    _internalBuildContext.read<DevicesProvider>().updateSinkState(sinkSnapshotMap);
   }
 }

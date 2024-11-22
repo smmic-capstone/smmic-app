@@ -36,7 +36,7 @@ class AuthService {
       //TODO: HANDLE ERROR SCENARIO
       _logs.warning(message: 'Data caught error key!');
       _logs.warning(message: data.toString());
-      _globalNavigator.forceLoginDialog(); // replace with a more specific dialog
+      _globalNavigator.forceLoginDialog(origin: _logs.tag); // replace with a more specific dialog
     }
 
     Map<String, dynamic> body = data['data'];
@@ -51,7 +51,7 @@ class AuthService {
 
     if (refreshStatus != TokenStatus.valid) {
       //TODO: HANDLE ON LOGIN ERROR
-      _globalNavigator.forceLoginDialog();
+      _globalNavigator.forceLoginDialog(origin: _logs.tag);
     }
 
     String? newAccess;

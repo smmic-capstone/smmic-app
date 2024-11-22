@@ -43,9 +43,7 @@ class AuthUtils {
   }
 
   ///Verifies token validity from api. Returns `TokenStatus` enums, useful for validating access from and to database
-  Future<TokenStatus> verifyToken({
-    required String? token,
-    bool refresh = false}) async {
+  Future<TokenStatus> verifyToken({required String? token, bool refresh = false}) async {
 
     TokenStatus finalStatus = TokenStatus.unverified;
     // if provided token is null
@@ -92,15 +90,23 @@ class AuthUtils {
   ///
   ///Handle null value using forceLogin or other error handling functions to avoid the funny
   Future<String?> refreshAccessToken({required String refresh, bool setAccess = false}) async {
-    Map<String, dynamic> data = await _apiRequest.post(route: _apiRoutes.refreshToken, body: {'refresh' : refresh});
+    Map<String, dynamic> res = await _apiRequest.post(
+        route: _apiRoutes.refreshToken,
+        body: {'refresh' : refresh}
+    );
 
     // TODO: handle error
-    if (data.containsKey('error')) {
-      throw Exception(data);
+    if (res.containsKey('error')) {
+      throw Exception(res);
     }
 
-    Map<String, dynamic> body = data['data'];
-    await _sharedPrefsUtils.setTokens(tokens: {Tokens.access: body['access']});
+    Map<String, dynamic> body = res['data'];
+    await _sharedPrefsUtils.setTokens(
+        tokens: {
+          Tokens.access: body['access'],
+          Tokens.refresh: body['refresh']
+        }
+    );
     return body['access'];
   }
 

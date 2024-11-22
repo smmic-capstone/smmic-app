@@ -37,16 +37,12 @@ class AuthProvider extends ChangeNotifier {
   TokenStatus? _accessStatus;
   TokenStatus? get accessStatus => _accessStatus;
 
-  /// Returns the status of the refresh token
+  ///Returns the status of the refresh token
   TokenStatus? _refreshStatus;
   TokenStatus? get refreshStatus => _refreshStatus;
 
   Future<void> init() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-
-    if (!sharedPreferences.containsKey('login')){
-      return;
-    }
 
     // acquire keys first
     // check token status of refresh token
@@ -63,10 +59,10 @@ class AuthProvider extends ChangeNotifier {
     );
 
     if (_refreshStatus == TokenStatus.invalid) {
-      _globalNavigator.forceLoginDialog();
+      _globalNavigator.forceLoginDialog(origin: _logs.tag);
       return;
     } else if (_refreshStatus == TokenStatus.expired) {
-      _globalNavigator.forceLoginDialog();
+      _globalNavigator.forceLoginDialog(origin: _logs.tag);
       return;
     } else if (_refreshStatus == TokenStatus.unverified) {
       // TODO handle unverified refresh token status
@@ -92,13 +88,6 @@ class AuthProvider extends ChangeNotifier {
         _authUtils.parseToken(token: accessToken)!
     );
     _accessStatus = TokenStatus.valid;
-
-    _sharedPrefsUtils.setTokens(
-        tokens: {
-          Tokens.refresh: refreshToken,
-          Tokens.access: accessToken
-        }
-    );
 
     _logs.success(message: 'init() done');
 
