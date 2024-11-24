@@ -10,10 +10,14 @@ import 'package:smmic/providers/devices_provider.dart';
 class SinkNodeCard extends StatefulWidget {
   const SinkNodeCard({
     super.key,
-    required this.deviceInfo
+    required this.deviceInfo,
+    this.bottomMargin,
+    this.expanded = true
   });
 
   final SinkNode deviceInfo;
+  final double? bottomMargin;
+  final bool expanded;
 
   @override
   State<SinkNodeCard> createState() => _SinkNodeCardState();
@@ -50,7 +54,7 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
     SinkNodeState sinkState = context.watch<DevicesProvider>()
         .sinkNodeStateMap[widget.deviceInfo.deviceID]!;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 25),
+      margin: EdgeInsets.only(left: 25, right: 25, bottom: widget.bottomMargin ?? 0),
       child: Stack(
         children: [
           _cardBackground(),
@@ -74,20 +78,11 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
                     )
                   ],
                 ),
-                const SizedBox(height: 35),
-                Row(
+                SizedBox(height: widget.expanded ? 35 : 0),
+                widget.expanded ? Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _bytesSentAndReceived(sinkState.bytesSent, sinkState.bytesReceived),
-                    // SvgPicture.asset(
-                    //   'assets/icons/signal.svg',
-                    //   width: 28,
-                    //   height: 28,
-                    //   colorFilter: const ColorFilter.mode(
-                    //       Colors.white,
-                    //       BlendMode.srcATop
-                    //   ),
-                    // ) // TODO: ilisdan og back button
                     const Icon(
                         CupertinoIcons.arrow_right,
                         size: 35,
@@ -95,7 +90,7 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
                         color: Colors.white
                     )
                   ],
-                )
+                ) : const SizedBox()
               ],
             ),
           )
@@ -105,6 +100,7 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
   }
 
   Widget _skNameAndSignalIcon(DateTime lastTransmission) {
+    final double iconSize = widget.expanded ? 28 : 16;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -137,8 +133,8 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
                   }
                   return SvgPicture.asset(
                     'assets/icons/signal.svg',
-                    width: 28,
-                    height: 28,
+                    width: iconSize,
+                    height: iconSize,
                     colorFilter: ColorFilter.mode(
                         iconColor,
                         BlendMode.srcATop
@@ -277,12 +273,18 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
   }
 
   Widget _cardBackground() {
+    double finalHeightExpanded = widget.deviceInfo.deviceName.length > 9
+        ? 375
+        : 315;
+    double finalHeight = widget.deviceInfo.deviceName.length > 9
+        ? 285
+        : 228;
     return ClipRRect(
       borderRadius: const BorderRadius.all(Radius.circular(25)),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaY: 10, sigmaX: 10),
         child: Container(
-          height: widget.deviceInfo.deviceName.length > 9 ? 375 : 315,
+          height: widget.expanded ? finalHeightExpanded : finalHeight,
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.65),
             borderRadius: const BorderRadius.all(

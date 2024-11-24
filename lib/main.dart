@@ -193,16 +193,6 @@ class _AuthGateState extends State<AuthGate> {
                       context: context
                   );
 
-                  /*_apiRequest.initSeReadingsWSChannel(
-                      route: _apiRoutes.seReadingsWs,
-                      context: context
-                  );
-
-                  _apiRequest.initSeAlertsWSChannel(
-                      route: _apiRoutes.seAlertsWs,
-                      context: context
-                  );*/
-
                   return const Stack(
                     children: [
                       BottomNavBar(initialIndexPage: 0),

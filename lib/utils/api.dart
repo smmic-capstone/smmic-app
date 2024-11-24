@@ -184,11 +184,6 @@ class ApiRequest {
     _internalBuildContext = context;
     _logs.warning(message: "openConnection running");
 
-    await _pusher.init(
-      apiKey: 'd0f649dd91498f8916b8',
-      cluster: 'ap3',
-    );
-
     try {
       await _pusher.init(
           apiKey: 'd0f649dd91498f8916b8',

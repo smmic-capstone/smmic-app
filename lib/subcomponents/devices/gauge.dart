@@ -1,24 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
+import 'package:smmic/subcomponents/devices/digital_display.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 class RadialGauge extends StatefulWidget {
-  const RadialGauge(
-      {super.key,
-      required this.valueType,
-      required this.value,
-      required this.limit,
-      required this.opacity,
-      this.scaleMultiplier = 1,
-      this.radiusMultiplier = 1});
+  const RadialGauge({
+    super.key,
+    required this.valueType,
+    required this.value,
+    required this.limit,
+    required this.opacity,
+    this.scaleMultiplier = 1,
+    this.radiusMultiplier = 1,
+    this.valueTextStyle,
+    this.symbolTextStyle,
+    this.labelTextStyle
+  });
 
-  final String valueType;
+  final ValueType valueType;
   final double opacity;
   final double value;
   final double limit;
   final double scaleMultiplier;
   final double radiusMultiplier;
+  final TextStyle? valueTextStyle;
+  final TextStyle? symbolTextStyle;
+  final TextStyle? labelTextStyle;
 
   @override
   State<StatefulWidget> createState() => _RadialGaugeState();
@@ -59,20 +67,24 @@ class _RadialGaugeState extends State<RadialGauge> {
                 widget: RichText(
                   text: TextSpan(
                     text: widget.value.toInt().toString(),
-                    style: TextStyle(
+                    style: widget.valueTextStyle ?? TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 30 * widget.scaleMultiplier,
                         color: context.watch<UiProvider>().isDark
                             ? Colors.white.withOpacity(widget.opacity)
-                            : Colors.black.withOpacity(widget.opacity)),
+                            : Colors.black.withOpacity(widget.opacity)
+                    ),
                     children: [
                       TextSpan(
                           text: setSymbol(widget.valueType),
-                          style:
-                              TextStyle(fontSize: 17 * widget.scaleMultiplier))
+                          style: widget.symbolTextStyle ?? TextStyle(
+                              fontSize: 17 * widget.scaleMultiplier
+                          )
+                      )
                     ],
                   ),
-                )),
+                )
+            ),
             GaugeAnnotation(
                 angle: 90,
                 positionFactor: 0.8,
@@ -80,7 +92,7 @@ class _RadialGaugeState extends State<RadialGauge> {
                   child: Text(
                     setTitle(widget.valueType),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: widget.labelTextStyle ?? TextStyle(
                         fontSize: 10 *
                             (!(widget.scaleMultiplier == 1)
                                 ? widget.scaleMultiplier * 0.9
@@ -88,7 +100,8 @@ class _RadialGaugeState extends State<RadialGauge> {
                         fontFamily: 'Inter',
                         color: context.watch<UiProvider>().isDark
                             ? Colors.white.withOpacity(widget.opacity)
-                            : Colors.black.withOpacity(widget.opacity)),
+                            : Colors.black.withOpacity(widget.opacity)
+                    ),
                   ),
                 ))
           ],
@@ -98,24 +111,24 @@ class _RadialGaugeState extends State<RadialGauge> {
   }
 }
 
-String setSymbol(String type) {
+String setSymbol(ValueType type) {
   switch (type) {
-    case == 'soilMoisture' || 'humidity':
+    case == ValueType.soilMoisture || ValueType.humidity:
       return '%';
-    case == 'temperature':
+    case == ValueType.temperature:
       return '°C';
     default:
       return '$type: unknown type (sm, tm, hm)';
   }
 }
 
-String setTitle(String type) {
+String setTitle(ValueType type) {
   switch (type) {
-    case == 'soilMoisture':
+    case == ValueType.soilMoisture:
       return 'Soil\nMoisture';
-    case == 'temperature':
+    case == ValueType.temperature:
       return 'Temp.';
-    case == 'humidity':
+    case == ValueType.humidity:
       return 'Humidity';
     default:
       return '$type: unknown type (sm, tm, hm)';
