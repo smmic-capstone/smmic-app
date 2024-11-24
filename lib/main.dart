@@ -90,7 +90,8 @@ class SMMICApp extends StatelessWidget {
           ? context.watch<UiProvider>().darkTheme
           : context.watch<UiProvider>().lightTheme,
       theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)
+      ),
       home: const AuthGate(),
     );
   }
@@ -181,10 +182,9 @@ class _AuthGateState extends State<AuthGate> {
                 ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    // TODO   add loading screen
+                    // TODO add loading screen
                     return const Center(child: CircularProgressIndicator());
                   }
-
 
                   context.read<MqttProvider>().registerContext(context: context);
 
@@ -192,16 +192,6 @@ class _AuthGateState extends State<AuthGate> {
                       connectivity: context.read<ConnectionProvider>().connectionStatus,
                       context: context
                   );
-
-                  /*_apiRequest.initSeReadingsWSChannel(
-                      route: _apiRoutes.seReadingsWs,
-                      context: context
-                  );
-
-                  _apiRequest.initSeAlertsWSChannel(
-                      route: _apiRoutes.seAlertsWs,
-                      context: context
-                  );*/
 
                   return const Stack(
                     children: [

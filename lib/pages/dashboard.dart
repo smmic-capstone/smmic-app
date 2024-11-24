@@ -142,7 +142,7 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
             ],
           ),
           Positioned(
-            top: 50,
+            top: 45,
             left: (MediaQuery.of(context).size.width / 2)
                 - (MediaQuery.of(context).size.width * 0.90) / 2,
             child: Center(

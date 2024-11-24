@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
@@ -13,24 +15,49 @@ import 'package:smmic/subcomponents/devices/digital_display.dart';
 import 'package:smmic/subcomponents/devices/gauge.dart';
 import 'package:smmic/utils/api.dart';
 import 'package:smmic/providers/devices_provider.dart';
-import '../../../subcomponents/devices/device_dialog.dart';
+import 'package:smmic/subcomponents/devices/device_dialog.dart';
 import 'package:smmic/utils/logs.dart';
 
 class SensorNodeCard extends StatefulWidget {
-  const SensorNodeCard({super.key, required this.deviceInfo, required this.deviceSnapshot});
+  const SensorNodeCard({
+    super.key,
+    required this.deviceInfo,
+    this.bottomMargin
+  });
 
   final SensorNode deviceInfo;
-  final SensorNodeSnapshot? deviceSnapshot;
+  final double? bottomMargin;
 
   @override
   State<SensorNodeCard> createState() => _SensorNodeCardState();
 }
 
 class _SensorNodeCardState extends State<SensorNodeCard> {
+  final TextStyle _primaryTextStyle = const TextStyle(
+      fontSize: 32,
+      fontFamily: 'Inter',
+      fontWeight: FontWeight.w500
+  );
 
-  final ApiRequest _apiRequest = ApiRequest();
-  final ApiRoutes _apiRoutes = ApiRoutes();
-  final Logs _logs = Logs(tag: 'Sensor Node Card()');
+  final TextStyle _secondaryTextStyle = const TextStyle(
+      fontFamily: 'Inter',
+      fontSize: 18,
+      fontWeight: FontWeight.w400
+  );
+
+  final TextStyle _tertiaryTextStyle = TextStyle(
+      fontFamily: 'Inter',
+      fontSize: 12,
+      fontWeight: FontWeight.w400,
+      color: Colors.white.withOpacity(0.5)
+  );
+
+  Stream<DateTime> _timeTickerSeconds() async* {
+    while (true) {
+      yield DateTime.now();
+      await Future.delayed(const Duration(seconds: 1));
+    }
+  }
 
   final StreamController<SensorNodeSnapshot> _snapshotStreamController = StreamController<SensorNodeSnapshot>.broadcast();
   final StreamController<SMSensorState> _alertsStreamController = StreamController<SMSensorState>.broadcast();
@@ -53,6 +80,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
     _alertsStreamController.close();
     super.dispose();
   }
+
   Color _getColor(int? alertCode, Map<int,Color> colorMap){
     return colorMap[alertCode] ?? Colors.grey;
   }
@@ -75,133 +103,142 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
 
   @override
   Widget build(BuildContext context) {
-    final SensorNodeSnapshot deviceSnapshot = widget.deviceSnapshot ?? SensorNodeSnapshot.placeHolder(deviceId: widget.deviceInfo.deviceID);
 
-    final DeviceDialog _skDeviceDialog = DeviceDialog(
-        context: context,
-        deviceID: widget.deviceInfo.deviceID,
-        latitude: widget.deviceInfo.latitude,
-        longitude: widget.deviceInfo.longitude
-    );
-
+    // device connectivity status
     ConnectivityResult deviceConnectionStatus = context
         .watch<ConnectionProvider>().connectionStatus;
+
+    // sensor data
+    SensorNodeSnapshot seSnapshotData = context.watch<DevicesProvider>()
+        .sensorNodeSnapshotMap[widget.deviceInfo.deviceID]
+        ?? SensorNodeSnapshot.placeHolder(deviceId: widget.deviceInfo.deviceID);
+
+    // sensor states
     int sensorConnectionState = context
         .watch<DevicesProvider>()
         .sensorStatesMap[widget.deviceInfo.deviceID]!
         .connectionState.value1;
 
-    return GestureDetector(
-      onTap: () =>
-          Navigator.push(context, MaterialPageRoute(builder: (context) {
-        return SensorNodePage(
-            deviceID: widget.deviceInfo.deviceID,
-            latitude: widget.deviceInfo.latitude,
-            longitude: widget.deviceInfo.longitude,
-            deviceName: widget.deviceInfo.deviceName,
-            deviceInfo: widget.deviceInfo,
-            streamController: streamController,);
-      })),
+    return Container(
+      margin: EdgeInsets.only(left: 25, right: 25, bottom: widget.bottomMargin ?? 0),
       child: Stack(
         children: [
+          _cardBackground(),
           Container(
-              margin: const EdgeInsets.only(left: 25, right: 25, bottom: 15),
-              padding: const EdgeInsets.symmetric(horizontal: 19, vertical: 18),
-              decoration: BoxDecoration(
-                  color: context.watch<UiProvider>().isDark ? Colors.black : Colors.white,
-                  borderRadius: const BorderRadius.all(Radius.circular(10)),
-                  boxShadow: [
-                    BoxShadow(
-                        color: context.watch<UiProvider>().isDark
-                            ? Colors.white.withOpacity(0.09)
-                            : Colors.black.withOpacity(0.09),
-                        spreadRadius: 0,
-                        blurRadius: 4,
-                        offset: const Offset(0, 4))
-                  ]),
-              height: 160,
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 4,
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 2),
-                        Expanded(flex: 5, child: DeviceName(deviceName: widget.deviceInfo.deviceName)),
-                        Expanded(
-                            flex: 2,
-                            //TODO: add snapshot data here
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                const SizedBox(width: 3),
-                                // soil moisture
-                                Icon(
-                                  CupertinoIcons.dot_radiowaves_left_right,
-                                  color: UiProvider().setConnectionColor(
-                                      deviceConnectionStatus,
-                                      sensorConnectionState
-                                  ),
-                                  size: 24
-                                ),
-                              ],
-                            )
-                        )
-                      ],
-                    ),
+            padding: const EdgeInsets.all(40),
+            child: Stack(
+              children: [
+                SizedBox(
+                  width: 230,
+                  child: _nameAndReadings(
+                      seSnapshotData
                   ),
-                  Expanded(
-                      flex: 10,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                DigitalDisplay(
-                                  value: deviceSnapshot.temperature,
-                                  valueType: 'temperature',
-                                  opacityOverride: getOpacity(deviceConnectionStatus),
-                                ),
-                                DigitalDisplay(
-                                  value: deviceSnapshot.humidity,
-                                  valueType: 'humidity',
-                                  opacityOverride: getOpacity(deviceConnectionStatus),
-                                )
-                              ],
-                            ),
+                ),
+                SizedBox(
+                  height: widget.deviceInfo.deviceName.length > 9 ? 201 : 144,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: 10,
+                        right: 0,
+                        child: SvgPicture.asset(
+                          'assets/icons/signal.svg',
+                          width: 16,
+                          height: 16,
+                          colorFilter: const ColorFilter.mode(
+                              Color.fromRGBO(23, 255, 50, 1),
+                              BlendMode.srcATop
                           ),
-                          Expanded(
-                            flex: 4,
-                            child: Container(
-                                alignment: Alignment.center,
-                                child: RadialGauge(
-                                    valueType: 'soilMoisture',
-                                    value:  deviceSnapshot.soilMoisture,
-                                    limit: 100,
-                                    opacity: getOpacity(deviceConnectionStatus))),
-                          )
-                        ],
-                      )),
-                ],
-              )
-          ),
-          Container(
-            padding: const EdgeInsets.only(right: 40, top: 16),
-            alignment: Alignment.topRight,
-            child: RotatedBox(
-              quarterTurns: 2,
-              child: Icon(
-                CupertinoIcons.arrow_down_left_circle,
-                size: 20,
-                color: context.watch<UiProvider>().isDark
-                    ? Colors.white.withOpacity(0.35)
-                    : Colors.black.withOpacity(0.35),
-              ),
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.bottomRight,
+                        child: _gauge(seSnapshotData),
+                      )
+                    ],
+                  ),
+                ),
+              ],
             ),
           )
         ],
+      ),
+    );
+  }
+
+  Widget _nameAndReadings(SensorNodeSnapshot snapshotData) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        SizedBox(
+          width: 250,
+          child: Text(
+            softWrap: true,
+            widget.deviceInfo.deviceName,
+            style: const TextStyle(
+                color: Colors.white,
+                fontFamily: 'Inter',
+                fontSize: 40
+            ),
+          ),
+        ),
+        const SizedBox(height: 35),
+        Row(
+          children: [
+            SensorDigitalDisplay(
+              value: snapshotData.temperature,
+              valueType: ValueType.temperature,
+              opacityOverride: 1,
+              valueTextStyle: _primaryTextStyle,
+              labelTextStyle: _secondaryTextStyle,
+              symbolTextStyle: _tertiaryTextStyle,
+            ),
+            const SizedBox(width: 15),
+            SensorDigitalDisplay(
+              value: snapshotData.humidity,
+              valueType: ValueType.humidity,
+              opacityOverride: 1,
+              valueTextStyle: _primaryTextStyle,
+              labelTextStyle: _secondaryTextStyle,
+              symbolTextStyle: _tertiaryTextStyle,
+            )
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _gauge(SensorNodeSnapshot snapshotData) {
+    return SizedBox(
+      width: 115,
+      height: 115,
+      child: RadialGauge(
+        valueType: ValueType.soilMoisture,
+        value: snapshotData.soilMoisture,
+        limit: 100,
+        opacity: 1,
+        valueTextStyle: _primaryTextStyle,
+        symbolTextStyle: _secondaryTextStyle,
+        labelTextStyle: _tertiaryTextStyle,
+      ),
+    );
+  }
+
+  Widget _cardBackground() {
+    return ClipRRect(
+      borderRadius: const BorderRadius.all(Radius.circular(25)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaY: 10, sigmaX: 10),
+        child: Container(
+          height: widget.deviceInfo.deviceName.length > 9 ? 282 : 226,
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.65),
+            borderRadius: const BorderRadius.all(
+                Radius.circular(25)
+            ),
+          ),
+        ),
       ),
     );
   }

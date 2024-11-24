@@ -25,6 +25,7 @@ class ApiRoutes {
   final String _seReadingsWs = 'sensor_readings';
   final String _getSMAlerts = 'sensor_alerts';
   final String _getSendCommands = 'private-user_commands';
+  final String _skReadingsWs = 'sink_readings';
 
   /// Base url for the api
   //String get baseURL => _baseURL;
@@ -76,4 +77,5 @@ class ApiRoutes {
 
   String get getSensorReadings => '$_baseURL$_getSensorReadings';
   String get getSinkReadings => '$_baseURL$_getSinkReadings';
+  String get sinkReadingsWs => _skReadingsWs;
 }

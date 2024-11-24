@@ -114,6 +114,17 @@ class DevicesProvider extends ChangeNotifier {
     //TODO: share reading to sqlite database
   }
 
+  void updateSinkState(Map<String, dynamic> data) {
+    SinkNodeState? objExistence = _sinkNodeStateMap[data[SinkNodeSnapshotKeys.deviceID.key]];
+    if (objExistence == null) {
+      _logs.warning(message: 'received sink node state for ${data['device_id']}'
+          'but no sink node state object present in DevicesProvider._sinkNodeStateMap');
+    } else {
+      _sinkNodeStateMap[data[SinkNodeSnapshotKeys.deviceID.key]]!.updateState(data);
+    }
+    notifyListeners();
+  }
+
   /// Set current SinkNode and Sensor Node *objects* map
   /// to shared preferences as `List<String>`
   Future<bool> _setToSharedPrefs() async {

@@ -10,6 +10,7 @@ import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/services/devices_services.dart';
 import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/subcomponents/devices/device_dialog.dart';
+import 'package:smmic/subcomponents/devices/digital_display.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
 import 'package:smmic/subcomponents/devices/battery_level.dart';
 import 'package:smmic/subcomponents/devices/gauge.dart';
@@ -113,7 +114,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
           Expanded(
             flex: 4,
             child: RadialGauge(
-                valueType: 'soilMoisture',
+                valueType: ValueType.soilMoisture,
                 value: deviceSnapshot.soilMoisture,
                 limit: 100,
                 scaleMultiplier: 1.5,
@@ -129,7 +130,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                     SizedBox(
                       width: 160,
                       child: RadialGauge(
-                        valueType: 'temperature',
+                        valueType: ValueType.temperature,
                         value: deviceSnapshot.temperature,
                         limit: 100,
                         radiusMultiplier: 0.9,
@@ -139,7 +140,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                     SizedBox(
                       width: 160,
                       child: RadialGauge(
-                        valueType: 'humidity',
+                        valueType: ValueType.humidity,
                         value: deviceSnapshot.humidity,
                         limit: 100,
                         radiusMultiplier: 0.9,

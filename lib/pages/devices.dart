@@ -17,8 +17,6 @@ class Devices extends StatefulWidget {
 }
 
 class _Devices extends State<Devices> {
-  //TODO: assign theme
-
   final Logs _logs = Logs(tag: 'devices.dart');
 
   @override
@@ -28,12 +26,12 @@ class _Devices extends State<Devices> {
 
   @override
   Widget build(BuildContext context) {
-    Color bgColor = context.watch<UiProvider>().isDark ? Colors.black : const Color.fromRGBO(240, 240, 240, 1);
-
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: context.watch<UiProvider>().isDark
+          ? const Color.fromRGBO(14, 14, 14, 1)
+          : const Color.fromRGBO(230, 230, 230, 1),
       appBar: AppBar(
-          backgroundColor: bgColor,
+          backgroundColor: Colors.transparent,
           title: const Text('Devices'),
           centerTitle: true,
           actions: const [
@@ -47,7 +45,6 @@ class _Devices extends State<Devices> {
         sinkNodeMap: context.watch<DevicesProvider>().sinkNodeMap,
         sensorNodeMap: context.watch<DevicesProvider>().sensorNodeMap,
         options: context.watch<DeviceListOptionsNotifier>().enabledConditions,
-        seSnapShotMap: context.watch<DevicesProvider>().sensorNodeSnapshotMap,
       )
     );
   }
@@ -55,8 +52,7 @@ class _Devices extends State<Devices> {
   Widget _buildList({
     required Map<String, SinkNode> sinkNodeMap,
     required Map<String, SensorNode> sensorNodeMap,
-    required Map<String, bool Function(Widget)> options,
-    required Map<String, SensorNodeSnapshot> seSnapShotMap}){
+    required Map<String, bool Function(Widget)> options,}){
 
     return SingleChildScrollView(
       child: Column(
@@ -64,8 +60,7 @@ class _Devices extends State<Devices> {
           ..._buildCards(
             sinkNodeMap: sinkNodeMap,
             sensorNodeMap: sensorNodeMap,
-            options: options,
-            seSnapshotMap: seSnapShotMap
+            options: options
           ),
         ],
       ),
@@ -75,19 +70,26 @@ class _Devices extends State<Devices> {
   List<Widget> _buildCards({
     required Map<String, SinkNode> sinkNodeMap,
     required Map<String, SensorNode> sensorNodeMap,
-    required Map<String, bool Function(Widget)> options,
-    required Map<String, SensorNodeSnapshot> seSnapshotMap}){
+    required Map<String, bool Function(Widget)> options}){
 
     List<Widget> cards = [];
     List<String> sinkNodeMapKeys = sinkNodeMap.keys.toList();
 
     for (String sinkId in sinkNodeMapKeys) {
-      cards.add(SinkNodeCard(deviceInfo: sinkNodeMap[sinkId]!));
+      cards.add(
+        SinkNodeCard(
+          deviceInfo: sinkNodeMap[sinkId]!,
+          bottomMargin: 15,
+          expanded: false,
+        ),
+      );
       for (String sensorId in sinkNodeMap[sinkId]!.registeredSensorNodes) {
-        cards.add(SensorNodeCard(
+        cards.add(
+          SensorNodeCard(
             deviceInfo: sensorNodeMap[sensorId]!,
-            deviceSnapshot: seSnapshotMap[sensorId]
-        ));
+            bottomMargin: 15,
+          )
+        );
       }
     }
 
@@ -96,17 +98,5 @@ class _Devices extends State<Devices> {
           .map((optionKey) => options[optionKey]!(card))
           .any((result) => result);
     }).toList();
-  }
-
-  void _updateProviders({required BuildContext context, required var data}) {
-    WidgetsFlutterBinding.ensureInitialized();
-    if (data is SensorNodeSnapshot) {
-      context.read<DevicesProvider>().setNewSensorSnapshot(data);
-    } else if (data is SMSensorState) {
-      // TODO: handle from alerts
-    } else if (data is String) {
-      context.read<DevicesProvider>().setNewSensorSnapshot(data);
-    }
-    return;
   }
 }
