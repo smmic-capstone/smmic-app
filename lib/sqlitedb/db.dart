@@ -32,7 +32,8 @@ class DatabaseHelper {
         where: 'device_id = ?',
         whereArgs: [deviceID],
         orderBy: 'timestamp DESC',
-        limit: 1);
+        limit: 1
+    );
 
     if (maps.isEmpty) {
       return null;

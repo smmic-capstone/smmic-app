@@ -95,6 +95,27 @@ class DevicesServices {
     return finalMap;
   }
 
+  Future<Map<String, List<Map<String, dynamic>>>> getSensorBatchSnapshots(List<String> sensorIds) async {
+    Map<String, List<Map<String, dynamic>>> finalMap = {};
+    for (String sensorId in sensorIds) {
+      Map<String, dynamic> res = await _apiRequest.get(
+        route: _apiRoutes.getSensorReadings,
+        headers: {'Sensor': sensorId}
+      );
+      if (res.containsKey('error')) {
+        _logs.warning(message: 'request for $sensorId returned with error ->'
+            'code: ${res['status_code']}, body: ${res['body']}');
+      } else {
+        List<Map<String, dynamic>> castedList = [];
+        for (dynamic item in res['data']) {
+          castedList.add(item as Map<String, dynamic>);
+          finalMap[sensorId] = castedList;
+        }
+      }
+    }
+    return finalMap;
+  }
+
   List<SensorNodeSnapshot> getSensorTimeSeries({required String id}) {
     return _sensorNodeDataServices.getTimeSeries(id);
   }

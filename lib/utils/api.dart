@@ -284,9 +284,11 @@ class ApiRequest {
     final SensorNodeSnapshot snapshotObj =
         SensorNodeSnapshot.fromJSON(decodedData['message']);
     _logs.warning(message: "snapshotObj: $snapshotObj");
+
+    // NOTE: moved this process to DevicesProvider.setNewSensorSnapshot()
     // store data to sqlite database
-    DatabaseHelper.readingsLimit(snapshotObj.deviceID);
-    DatabaseHelper.addReadings(snapshotObj);
+    // DatabaseHelper.readingsLimit(snapshotObj.deviceID);
+    // DatabaseHelper.addReadings(snapshotObj);
 
     // pass to stream controller
     // streamController.add(snapshotObj);
@@ -302,23 +304,6 @@ class ApiRequest {
       channel.sink.close();
       context.read<ConnectionProvider>().sensorWsConnectStatus(WsConnectionStatus.disconnected);*/
   }
-
-  /// Initialize connection with the sensor node alert WebSocket
-  /*Future<void> initSeAlertsWSChannel() async {
-    // attempt websocket connection
-    void onEventCallback(PusherEvent data){
-      _seAlertsWsListener(data, context);
-    }
-
-    PusherChannel? seAlertsWebSocket = await _connectChannel(_apiRoutes.seAlertsWs, onEventCallback);
-    if (seAlertsWebSocket == null) {
-      return;
-    }
-
-    */ /*context.read<ConnectionProvider>().alertWsConnectStatus(WsConnectionStatus.connected);*/ /*
-    */ /*_wsConnectionManager(context, route, seAlertsWebSocket, _seAlertsWsListener);*/ /*
-    return;
-  }*/
 
   // listener wrapper function for the sensor node alerts websocket
   void _seAlertsWsListener(PusherEvent data) {

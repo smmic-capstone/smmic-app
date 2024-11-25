@@ -20,12 +20,10 @@ class SensorNodeCardExpanded extends StatefulWidget {
     super.key,
     required this.deviceID,
     required this.snapshot,
-    required this.streamController
   });
 
   final SensorNodeSnapshot? snapshot;
   final String deviceID;
-  final Stream<SensorNodeSnapshot> streamController;
 
 
   @override

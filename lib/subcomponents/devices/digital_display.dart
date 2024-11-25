@@ -85,16 +85,26 @@ class _SensorDigitalDisplayState extends State<SensorDigitalDisplay> {
                   ]
               ),
             ),
-            // Positioned(
-            //   right: 0,
-            //   child: SvgPicture.asset(
-            //     widget.valueType == ValueType.temperature
-            //         ? 'assets/icons/sun.svg'
-            //         : 'assets/icons/wind.svg',
-            //     height: 12.5,
-            //     width: 12.5,
-            //   ),
-            // )
+            Positioned(
+              top: 3,
+              right: widget.value.toInt().toString().length > 1 ? 10 : 19,
+              child: Opacity(
+                opacity: context.watch<UiProvider>().isDark ? 0.25 : 0.3,
+                child: SvgPicture.asset(
+                  colorFilter: ColorFilter.mode(
+                    widget.valueType == ValueType.temperature
+                        ? const Color.fromRGBO(255, 232, 62, 1)
+                        : const Color.fromRGBO(98, 245, 255, 1),
+                    BlendMode.srcATop
+                  ),
+                  widget.valueType == ValueType.temperature
+                      ? 'assets/icons/sun.svg'
+                      : 'assets/icons/wind.svg',
+                  height: 20,
+                  width: 20,
+                ),
+              ),
+            )
           ],
         )
     );

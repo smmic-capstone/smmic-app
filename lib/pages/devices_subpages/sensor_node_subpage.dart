@@ -15,7 +15,6 @@ class SensorNodePage extends StatefulWidget {
     this.latitude,
     this.longitude,
     required this.deviceName,
-    required this.streamController,
     required this.deviceInfo
   });
 
@@ -24,7 +23,6 @@ class SensorNodePage extends StatefulWidget {
   final String? longitude;
   final String deviceName;
   final SensorNode deviceInfo;
-  final StreamController<SensorNodeSnapshot> streamController;
 
 
   @override
@@ -68,7 +66,6 @@ class _SensorNodePageState extends State<SensorNodePage> {
               SensorNodeCardExpanded(
                 deviceID: widget.deviceID,
                 snapshot: context.watch<DevicesProvider>().sensorNodeSnapshotMap[widget.deviceID],
-                streamController: widget.streamController.stream
               ),
               Container(
                 margin: EdgeInsets.only(bottom: 25),

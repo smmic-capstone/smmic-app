@@ -21,7 +21,6 @@ import 'package:smmic/utils/shared_prefs.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 
-
 final Logs _logs = Logs(tag: 'Main.dart');
 ///Code is needed to be here
 ///When app is in background event FCM/Notifs Handler
@@ -180,6 +179,7 @@ class _AuthGateState extends State<AuthGate> {
                       _apiRequest.openConnection,
                     ]
                 ),
+
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     // TODO add loading screen

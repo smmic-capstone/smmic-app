@@ -166,8 +166,8 @@ class _StackedLineChartState extends State<StackedLineChart> {
     List<String> finalMarks = [];
 
     for(String mark in marks){
-      List<String>buffer = mark.split(":");
-      String f = "${buffer[0]}:${buffer[1]}";
+      List<String>split = mark.split(":");
+      String f = "${split[0]}:${split[1]}:${split[2].substring(0, 2)}";
       finalMarks.add(f);
     }
 
