@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -23,7 +22,6 @@ class SensorNodePage extends StatefulWidget {
   final String? longitude;
   final String deviceName;
   final SensorNode deviceInfo;
-
 
   @override
   State<StatefulWidget> createState() => _SensorNodePageState();

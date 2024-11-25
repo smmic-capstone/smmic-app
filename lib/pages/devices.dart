@@ -231,9 +231,8 @@ class _Devices extends State<Devices> with TickerProviderStateMixin {
     required Map<String, bool Function(Widget)> options}){
 
     List<Widget> cards = [];
-    List<String> sinkNodeMapKeys = sinkNodeMap.keys.toList();
 
-    for (String sinkId in sinkNodeMapKeys) {
+    for (String sinkId in sinkNodeMap.keys) {
       cards.add(
         SinkNodeCard(
           deviceInfo: sinkNodeMap[sinkId]!,

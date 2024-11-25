@@ -313,7 +313,7 @@ class ApiRequest {
 
     // store data to sqlite
     DatabaseHelper.readingsLimit(snapshotObj.deviceID);
-    DatabaseHelper.addReadings(snapshotObj);
+    DatabaseHelper.addReadings([snapshotObj]);
 
     // pass to stream controller
     //streamController.add(alertObj);

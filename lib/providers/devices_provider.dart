@@ -75,8 +75,11 @@ class DevicesProvider extends ChangeNotifier {
     _initDevicesStates();
 
     notifyListeners();
-    _loadSinkReadingsFromApi();
-    _loadSensorReadingsFromApi();
+
+    if (connectivity != ConnectivityResult.none) {
+      _loadSinkReadingsFromApi();
+      _loadSensorReadingsFromApi();
+    }
 
     // set *updated* list to shared preferences
     await _setToSharedPrefs();
@@ -106,13 +109,13 @@ class DevicesProvider extends ChangeNotifier {
       }
       notifyListeners();
     }
-    //TODO: share reading to sqlite database
   }
 
   Future<void> _loadSensorReadingsFromApi() async {
     Map<String, List<Map<String, dynamic>>> readings = await _devicesServices
         .getSensorBatchSnapshots(_sensorNodeMap.keys.toList());
     for (String sensorId in readings.keys) {
+      List<SensorNodeSnapshot> seSnapshotObjList = [];
       if (readings[sensorId]!.isEmpty) {
         continue;
       }
@@ -123,6 +126,7 @@ class DevicesProvider extends ChangeNotifier {
         reading[SMSensorSnapshotKeys.deviceID.key] = sensorId;
         // create new snapshot obj
         SensorNodeSnapshot seSnapshotObj = SensorNodeSnapshot.fromJSON(reading);
+        seSnapshotObjList.add(seSnapshotObj);
         // set new sensor snapshot obj in se snapshot map
         if (_sensorNodeSnapshotMap[sensorId] == null) {
           _sensorNodeSnapshotMap[sensorId] = seSnapshotObj;
@@ -135,6 +139,7 @@ class DevicesProvider extends ChangeNotifier {
         }
         _updateSensorChartDataMap(seSnapshotObj);
       }
+      DatabaseHelper.addReadings(seSnapshotObjList);
     }
   }
 
@@ -190,13 +195,12 @@ class DevicesProvider extends ChangeNotifier {
   Future<bool> _loadReadingsFromSqlite() async {
     for (String seId in _sensorNodeMap.keys) {
       SensorNodeSnapshot? fromSQFLiteSnapshot = await DatabaseHelper
-          .getAllReadings(_sensorNodeMap[seId]!.deviceID);
+          .getSeReading(_sensorNodeMap[seId]!.deviceID);
       if (fromSQFLiteSnapshot != null){
         _sensorNodeSnapshotMap[_sensorNodeMap[seId]!.deviceID] = fromSQFLiteSnapshot;
       }
       List<SensorNodeSnapshot>? fromSQFLiteChartData = await DatabaseHelper
           .chartReadings(_sensorNodeMap[seId]!.deviceID);
-      _logs.info2(message: fromSQFLiteChartData.toString());
       if (fromSQFLiteChartData != null) {
         for (SensorNodeSnapshot snapshot in fromSQFLiteChartData) {
           _updateSensorChartDataMap(snapshot);
@@ -316,7 +320,7 @@ class DevicesProvider extends ChangeNotifier {
 
     // store data to sqlite database
     DatabaseHelper.readingsLimit(finalSnapshot.deviceID);
-    DatabaseHelper.addReadings(finalSnapshot);
+    DatabaseHelper.addReadings([finalSnapshot]);
 
     return;
   }
