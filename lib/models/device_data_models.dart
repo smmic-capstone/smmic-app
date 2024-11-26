@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -73,7 +74,7 @@ class Device {
 }
 
 class SinkNode extends Device {
-  final List<String> registeredSensorNodes;
+  List<String> registeredSensorNodes;
 
   SinkNode._internal({
     required super.deviceID,
@@ -92,6 +93,19 @@ class SinkNode extends Device {
       latitude: deviceInfo[SinkNodeKeys.latitude.key],
       registeredSensorNodes: deviceInfo[SinkNodeKeys.registeredSensorNodes.key]
     );
+  }
+
+  String toHash() {
+    return sha256.convert(
+        utf8.encode('$deviceName$latitude$longitude$registeredSensorNodes')
+    ).toString();
+  }
+
+  void update(SinkNode newData) {
+    deviceName = newData.deviceName;
+    latitude = newData.latitude;
+    longitude = newData.longitude;
+    registeredSensorNodes = newData.registeredSensorNodes;
   }
 }
 
@@ -181,7 +195,7 @@ class SinkNodeState {
 }
 
 class SensorNode extends Device {
-  final String registeredSinkNode;
+  String registeredSinkNode;
   
   SensorNode._internal({
     required super.deviceID,
@@ -200,6 +214,19 @@ class SensorNode extends Device {
       longitude: deviceInfo[SensorNodeKeys.longitude.key],
       registeredSinkNode: deviceInfo[SensorNodeKeys.sinkNode.key]
     );
+  }
+
+  String toHash() {
+    return sha256.convert(
+      utf8.encode('$deviceName$longitude$latitude$registeredSinkNode')
+    ).toString();
+  }
+  
+  void update(SensorNode newData) {
+    deviceName = newData.deviceName;
+    longitude = newData.longitude;
+    latitude = newData.latitude;
+    registeredSinkNode = newData.registeredSinkNode;
   }
 }
 

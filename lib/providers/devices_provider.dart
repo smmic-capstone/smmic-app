@@ -70,7 +70,6 @@ class DevicesProvider extends ChangeNotifier {
 
     // initially, load readings from the sqlite
     await _loadReadingsFromSqlite();
-
     _initDevicesStates();
 
     notifyListeners();
@@ -225,22 +224,36 @@ class DevicesProvider extends ChangeNotifier {
 
     // acquire sink nodes and add to sinkNodeMap
     for (Map<String, dynamic> sinkMap in devices) {
-      SinkNode sink = _deviceUtils.sinkNodeMapToObject(sinkMap);
-      _sinkNodeMap[sink.deviceID] = sink;
+      SinkNode incomingSk = _deviceUtils.sinkNodeMapToObject(sinkMap);
+      if (_sinkNodeMap[incomingSk.deviceID] != null) {
+        if (!(_sinkNodeMap[incomingSk.deviceID]!.toHash() == incomingSk.toHash())){
+          // TODO: version checking here, in the future
+          _sinkNodeMap[incomingSk.deviceID]!.update(incomingSk);
+        }
+      } else {
+        _sinkNodeMap[incomingSk.deviceID] = incomingSk;
+      }
     }
 
     // acquire sensor nodes and add to sensorNodeMap
     for (Map<String, dynamic> sinkMap in devices) {
       List<Map<String, dynamic>> sensorMapList = sinkMap['sensor_nodes'];
       for (Map<String, dynamic> sensorMap in sensorMapList) {
-        SensorNode sensor = _deviceUtils.sensorNodeMapToObject(
+        SensorNode incomingSe = _deviceUtils.sensorNodeMapToObject(
             sensorMap: sensorMap,
             sinkNodeID: sinkMap['device_id']
         );
-        _sensorNodeMap[sensor.deviceID] = sensor;
+        if (_sensorNodeMap[incomingSe.deviceID] != null) {
+          if (!(_sensorNodeMap[incomingSe.deviceID]!.toHash() == incomingSe.toHash())) {
+            _sensorNodeMap[incomingSe.deviceID]!.update(incomingSe);
+          }
+        } else {
+          _sensorNodeMap[incomingSe.deviceID] = incomingSe;
+        }
       }
     }
 
+    notifyListeners();
     return true;
   }
 
@@ -324,7 +337,7 @@ class DevicesProvider extends ChangeNotifier {
     return;
   }
 
-  final int _maxChartLength = 6;
+  final int _maxSeChartLength = 6;
 
   // update the sensor chart data map with new data
   void _updateSensorChartDataMap(SensorNodeSnapshot newData) {
@@ -337,35 +350,31 @@ class DevicesProvider extends ChangeNotifier {
       chartData = [newData];
       modified = true;
     } else {
-      // compare timestamp with all items in chart data
-      // to verify uniqueness
-      if (!chartData.any(
+      // uniqueness check
+      bool isDup = chartData
+          .any(
               (x) => x.timestamp
-                  .compareTo(newData.timestamp) == 0)) {
+                  .compareTo(newData.timestamp) == 0
+      );
+      if (!isDup) {
         int index = -1;
         // reverse traversal to start from end of list (latest reading)
         for (int i = chartData.length - 1; i >= 0; i--) {
-          // if new data's timestamp is after the current item,
-          // acquire the index and break from loop
-          if (newData.timestamp.compareTo(chartData[i].timestamp) == 1) {
+          if (newData.timestamp.isAfter(chartData[i].timestamp)) {
             index = i;
             break;
           }
         }
-        // insert even if no index is found only if chart data's length
-        // is less than the max length allowed
-        if (chartData.length < _maxChartLength && index == -1) {
+        if (chartData.length < _maxSeChartLength && index == -1) {
           chartData.insert(0, newData);
           modified = true;
         } else if (index > -1) {
-          // insert at the index after the found item's index
           chartData.insert(index + 1, newData);
-          chartData.length > _maxChartLength ? chartData.removeAt(0) : ();
+          chartData.length > _maxSeChartLength ? chartData.removeAt(0) : ();
           modified = true;
         }
       }
     }
-    // guard condition to avoid unnecessarily notifying listeners
     if (modified) {
       _sensorNodeChartDataMap[newData.deviceID] = chartData;
       notifyListeners();
