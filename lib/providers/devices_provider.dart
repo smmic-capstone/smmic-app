@@ -3,17 +3,15 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/services/devices_services.dart';
 import 'package:smmic/sqlitedb/db.dart';
-import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/device_utils.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
 
 class DevicesProvider extends ChangeNotifier {
-  // dependencies
+  // dependencies, helpers
   final Logs _logs = Logs(tag: 'DevicesProvider()');
   final DevicesServices _devicesServices = DevicesServices();
   final DeviceUtils _deviceUtils = DeviceUtils();
@@ -24,6 +22,7 @@ class DevicesProvider extends ChangeNotifier {
   // sink node map
   Map<String, SinkNode> _sinkNodeMap = {}; // ignore: prefer_final_fields
   Map<String, SinkNode> get sinkNodeMap => _sinkNodeMap;
+
   // sensor node map
   Map<String, SensorNode> _sensorNodeMap = {}; // ignore: prefer_final_fields
   Map<String, SensorNode> get sensorNodeMap => _sensorNodeMap;
@@ -41,7 +40,7 @@ class DevicesProvider extends ChangeNotifier {
   Map<String, List<SensorNodeSnapshot>> get sensorNodeChartDataMap => _sensorNodeChartDataMap;
 
   Future<void> init({required ConnectivityResult connectivity, required BuildContext context}) async {
-
+    // register context
     try {
       _internalContext = context;
     } on Exception catch (e) {
@@ -325,36 +324,52 @@ class DevicesProvider extends ChangeNotifier {
     return;
   }
 
-  // update the sensor chart data map with a new snapshot data
-  void _updateSensorChartDataMap(SensorNodeSnapshot newSnapshot) {
-    // set chart data
-    List<SensorNodeSnapshot>? chartDataBuffer = _sensorNodeChartDataMap[newSnapshot.deviceID];
-    // the chart data is a list that stores sensor snapshot objects
-    // sorted by timestamp (in ascending order from index 0)
-    if (chartDataBuffer == null || chartDataBuffer.isEmpty) {
-      chartDataBuffer = [newSnapshot];
-      _sensorNodeChartDataMap[newSnapshot.deviceID] = chartDataBuffer;
+  final int _maxChartLength = 6;
+
+  // update the sensor chart data map with new data
+  void _updateSensorChartDataMap(SensorNodeSnapshot newData) {
+    List<SensorNodeSnapshot>? chartData = _sensorNodeChartDataMap[
+      newData.deviceID
+    ];
+    // chart data modified flag
+    bool modified = false;
+    if (chartData == null || chartData.isEmpty) {
+      chartData = [newData];
+      modified = true;
     } else {
-      // compare the new snapshot object's timestamp
-      // to the first and the earliest snapshot's timestamp in the list
-      int comparison = newSnapshot.timestamp
-          .compareTo(chartDataBuffer.first.timestamp);
-      // if the new snapshot is after the earliest snapshot, it belongs to
-      // the list, or if the list is less than 6 (the current max)
-      if (comparison == 1 || (chartDataBuffer.length < 6)) {
-        chartDataBuffer.add(newSnapshot);
-        chartDataBuffer.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      // compare timestamp with all items in chart data
+      // to verify uniqueness
+      if (!chartData.any(
+              (x) => x.timestamp
+                  .compareTo(newData.timestamp) == 0)) {
+        int index = -1;
+        // reverse traversal to start from end of list (latest reading)
+        for (int i = chartData.length - 1; i >= 0; i--) {
+          // if new data's timestamp is after the current item,
+          // acquire the index and break from loop
+          if (newData.timestamp.compareTo(chartData[i].timestamp) == 1) {
+            index = i;
+            break;
+          }
+        }
+        // insert even if no index is found only if chart data's length
+        // is less than the max length allowed
+        if (chartData.length < _maxChartLength && index == -1) {
+          chartData.insert(0, newData);
+          modified = true;
+        } else if (index > -1) {
+          // insert at the index after the found item's index
+          chartData.insert(index + 1, newData);
+          chartData.length > _maxChartLength ? chartData.removeAt(0) : ();
+          modified = true;
+        }
       }
-      // toSet() to remove duplicates
-      // and then remove the first item if
-      // the list length is more than 6
-      chartDataBuffer.toSet().toList();
-      if (chartDataBuffer.length > 6) {
-        chartDataBuffer.removeAt(0);
-      }
-      _sensorNodeChartDataMap[newSnapshot.deviceID] = chartDataBuffer;
     }
-    notifyListeners();
+    // guard condition to avoid unnecessarily notifying listeners
+    if (modified) {
+      _sensorNodeChartDataMap[newData.deviceID] = chartData;
+      notifyListeners();
+    }
   }
 
   // soil moisture sensor states as map

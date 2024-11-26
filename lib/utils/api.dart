@@ -285,24 +285,11 @@ class ApiRequest {
         SensorNodeSnapshot.fromJSON(decodedData['message']);
     _logs.warning(message: "snapshotObj: $snapshotObj");
 
-    // NOTE: moved this process to DevicesProvider.setNewSensorSnapshot()
-    // store data to sqlite database
-    // DatabaseHelper.readingsLimit(snapshotObj.deviceID);
-    // DatabaseHelper.addReadings(snapshotObj);
-
     // pass to stream controller
     // streamController.add(snapshotObj);
     _internalBuildContext
         .read<DevicesProvider>()
         .setNewSensorSnapshot(snapshotObj);
-
-    /*channel.sink.close();
-      _logs.warning(message: '_seReadingsWsListener() error in stream.listen : $err');
-      context.read<ConnectionProvider>().sensorWsConnectStatus(WsConnectionStatus.disconnected);
-
-
-      channel.sink.close();
-      context.read<ConnectionProvider>().sensorWsConnectStatus(WsConnectionStatus.disconnected);*/
   }
 
   // listener wrapper function for the sensor node alerts websocket
@@ -315,25 +302,15 @@ class ApiRequest {
     DatabaseHelper.readingsLimit(snapshotObj.deviceID);
     DatabaseHelper.addReadings([snapshotObj]);
 
-    // pass to stream controller
-    //streamController.add(alertObj);
-
+    // updated sensor snapshot
     _internalBuildContext
         .read<DevicesProvider>()
         .setNewSensorSnapshot(snapshotObj);
+
+    // update sensor state
     _internalBuildContext
         .read<DevicesProvider>()
         .updateSMSensorState(decodedData['message']);
-
-    /* channel.sink.close();
-      _logs.warning(message: '_seAlertsWsListener() error in stream.listen : $err');
-      context.read<ConnectionProvider>()
-          .alertWsConnectStatus(WsConnectionStatus.disconnected);
-
-
-      channel.sink.close();
-      context.read<ConnectionProvider>()
-          .alertWsConnectStatus(WsConnectionStatus.disconnected);*/
   }
 
   void _sinkSnapshotListener(PusherEvent data) {

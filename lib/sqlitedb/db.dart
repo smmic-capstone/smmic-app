@@ -39,6 +39,15 @@ class DatabaseHelper {
       jsonSnapshot['hash_id'] = sha256.convert(
         utf8.encode('${snapshot.deviceID}${snapshot.timestamp}')
       ).toString();
+      List<Map<String, dynamic>> checkExists = await db.query(
+          "SMSensorReadings",
+        where: 'hash_id = ?',
+        whereArgs: [jsonSnapshot['hash_id']],
+        limit: 1
+      );
+      if (checkExists.isNotEmpty) {
+        continue;
+      }
       results.add(
           await db.insert(
               "SMSensorReadings",

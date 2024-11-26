@@ -17,7 +17,7 @@ class BottomNavBar extends StatefulWidget {
 }
 
 class _BottomNavBarState extends State<BottomNavBar> {
-  int _currentIndexPage = 1;
+  int _currentIndexPage = 0;
 
   void setCurrentIndex(int index) {
     setState(() {
