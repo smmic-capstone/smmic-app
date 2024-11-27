@@ -69,8 +69,6 @@ class MqttProvider extends ChangeNotifier {
       Map<String, dynamic>? mappedPayload = MqttUtils().mapSensorPayload(payload);
       if (mappedPayload != null) {
         SensorNodeSnapshot snapshot = SensorNodeSnapshot.fromJSON(mappedPayload);
-        DatabaseHelper.addReadings(snapshot);
-        DatabaseHelper.readingsLimit(snapshot.deviceID);
 
         if (_context != null && _context!.mounted){
           _context!.read<DevicesProvider>().setNewSensorSnapshot(snapshot);

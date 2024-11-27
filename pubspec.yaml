@@ -63,6 +63,7 @@ dependencies:
   firebase_messaging: ^15.1.5
   rxdart: ^0.28.0
   pusher_channels_flutter: ^2.3.0
+  crypto: ^3.0.6
 
 dev_dependencies:
   flutter_test:
@@ -133,6 +134,7 @@ flutter:
     - assets/icons/menu.svg
     - assets/icons/sun.svg
     - assets/icons/wind.svg
+    - assets/icons/droplet.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -14,31 +17,61 @@ class DatabaseHelper {
     return openDatabase(join(await getDatabasesPath(), dbName),
         onCreate: (db, version) async {
       await db.execute(
-          "CREATE TABLE SMSensorReadings(device_id TEXT NOT NULL, timestamp DATETIME, soil_moisture DECIMAL(10,7), temperature DECIMAL(10,7), humidity DECIMAL(10,7), battery_level DECIMAL(10,7))");
-
+          "CREATE TABLE IF NOT EXISTS SMSensorReadings ("
+              "hash_id TEXT PRIMARY KEY NOT NULL, "
+              "device_id TEXT NOT NULL, "
+              "timestamp DATETIME, "
+              "soil_moisture DECIMAL(10,7), "
+              "temperature DECIMAL(10,7), "
+              "humidity DECIMAL(10,7), "
+              "battery_level DECIMAL(10,7)"
+              ")"
+      );
       ///TODO: Add more tables if necessary
     }, version: _version);
   }
 
-  static Future<int> addReadings(SensorNodeSnapshot readings) async {
+  static Future<void> addReadings(List<SensorNodeSnapshot> readings) async {
     final db = await _getDB();
-    return await db.insert("SMSensorReadings", readings.toJson(),
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    List<int> results = [];
+    for (SensorNodeSnapshot snapshot in readings) {
+      Map<String, dynamic> jsonSnapshot = snapshot.toJson();
+      jsonSnapshot['hash_id'] = sha256.convert(
+        utf8.encode('${snapshot.deviceID}${snapshot.timestamp}')
+      ).toString();
+      List<Map<String, dynamic>> checkExists = await db.query(
+          "SMSensorReadings",
+        where: 'hash_id = ?',
+        whereArgs: [jsonSnapshot['hash_id']],
+        limit: 1
+      );
+      if (checkExists.isNotEmpty) {
+        continue;
+      }
+      results.add(
+          await db.insert(
+              "SMSensorReadings",
+              jsonSnapshot,
+              conflictAlgorithm: ConflictAlgorithm.replace
+          )
+      );
+    }
+    Logs(tag: 'db.addReadings()').info2(message: results.toString());
   }
 
-  static Future<SensorNodeSnapshot?> getAllReadings(String deviceID) async {
+  static Future<SensorNodeSnapshot?> getSeReading(String deviceID) async {
     final db = await _getDB();
-    final List<Map<String, dynamic>> maps = await db.query("SMSensorReadings",
+    final List<Map<String, dynamic>> queryResult = await db.query("SMSensorReadings",
         where: 'device_id = ?',
         whereArgs: [deviceID],
         orderBy: 'timestamp DESC',
-        limit: 1);
-
-    if (maps.isEmpty) {
+        limit: 1
+    );
+    if (queryResult.isEmpty) {
       return null;
     }
     try {
-      final snapshot = SensorNodeSnapshot.fromJSON(maps.first);
+      final snapshot = SensorNodeSnapshot.fromJSON(queryResult.first);
       return snapshot;
     } catch (e) {
       return null;
@@ -66,19 +99,21 @@ class DatabaseHelper {
     }
   }
   
-  
+  static int maxChartLength = 10;
   static Future<List<SensorNodeSnapshot>?>chartReadings(String deviceID) async {
     final db = await _getDB();
-    
+
     final List<Map<String,dynamic>> queryResult = await db.query(
       "SMSensorReadings",
       where: 'device_id = ?',
       whereArgs: [deviceID],
       orderBy: 'timestamp DESC',
-      limit: 6,
+      limit: maxChartLength,
     );
 
-    final readings = queryResult.map((data) => SensorNodeSnapshot.fromJSON(data)).toList().reversed.toList();
+    final readings = queryResult.map(
+            (data) => SensorNodeSnapshot.fromJSON(data)
+    ).toList().reversed.toList();
 
     return readings;
   }

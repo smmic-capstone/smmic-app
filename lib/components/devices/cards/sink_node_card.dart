@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/providers/devices_provider.dart';
+import 'package:smmic/utils/device_utils.dart';
 
 class SinkNodeCard extends StatefulWidget {
   const SinkNodeCard({
@@ -24,6 +25,8 @@ class SinkNodeCard extends StatefulWidget {
 }
 
 class _SinkNodeCardState extends State<SinkNodeCard> {
+  final DeviceUtils _deviceUtils = DeviceUtils();
+
   final TextStyle _primaryTextStyle = const TextStyle(
       fontSize: 32,
       fontFamily: 'Inter',
@@ -41,13 +44,6 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
       fontSize: 12,
       color: Colors.white.withOpacity(0.5)
   );
-
-  Stream<DateTime> _timeTickerSeconds() async* {
-    while (true) {
-      yield DateTime.now();
-      await Future.delayed(const Duration(seconds: 1));
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -122,7 +118,7 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
           children: [
             const SizedBox(height: 15),
             StreamBuilder(
-                stream: _timeTickerSeconds(),
+                stream: _deviceUtils.timeTickerSeconds(),
                 builder: (context, snapshot) {
                   Color iconColor = Colors.white.withOpacity(0.6);
                   if (snapshot.hasData) {
@@ -178,9 +174,9 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
   Widget _lastTransmission({required DateTime latestTimestamp}) {
     // stream builder to get data from time ticker function
     return StreamBuilder<DateTime>(
-        stream: _timeTickerSeconds(),
+        stream: _deviceUtils.timeTickerSeconds(),
         builder: (context, snapshot) {
-          String displayText = _dynamicTimeDisplay(
+          String displayText = _deviceUtils.relativeTimeDisplay(
               latestTimestamp,
               snapshot.data ?? DateTime.now()
           );
@@ -210,30 +206,6 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
           );
         }
     );
-  }
-
-  String _dynamicTimeDisplay(DateTime latestTime, DateTime currentTime) {
-    Duration diff = currentTime.difference(latestTime);
-
-    String finalString = '';
-
-    if (diff < const Duration(minutes: 1)) {
-      finalString = '<1 minute ago';
-    } else if (diff >= const Duration(minutes: 1) && diff < const Duration(minutes: 2)) {
-      finalString = '${diff.inMinutes} minute ago';
-    } else if (diff >= const Duration(minutes: 2) && diff < const Duration(hours: 1)) {
-      finalString = '${diff.inMinutes} minutes ago';
-    } else if (diff >= const Duration(hours: 1) && diff < const Duration(hours: 2)) {
-      finalString = '${diff.inHours} hour ago';
-    } else if (diff >= const Duration(hours: 2) && diff < const Duration(days: 1)) {
-      finalString = '${diff.inHours} hours ago';
-    } else if (diff >= const Duration(days: 1) && diff < const Duration(days: 2)) {
-      finalString = '${diff.inDays} day ago';
-    } else if (diff >= const Duration(days: 2)) {
-      finalString = '${diff.inDays} days ago';
-    }
-
-    return finalString;
   }
 
   Widget _bytesSentAndReceived(int bytesSent, int bytesReceived) {

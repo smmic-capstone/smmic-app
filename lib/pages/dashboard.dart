@@ -106,6 +106,7 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _weatherOpacityAnimationController.dispose();
+    _appBarBgAnimController.dispose();
     super.dispose();
   }
 
@@ -120,15 +121,21 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
         children: [
           _drawCircle(),
           Stack(
+            fit: StackFit.passthrough,
             children: [
-              AnimatedBuilder(
-                  animation: _weatherOpacityAnimation,
-                  builder: (context, child) {
-                    return Opacity(
-                      opacity: _weatherOpacityAnimation.value,
-                      child: _weatherWidget(),
-                    );
-                  }
+              Positioned(
+                top: 105,
+                right: 0,
+                left: 0,
+                child: AnimatedBuilder(
+                    animation: _weatherOpacityAnimation,
+                    builder: (context, child) {
+                      return Opacity(
+                        opacity: _weatherOpacityAnimation.value,
+                        child: _weatherWidget(),
+                      );
+                    }
+                ),
               ),
               SingleChildScrollView(
                   controller: _scrollController,
@@ -170,29 +177,22 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
   }
 
   Widget _weatherWidget() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 80),
-      child: ListView(
-        children: [
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ForcastPage())
-              );
-            },
-            child: Container(
-              margin: const EdgeInsets.symmetric(
-                  horizontal: 35,
-                  vertical: 20
-              ),
-              height: 150,
-              child: const Center(
-                child: WeatherComponentsWidget(),
-              ),
-            ),
-          ),
-        ],
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ForcastPage())
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(
+            horizontal: 35,
+            vertical: 20
+        ),
+        height: 150,
+        child: const Center(
+          child: WeatherComponentsWidget(),
+        ),
       ),
     );
   }

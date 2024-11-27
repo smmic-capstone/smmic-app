@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -73,7 +74,7 @@ class Device {
 }
 
 class SinkNode extends Device {
-  final List<String> registeredSensorNodes;
+  List<String> registeredSensorNodes;
 
   SinkNode._internal({
     required super.deviceID,
@@ -92,6 +93,19 @@ class SinkNode extends Device {
       latitude: deviceInfo[SinkNodeKeys.latitude.key],
       registeredSensorNodes: deviceInfo[SinkNodeKeys.registeredSensorNodes.key]
     );
+  }
+
+  String toHash() {
+    return sha256.convert(
+        utf8.encode('$deviceName$latitude$longitude$registeredSensorNodes')
+    ).toString();
+  }
+
+  void update(SinkNode newData) {
+    deviceName = newData.deviceName;
+    latitude = newData.latitude;
+    longitude = newData.longitude;
+    registeredSensorNodes = newData.registeredSensorNodes;
   }
 }
 
@@ -181,7 +195,7 @@ class SinkNodeState {
 }
 
 class SensorNode extends Device {
-  final String registeredSinkNode;
+  String registeredSinkNode;
   
   SensorNode._internal({
     required super.deviceID,
@@ -201,6 +215,19 @@ class SensorNode extends Device {
       registeredSinkNode: deviceInfo[SensorNodeKeys.sinkNode.key]
     );
   }
+
+  String toHash() {
+    return sha256.convert(
+      utf8.encode('$deviceName$longitude$latitude$registeredSinkNode')
+    ).toString();
+  }
+  
+  void update(SensorNode newData) {
+    deviceName = newData.deviceName;
+    longitude = newData.longitude;
+    latitude = newData.latitude;
+    registeredSinkNode = newData.registeredSinkNode;
+  }
 }
 
 class SensorNodeSnapshot {
@@ -219,6 +246,16 @@ class SensorNodeSnapshot {
     required this.humidity,
     required this.batteryLevel,
   });
+
+  @override
+  String toString() {
+    return 'SensorNodeSnapshot object -> ${SMSensorSnapshotKeys.deviceID.key}: $deviceID,'
+        '${SMSensorSnapshotKeys.timestamp.key}: $timestamp,'
+        '${SMSensorSnapshotKeys.soilMoisture.key}: $soilMoisture,'
+        '${SMSensorSnapshotKeys.temperature.key}: $temperature,'
+        '${SMSensorSnapshotKeys.humidity.key}: $humidity,'
+        '${SMSensorSnapshotKeys.batteryLevel.key}: $batteryLevel';
+  }
 
   factory SensorNodeSnapshot.fromJSON(Map<String, dynamic> data) {
     // the data contains a 'data' key, it is an alert message
@@ -245,10 +282,10 @@ class SensorNodeSnapshot {
     );
   }
 
-  factory SensorNodeSnapshot.placeHolder({required String deviceId}) {
+  factory SensorNodeSnapshot.placeHolder({required String deviceId, DateTime? timestamp}) {
     return SensorNodeSnapshot._internal(
         deviceID: deviceId,
-        timestamp: DateTime.now(),
+        timestamp: timestamp ?? DateTime.now(),
         soilMoisture: 0,
         temperature: 0,
         humidity: 0,
@@ -303,12 +340,6 @@ class SensorNodeSnapshot {
     SMSensorSnapshotKeys.humidity.key : humidity,
     SMSensorSnapshotKeys.batteryLevel.key: batteryLevel
   };
-
-  @override
-  String toString(){
-    return 'SensorNodeSnapshot(deviceID: $deviceID, timestamp: $timestamp, soilMoisture: $soilMoisture, '
-        'temperature: $temperature, humidity: $humidity, batteryLevel: $batteryLevel)';
-  }
 }
 
 enum SMSensorAlertCodes {
@@ -364,10 +395,22 @@ class SMSensorState {
   // 1. the current state code / alert code received from the web socket
   // 2. the timestamp when the alert was received
   // 3. the timestamp it should 'expire'
+
+  /// The device connection state (0, 1),
+  /// the timestamp of the last transmission,
+  /// and the expiry of the transmission.
   Tuple3<int, DateTime, DateTime> connectionState;
+  /// The soil moisture state, timestamp of the transmission
+  /// and the expected expiry
   Tuple3<int, DateTime, DateTime> soilMoistureState;
+  /// The humidity state, timestamp of the transmission
+  /// and the expected expiry
   Tuple3<int, DateTime, DateTime> humidityState;
+  /// The temperature state, timestamp of the transmission
+  /// and the expected expiry
   Tuple3<int, DateTime, DateTime> temperatureState;
+  /// The battery state, timestamp of the transmission
+  /// and the expected expiry
   Tuple3<int, DateTime, DateTime> batteryState;
 
   SMSensorState._internal({

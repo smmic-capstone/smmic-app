@@ -2,20 +2,16 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
-import 'package:provider/provider.dart';
-import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/services/devices_services.dart';
 import 'package:smmic/sqlitedb/db.dart';
-import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/device_utils.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
 
 class DevicesProvider extends ChangeNotifier {
-  // dependencies
+  // dependencies, helpers
   final Logs _logs = Logs(tag: 'DevicesProvider()');
   final DevicesServices _devicesServices = DevicesServices();
   final DeviceUtils _deviceUtils = DeviceUtils();
@@ -23,13 +19,10 @@ class DevicesProvider extends ChangeNotifier {
 
   late final BuildContext _internalContext;
 
-  // api helpers, dependencies
-  final ApiRoutes _apiRoutes = ApiRoutes();
-  final ApiRequest _apiRequest = ApiRequest();
-
   // sink node map
   Map<String, SinkNode> _sinkNodeMap = {}; // ignore: prefer_final_fields
   Map<String, SinkNode> get sinkNodeMap => _sinkNodeMap;
+
   // sensor node map
   Map<String, SensorNode> _sensorNodeMap = {}; // ignore: prefer_final_fields
   Map<String, SensorNode> get sensorNodeMap => _sensorNodeMap;
@@ -47,7 +40,7 @@ class DevicesProvider extends ChangeNotifier {
   Map<String, List<SensorNodeSnapshot>> get sensorNodeChartDataMap => _sensorNodeChartDataMap;
 
   Future<void> init({required ConnectivityResult connectivity, required BuildContext context}) async {
-
+    // register context
     try {
       _internalContext = context;
     } on Exception catch (e) {
@@ -77,11 +70,14 @@ class DevicesProvider extends ChangeNotifier {
 
     // initially, load readings from the sqlite
     await _loadReadingsFromSqlite();
-
     _initDevicesStates();
 
     notifyListeners();
-    _loadSinkReadingsFromApi();
+
+    // if (connectivity != ConnectivityResult.none) {
+    //   _loadSinkReadingsFromApi();
+    //   _loadSensorReadingsFromApi();
+    // }
 
     // set *updated* list to shared preferences
     await _setToSharedPrefs();
@@ -111,7 +107,38 @@ class DevicesProvider extends ChangeNotifier {
       }
       notifyListeners();
     }
-    //TODO: share reading to sqlite database
+  }
+
+  Future<void> _loadSensorReadingsFromApi() async {
+    Map<String, List<Map<String, dynamic>>> readings = await _devicesServices
+        .getSensorBatchSnapshots(_sensorNodeMap.keys.toList());
+    for (String sensorId in readings.keys) {
+      List<SensorNodeSnapshot> seSnapshotObjList = [];
+      if (readings[sensorId]!.isEmpty) {
+        continue;
+      }
+      // set a new sensor node snapshot object
+      // for sensor node snapshot
+      for (Map<String, dynamic> reading in readings[sensorId]!) {
+        // id not included in the response :(
+        reading[SMSensorSnapshotKeys.deviceID.key] = sensorId;
+        // create new snapshot obj
+        SensorNodeSnapshot seSnapshotObj = SensorNodeSnapshot.fromJSON(reading);
+        seSnapshotObjList.add(seSnapshotObj);
+        // set new sensor snapshot obj in se snapshot map
+        if (_sensorNodeSnapshotMap[sensorId] == null) {
+          _sensorNodeSnapshotMap[sensorId] = seSnapshotObj;
+        } else {
+          int comparison = seSnapshotObj.timestamp
+              .compareTo(_sensorNodeSnapshotMap[sensorId]!.timestamp);
+          if (comparison == 1) {
+            _sensorNodeSnapshotMap[sensorId] = seSnapshotObj;
+          }
+        }
+        _updateSensorChartDataMap(seSnapshotObj);
+      }
+      DatabaseHelper.addReadings(seSnapshotObjList);
+    }
   }
 
   void updateSinkState(Map<String, dynamic> data) {
@@ -162,17 +189,20 @@ class DevicesProvider extends ChangeNotifier {
   }
 
   /// Load initial readings and chart data from the sqlite local storage
+  // TODO: chart is fucked when loading from sqlite
   Future<bool> _loadReadingsFromSqlite() async {
     for (String seId in _sensorNodeMap.keys) {
       SensorNodeSnapshot? fromSQFLiteSnapshot = await DatabaseHelper
-          .getAllReadings(_sensorNodeMap[seId]!.deviceID);
+          .getSeReading(_sensorNodeMap[seId]!.deviceID);
       if (fromSQFLiteSnapshot != null){
         _sensorNodeSnapshotMap[_sensorNodeMap[seId]!.deviceID] = fromSQFLiteSnapshot;
       }
       List<SensorNodeSnapshot>? fromSQFLiteChartData = await DatabaseHelper
           .chartReadings(_sensorNodeMap[seId]!.deviceID);
       if (fromSQFLiteChartData != null) {
-        _sensorNodeChartDataMap[_sensorNodeMap[seId]!.deviceID] = fromSQFLiteChartData;
+        for (SensorNodeSnapshot snapshot in fromSQFLiteChartData) {
+          _updateSensorChartDataMap(snapshot);
+        }
       }
     }
     return true;
@@ -194,22 +224,36 @@ class DevicesProvider extends ChangeNotifier {
 
     // acquire sink nodes and add to sinkNodeMap
     for (Map<String, dynamic> sinkMap in devices) {
-      SinkNode sink = _deviceUtils.sinkNodeMapToObject(sinkMap);
-      _sinkNodeMap[sink.deviceID] = sink;
+      SinkNode incomingSk = _deviceUtils.sinkNodeMapToObject(sinkMap);
+      if (_sinkNodeMap[incomingSk.deviceID] != null) {
+        if (!(_sinkNodeMap[incomingSk.deviceID]!.toHash() == incomingSk.toHash())){
+          // TODO: version checking here, in the future
+          _sinkNodeMap[incomingSk.deviceID]!.update(incomingSk);
+        }
+      } else {
+        _sinkNodeMap[incomingSk.deviceID] = incomingSk;
+      }
     }
 
     // acquire sensor nodes and add to sensorNodeMap
     for (Map<String, dynamic> sinkMap in devices) {
       List<Map<String, dynamic>> sensorMapList = sinkMap['sensor_nodes'];
       for (Map<String, dynamic> sensorMap in sensorMapList) {
-        SensorNode sensor = _deviceUtils.sensorNodeMapToObject(
+        SensorNode incomingSe = _deviceUtils.sensorNodeMapToObject(
             sensorMap: sensorMap,
             sinkNodeID: sinkMap['device_id']
         );
-        _sensorNodeMap[sensor.deviceID] = sensor;
+        if (_sensorNodeMap[incomingSe.deviceID] != null) {
+          if (!(_sensorNodeMap[incomingSe.deviceID]!.toHash() == incomingSe.toHash())) {
+            _sensorNodeMap[incomingSe.deviceID]!.update(incomingSe);
+          }
+        } else {
+          _sensorNodeMap[incomingSe.deviceID] = incomingSe;
+        }
       }
     }
 
+    notifyListeners();
     return true;
   }
 
@@ -276,99 +320,77 @@ class DevicesProvider extends ChangeNotifier {
       _sensorNodeSnapshotMap[finalSnapshot.deviceID] = finalSnapshot;
     }
 
-    // set chart data
-    List<SensorNodeSnapshot>? chartDataBuffer = _sensorNodeChartDataMap[finalSnapshot.deviceID];
-    // the chart data is a list that stores sensor snapshot objects
-    // sorted by timestamp (in ascending order from index 0)
-    if (chartDataBuffer == null) {
-      chartDataBuffer = [finalSnapshot];
-      _sensorNodeChartDataMap[finalSnapshot.deviceID] = chartDataBuffer;
-    } else {
-      chartDataBuffer = chartDataBuffer.reversed.toList();
-      for ((int, SensorNodeSnapshot) snapshot in chartDataBuffer.indexed) {
-        int comparisonRes = finalSnapshot.timestamp.compareTo(
-          snapshot.$2.timestamp
-        );
-        if (comparisonRes == 1){
-          // if greater than or equal to six, replace item
-          // if not, *and assuming that it is less*
-          // insert item
-          if (chartDataBuffer.length >= 6){
-            chartDataBuffer[snapshot.$1] = finalSnapshot;
-          } else {
-            chartDataBuffer.insert(snapshot.$1, finalSnapshot);
-          }
-          _sensorNodeChartDataMap[finalSnapshot.deviceID] = chartDataBuffer.reversed.toList();
-          break;
-        }
-      }
-    }
-
     // update connection state
-    _sensorStatesMap[finalSnapshot.deviceID]!.updateState({
-      SensorAlertKeys.alertCode.key : SMSensorAlertCodes.connectedState.code.toString(),
-      SensorAlertKeys.timestamp.key : finalSnapshot.timestamp.toString(),
-    });
+    // _sensorStatesMap[finalSnapshot.deviceID]!.updateState({
+    //   SensorAlertKeys.alertCode.key : SMSensorAlertCodes.connectedState.code.toString(),
+    //   SensorAlertKeys.timestamp.key : finalSnapshot.timestamp.toString(),
+    // });
+
+    _updateSensorChartDataMap(finalSnapshot);
 
     notifyListeners();
 
-    // store the timer object into the _statesTimerMap
-    // check if a timer for connection state is already present in the map
-    // and cancel if true
-    if (_statesTimerMap[finalSnapshot.deviceID] == null) {
-      _statesTimerMap[finalSnapshot.deviceID] = {};
-    } else if (_statesTimerMap[finalSnapshot.deviceID]![SMSensorAlertCodes.connectionState] != null) {
-      _statesTimerMap[finalSnapshot.deviceID]![SMSensorAlertCodes.connectionState]!.cancel();
-      _statesTimerMap[finalSnapshot.deviceID]![SMSensorAlertCodes.connectionState] = null;
-      _logs.info(message: 'cancelling and removing existing timer in _statesTimerMap');
-    }
-
-    // timer mechanism that updates
-    // keep an update time record of the snapshot
-    DateTime updateTime = finalSnapshot.timestamp;
-    Timer timer = Timer(finalSnapshot
-        .timestamp
-        .add(const Duration(seconds: 10))//add(SMSensorState.keepStateTime)
-        .difference(DateTime.now()), () {
-      // check whether the update time still matches
-      // the last update time currently in store in the _sensorStatesMap
-      // if so, no updates have been made since the updateTime record has been kept
-      // and assume sensor disconnect
-      if (_sensorStatesMap[finalSnapshot!.deviceID]!.lastUpdate.difference(updateTime) == Duration.zero) {
-        _sensorStatesMap[finalSnapshot.deviceID]!.updateState({
-          SensorAlertKeys.alertCode.key : SMSensorAlertCodes.disconnectedState.code.toString(),
-          SensorAlertKeys.timestamp.key : finalSnapshot.timestamp.toString()
-        });
-        notifyListeners();
-      } else {
-        return;
-      }
-    });
-    // replace timer with the new timer
-    _statesTimerMap[finalSnapshot.deviceID]![SMSensorAlertCodes.connectionState] = timer;
+    // store data to sqlite database
+    DatabaseHelper.readingsLimit(finalSnapshot.deviceID);
+    DatabaseHelper.addReadings([finalSnapshot]);
 
     return;
+  }
+
+  // update the sensor chart data map with new data
+  void _updateSensorChartDataMap(SensorNodeSnapshot newData) {
+    List<SensorNodeSnapshot>? chartData = _sensorNodeChartDataMap[
+      newData.deviceID
+    ];
+    // chart data modified flag
+    bool modified = false;
+    if (chartData == null || chartData.isEmpty) {
+      chartData = [newData];
+      modified = true;
+    } else {
+      // uniqueness check
+      bool isDup = chartData
+          .any(
+              (x) => x.timestamp
+                  .compareTo(newData.timestamp) == 0
+      );
+      if (!isDup) {
+        int index = -1;
+        // reverse traversal to start from end of list (latest reading)
+        for (int i = chartData.length - 1; i >= 0; i--) {
+          if (newData.timestamp.isAfter(chartData[i].timestamp)) {
+            index = i;
+            break;
+          }
+        }
+        if (chartData.length < DatabaseHelper.maxChartLength && index == -1) {
+          chartData.insert(0, newData);
+          modified = true;
+        } else if (index > -1) {
+          chartData.insert(index + 1, newData);
+          chartData.length > DatabaseHelper.maxChartLength ? chartData.removeAt(0) : ();
+          modified = true;
+        }
+      }
+    }
+    if (modified) {
+      _sensorNodeChartDataMap[newData.deviceID] = chartData;
+      notifyListeners();
+    }
   }
 
   // soil moisture sensor states as map
   Map<String, SMSensorState> _sensorStatesMap = {}; // ignore: prefer_final_fields
   Map<String, SMSensorState> get sensorStatesMap => _sensorStatesMap;
 
-  // internal map of timers for each sensor node, to avoid overhead from timer objects
-  // and to outright cancel timers that are no longer relevant
-  Map<String, Map<SMSensorAlertCodes, Timer?>> _statesTimerMap = {}; // ignore: prefer_final_fields
-
   void _initDevicesStates() {
     for (String sinkId in _sinkNodeMap.keys) {
       SinkNodeState sinkStateObj = SinkNodeState.initObj(sinkId);
       _sinkNodeStateMap[sinkId] = sinkStateObj;
-      // TODO: add states timer for sink node?
-      // _statesTimerMap = {};
     }
     for (String sensorId in _sensorNodeMap.keys) {
       SMSensorState smStateObj = SMSensorState.initObj(sensorId);
       _sensorStatesMap[sensorId] = smStateObj;
-      _statesTimerMap = {};
     }
   }
   

@@ -1,23 +1,11 @@
-library devices_services;
-
-import 'dart:convert';
-
 import 'package:smmic/constants/api.dart';
-import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/auth_utils.dart';
 import 'package:smmic/utils/logs.dart';
-
 import '../utils/shared_prefs.dart';
 
-part 'devices/sensor_data.dart';
-part 'devices/sink_data.dart';
-
 class DevicesServices {
-  final _SensorNodeDataServices _sensorNodeDataServices =_SensorNodeDataServices();
-  final _SinkNodeDataServices _sinkNodeDataServices = _SinkNodeDataServices();
-
   // dependencies
   final ApiRoutes _apiRoutes = ApiRoutes();
   final ApiRequest _apiRequest = ApiRequest();
@@ -69,11 +57,6 @@ class DevicesServices {
     return sinkNodesParsed.isNotEmpty ? sinkNodesParsed : null;
   }
 
-  /// Returns sensor node snapshot data (`deviceID`, `timestamp`, `soilMoisture`, `temperature`, `humidity`, `batteryLevel`)
-  SensorNodeSnapshot getSensorSnapshot({required String id}) {
-    return _sensorNodeDataServices.getSnapshot(id);
-  }
-
   Future<Map<String, List<Map<String, dynamic>>>> getSinkBatchSnapshots(List<String> sinkIds) async {
     Map<String, List<Map<String, dynamic>>> finalMap = {};
     for (String sinkId in sinkIds) {
@@ -95,8 +78,25 @@ class DevicesServices {
     return finalMap;
   }
 
-  List<SensorNodeSnapshot> getSensorTimeSeries({required String id}) {
-    return _sensorNodeDataServices.getTimeSeries(id);
+  Future<Map<String, List<Map<String, dynamic>>>> getSensorBatchSnapshots(List<String> sensorIds) async {
+    Map<String, List<Map<String, dynamic>>> finalMap = {};
+    for (String sensorId in sensorIds) {
+      Map<String, dynamic> res = await _apiRequest.get(
+        route: _apiRoutes.getSensorReadings,
+        headers: {'Sensor': sensorId}
+      );
+      if (res.containsKey('error')) {
+        _logs.warning(message: 'request for $sensorId returned with error ->'
+            'code: ${res['status_code']}, body: ${res['body']}');
+      } else {
+        List<Map<String, dynamic>> castedList = [];
+        for (dynamic item in res['data']) {
+          castedList.add(item as Map<String, dynamic>);
+          finalMap[sensorId] = castedList;
+        }
+      }
+    }
+    return finalMap;
   }
 
   Future<Map<String, dynamic>?> updateSKDeviceName(

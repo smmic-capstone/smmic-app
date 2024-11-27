@@ -13,10 +13,7 @@ import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/subcomponents/devices/device_name.dart';
 import 'package:smmic/subcomponents/devices/digital_display.dart';
 import 'package:smmic/subcomponents/devices/gauge.dart';
-import 'package:smmic/utils/api.dart';
 import 'package:smmic/providers/devices_provider.dart';
-import 'package:smmic/subcomponents/devices/device_dialog.dart';
-import 'package:smmic/utils/logs.dart';
 
 class SensorNodeCard extends StatefulWidget {
   const SensorNodeCard({
@@ -59,16 +56,6 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
     }
   }
 
-  final StreamController<SensorNodeSnapshot> _snapshotStreamController = StreamController<SensorNodeSnapshot>.broadcast();
-  final StreamController<SMSensorState> _alertsStreamController = StreamController<SMSensorState>.broadcast();
-
-  StreamController<SMSensorState> get smStreamController => _alertsStreamController;
-  StreamController<SensorNodeSnapshot> get streamController => _snapshotStreamController;
-
-  SensorNodeSnapshot? cardReadings;
-  SensorNodeSnapshot? sqlCardReadings;
-  SMSensorState? alertsStreamData;
-
   @override
   void initState(){
     super.initState();
@@ -76,13 +63,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
 
   @override
   void dispose() {
-    _snapshotStreamController.close();
-    _alertsStreamController.close();
     super.dispose();
-  }
-
-  Color _getColor(int? alertCode, Map<int,Color> colorMap){
-    return colorMap[alertCode] ?? Colors.grey;
   }
 
   double getOpacity(ConnectivityResult connection) {
@@ -111,57 +92,63 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
     // sensor data
     SensorNodeSnapshot seSnapshotData = context.watch<DevicesProvider>()
         .sensorNodeSnapshotMap[widget.deviceInfo.deviceID]
-        ?? SensorNodeSnapshot.placeHolder(deviceId: widget.deviceInfo.deviceID);
+        ?? SensorNodeSnapshot.placeHolder(
+            deviceId: widget.deviceInfo.deviceID,
+            timestamp: DateTime.fromMillisecondsSinceEpoch(989452800000)
+        );
 
     // sensor states
-    int sensorConnectionState = context
-        .watch<DevicesProvider>()
-        .sensorStatesMap[widget.deviceInfo.deviceID]!
-        .connectionState.value1;
+    int sensorConnectionState = context.watch<DevicesProvider>()
+        .sensorStatesMap[widget.deviceInfo.deviceID]!.connectionState.value1;
 
-    return Container(
-      margin: EdgeInsets.only(left: 25, right: 25, bottom: widget.bottomMargin ?? 0),
-      child: Stack(
-        children: [
-          _cardBackground(),
-          Container(
-            padding: const EdgeInsets.all(40),
-            child: Stack(
-              children: [
-                SizedBox(
-                  width: 230,
-                  child: _nameAndReadings(
-                      seSnapshotData
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(
+            builder: (context) => SensorNodePage(
+                deviceID: widget.deviceInfo.deviceID,
+                deviceName: widget.deviceInfo.deviceName,
+                deviceInfo: widget.deviceInfo
+            )
+        ));
+      },
+      child: Container(
+        margin: EdgeInsets.only(
+            left: 25,
+            right: 25,
+            bottom: widget.bottomMargin ?? 0
+        ),
+        child: Stack(
+          children: [
+            _cardBackground(),
+            Container(
+              padding: const EdgeInsets.all(40),
+              child: Stack(
+                children: [
+                  SizedBox(
+                    width: 230,
+                    child: _nameAndReadings(
+                        seSnapshotData
+                    ),
                   ),
-                ),
-                SizedBox(
-                  height: widget.deviceInfo.deviceName.length > 9 ? 201 : 144,
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        top: 10,
-                        right: 0,
-                        child: SvgPicture.asset(
-                          'assets/icons/signal.svg',
-                          width: 16,
-                          height: 16,
-                          colorFilter: const ColorFilter.mode(
-                              Color.fromRGBO(23, 255, 50, 1),
-                              BlendMode.srcATop
-                          ),
+                  SizedBox(
+                    height: widget.deviceInfo.deviceName.length > 9 ? 201 : 144,
+                    child: Stack(
+                      children: [
+                        _topRightIcons(
+                            seSnapshotData.timestamp
                         ),
-                      ),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: _gauge(seSnapshotData),
-                      )
-                    ],
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: _gauge(seSnapshotData),
+                        )
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          )
-        ],
+                ],
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -191,8 +178,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
               valueType: ValueType.temperature,
               opacityOverride: 1,
               valueTextStyle: _primaryTextStyle,
-              labelTextStyle: _secondaryTextStyle,
-              symbolTextStyle: _tertiaryTextStyle,
+              secondaryTextStyle: _secondaryTextStyle,
+              tertiaryTextStyle: _tertiaryTextStyle,
             ),
             const SizedBox(width: 15),
             SensorDigitalDisplay(
@@ -200,12 +187,36 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
               valueType: ValueType.humidity,
               opacityOverride: 1,
               valueTextStyle: _primaryTextStyle,
-              labelTextStyle: _secondaryTextStyle,
-              symbolTextStyle: _tertiaryTextStyle,
+              secondaryTextStyle: _secondaryTextStyle,
+              tertiaryTextStyle: _tertiaryTextStyle,
             )
           ],
         ),
       ],
+    );
+  }
+
+  Widget _topRightIcons(DateTime lastTransmission) {
+    return Positioned(
+      top: 10,
+      right: 0,
+      child: Row(
+        children: [
+          SvgPicture.asset(
+            'assets/icons/signal.svg',
+            width: 16,
+            height: 16,
+            colorFilter: ColorFilter.mode(
+                context.watch<DevicesProvider>()
+                    .sensorStatesMap[widget.deviceInfo.deviceID]!
+                    .connectionState.value1 == SMSensorAlertCodes.disconnectedState.code
+                        ? Colors.white.withOpacity(0.5)
+                        : const Color.fromRGBO(23, 255, 50, 1),
+                BlendMode.srcATop
+            ),
+          )
+        ],
+      ),
     );
   }
 

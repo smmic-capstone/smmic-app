@@ -58,7 +58,11 @@ class _RadialGaugeState extends State<RadialGauge> {
               value: widget.value,
               cornerStyle: CornerStyle.bothCurve,
               width: 8,
-              color: setColor(widget.value, widget.limit, widget.opacity),
+              color: setColor(
+                  widget.value,
+                  widget.limit,
+                  widget.opacity
+              ),
             )
           ],
           annotations: [
