@@ -41,4 +41,35 @@ class DeviceUtils {
     };
     return SensorNode.fromJSON(sensorNodeMap);
   }
+
+  Stream<DateTime> timeTickerSeconds() async* {
+    while (true) {
+      yield DateTime.now();
+      await Future.delayed(const Duration(seconds: 1));
+    }
+  }
+
+  String relativeTimeDisplay(DateTime latestTime, DateTime currentTime) {
+    Duration diff = currentTime.difference(latestTime);
+
+    String finalString = '';
+
+    if (diff < const Duration(minutes: 1)) {
+      finalString = '<1 minute ago';
+    } else if (diff >= const Duration(minutes: 1) && diff < const Duration(minutes: 2)) {
+      finalString = '${diff.inMinutes} minute ago';
+    } else if (diff >= const Duration(minutes: 2) && diff < const Duration(hours: 1)) {
+      finalString = '${diff.inMinutes} minutes ago';
+    } else if (diff >= const Duration(hours: 1) && diff < const Duration(hours: 2)) {
+      finalString = '${diff.inHours} hour ago';
+    } else if (diff >= const Duration(hours: 2) && diff < const Duration(days: 1)) {
+      finalString = '${diff.inHours} hours ago';
+    } else if (diff >= const Duration(days: 1) && diff < const Duration(days: 2)) {
+      finalString = '${diff.inDays} day ago';
+    } else if (diff >= const Duration(days: 2)) {
+      finalString = '${diff.inDays} days ago';
+    }
+
+    return finalString;
+  }
 }

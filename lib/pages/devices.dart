@@ -20,8 +20,6 @@ class Devices extends StatefulWidget {
 }
 
 class _Devices extends State<Devices> with TickerProviderStateMixin {
-  final Logs _logs = Logs(tag: 'devices.dart');
-
   final ScrollController _scrollController = ScrollController();
   late AnimationController _appBarBgAnimController;
   late Animation<double> _appBarBgAnimation;

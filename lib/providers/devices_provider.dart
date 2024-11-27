@@ -74,10 +74,10 @@ class DevicesProvider extends ChangeNotifier {
 
     notifyListeners();
 
-    if (connectivity != ConnectivityResult.none) {
-      _loadSinkReadingsFromApi();
-      _loadSensorReadingsFromApi();
-    }
+    // if (connectivity != ConnectivityResult.none) {
+    //   _loadSinkReadingsFromApi();
+    //   _loadSensorReadingsFromApi();
+    // }
 
     // set *updated* list to shared preferences
     await _setToSharedPrefs();
@@ -337,8 +337,6 @@ class DevicesProvider extends ChangeNotifier {
     return;
   }
 
-  final int _maxSeChartLength = 6;
-
   // update the sensor chart data map with new data
   void _updateSensorChartDataMap(SensorNodeSnapshot newData) {
     List<SensorNodeSnapshot>? chartData = _sensorNodeChartDataMap[
@@ -365,12 +363,12 @@ class DevicesProvider extends ChangeNotifier {
             break;
           }
         }
-        if (chartData.length < _maxSeChartLength && index == -1) {
+        if (chartData.length < DatabaseHelper.maxChartLength && index == -1) {
           chartData.insert(0, newData);
           modified = true;
         } else if (index > -1) {
           chartData.insert(index + 1, newData);
-          chartData.length > _maxSeChartLength ? chartData.removeAt(0) : ();
+          chartData.length > DatabaseHelper.maxChartLength ? chartData.removeAt(0) : ();
           modified = true;
         }
       }

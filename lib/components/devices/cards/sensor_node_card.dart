@@ -178,8 +178,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
               valueType: ValueType.temperature,
               opacityOverride: 1,
               valueTextStyle: _primaryTextStyle,
-              labelTextStyle: _secondaryTextStyle,
-              symbolTextStyle: _tertiaryTextStyle,
+              secondaryTextStyle: _secondaryTextStyle,
+              tertiaryTextStyle: _tertiaryTextStyle,
             ),
             const SizedBox(width: 15),
             SensorDigitalDisplay(
@@ -187,8 +187,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
               valueType: ValueType.humidity,
               opacityOverride: 1,
               valueTextStyle: _primaryTextStyle,
-              labelTextStyle: _secondaryTextStyle,
-              symbolTextStyle: _tertiaryTextStyle,
+              secondaryTextStyle: _secondaryTextStyle,
+              tertiaryTextStyle: _tertiaryTextStyle,
             )
           ],
         ),

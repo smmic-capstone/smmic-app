@@ -99,7 +99,7 @@ class DatabaseHelper {
     }
   }
   
-  
+  static int maxChartLength = 10;
   static Future<List<SensorNodeSnapshot>?>chartReadings(String deviceID) async {
     final db = await _getDB();
 
@@ -108,7 +108,7 @@ class DatabaseHelper {
       where: 'device_id = ?',
       whereArgs: [deviceID],
       orderBy: 'timestamp DESC',
-      limit: 6,
+      limit: maxChartLength,
     );
 
     final readings = queryResult.map(

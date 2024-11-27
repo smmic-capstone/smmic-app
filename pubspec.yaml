@@ -134,6 +134,7 @@ flutter:
     - assets/icons/menu.svg
     - assets/icons/sun.svg
     - assets/icons/wind.svg
+    - assets/icons/droplet.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
