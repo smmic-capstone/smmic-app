@@ -72,4 +72,6 @@ class DeviceUtils {
 
     return finalString;
   }
+
+  //Wi
 }
