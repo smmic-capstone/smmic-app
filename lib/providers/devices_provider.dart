@@ -69,6 +69,7 @@ class DevicesProvider extends ChangeNotifier {
     }
 
     // initially, load readings from the sqlite
+    // TODO: add sink states to sqlite
     await _loadReadingsFromSqlite();
     _initDevicesStates();
 

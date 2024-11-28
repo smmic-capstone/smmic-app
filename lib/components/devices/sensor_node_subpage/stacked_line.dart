@@ -1,12 +1,8 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
-import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/providers/devices_provider.dart';
-import 'package:smmic/services/devices_services.dart';
 import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/subcomponents/devices/digital_display.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
@@ -24,14 +20,54 @@ class StackedLineChart extends StatefulWidget {
   State<StackedLineChart> createState() => _StackedLineChartState();
 }
 
-class _StackedLineChartState extends State<StackedLineChart> {
+class _StackedLineChartState extends State<StackedLineChart> with TickerProviderStateMixin {
+  // helpers, configs
   final DeviceUtils _deviceUtils = DeviceUtils();
   final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
 
-  final ScrollController _stackedLinesScrollController = ScrollController();
-  bool _showRelativeTimeDisplay = false; //ignore: prefer_final_fields
+  // card variables
+  double _cardHeight = 300;
 
-  void _relativeTimeDisplayTrigger() {
+  // stacked line variables
+  final ScrollController _stackedLinesScrollController = ScrollController();
+  final ScrollController _onFocusPointScrollController = ScrollController();
+  bool _showRelativeTimeDisplay = false; //ignore: prefer_final_fields
+  int _highLightedPointIndex = -1; // ignore: prefer_final_fields
+
+  // focused value variables
+  late AnimationController _valuesAnimationController;
+  late CurvedAnimation _valuesAnimationCurve;
+  late Animation<double> _soilMoistureAnimation;
+  final Tween<double> _soilMoistureTween = Tween<double>(begin: 0, end: 0);
+  late Animation<double> _temperatureAnimation;
+  final Tween<double> _temperatureTween = Tween<double>(begin: 0, end: 0);
+  late Animation<double> _humidityAnimation;
+  final Tween<double> _humidityTween = Tween<double>(begin: 0, end: 0);
+  late List<Animation<double>> _valuesAnimationList;
+  double _focusedPointSoilMoisture = 0; // ignore: prefer_final_fields
+  double _focusedPointTemperature = 0; // ignore: prefer_final_fields
+  double _focusedPointHumidity = 0; // ignore: prefer_final_fields
+  late Animation _valueColoredLineAnimation;
+
+  // trigger focused point behavior
+  void _focusedPointTrigger() {
+    if (_highLightedPointIndex != -1) {
+      setState(() {
+        _soilMoistureTween.end = _focusedPointSoilMoisture;
+        _temperatureTween.end = _focusedPointTemperature;
+        _humidityTween.end = _focusedPointHumidity;
+        _valuesAnimationController.forward();
+      });
+      return;
+    } else {
+      setState(() {
+        _valuesAnimationController.reset();
+      });
+    }
+  }
+
+  // triggers opacity of the relative time display
+  void _relativeToNowOpacityTrigger() {
     if (_stackedLinesScrollController.position.maxScrollExtent
         - _stackedLinesScrollController.offset < 15) {
       setState(() {
@@ -45,22 +81,36 @@ class _StackedLineChartState extends State<StackedLineChart> {
     }
   }
 
+  // snaps the stacked line chart points to match background tick lines
   void _stackedLineSnapToOffset(double snapOffset) {
     double currentOffset = _stackedLinesScrollController.offset;
     double snapPoint = (currentOffset / snapOffset).round() * snapOffset;
-    _stackedLinesScrollController.animateTo(
-        snapPoint,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeOutExpo
-    );
+    double maxScrollExtent = _stackedLinesScrollController.position.maxScrollExtent;
+    if (currentOffset != maxScrollExtent) {
+      if (snapPoint > maxScrollExtent) {
+        _stackedLinesScrollController.animateTo(
+            _stackedLinesScrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutExpo
+        );
+      } else {
+        _stackedLinesScrollController.animateTo(
+            snapPoint,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutExpo
+        );
+      }
+    }
+    _onFocusPointScrollController.jumpTo(snapPoint);
   }
 
+  // generate a color for fields
   Color? _generateColor(String name) {
     if (name == 'soil moisture') {
       return Colors.amber;
     }
     if (name == 'humidity') {
-      return Colors.blue;
+      return const Color.fromRGBO(98, 245, 255, 1);
     }
     if (name == 'temperature') {
       return Colors.deepOrange;
@@ -69,134 +119,400 @@ class _StackedLineChartState extends State<StackedLineChart> {
   }
 
   int _scaleTemp(int temp) {
-    //TODO: format this variable so it aligns with the chart
     return (temp * 1.5).toInt();
   }
 
   @override
   void initState() {
+    // init animation variables
+    _valuesAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(
+          milliseconds: 500
+      ),
+    );
+
+    // underline field indicator animation
+    _valueColoredLineAnimation = Tween<double>(begin: 0,end: 25).animate(
+        CurvedAnimation(
+            parent: _valuesAnimationController,
+            curve: Curves.easeInOutExpo
+        )
+    );
+
+    // values animation variables
+    _valuesAnimationCurve = CurvedAnimation(
+        parent: _valuesAnimationController,
+        curve: Curves.easeInOutExpo
+    );
+    _soilMoistureAnimation = _soilMoistureTween.animate(_valuesAnimationCurve);
+    _temperatureAnimation = _temperatureTween.animate(_valuesAnimationCurve);
+    _humidityAnimation = _humidityTween.animate(_valuesAnimationCurve);
+
+    // set to list to access by index
+    _valuesAnimationList = [
+      _soilMoistureAnimation,
+      _temperatureAnimation,
+      _humidityAnimation
+    ];
+
+    // init to end of list
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _stackedLinesScrollController.jumpTo(
           _stackedLinesScrollController.position.maxScrollExtent
       );
+      _onFocusPointScrollController.jumpTo(
+        _stackedLinesScrollController.position.maxScrollExtent
+      );
     });
-    _stackedLinesScrollController.addListener(_relativeTimeDisplayTrigger);
+    _stackedLinesScrollController.addListener(_relativeToNowOpacityTrigger);
+
     super.initState();
   }
 
   @override
   void dispose() {
-    _stackedLinesScrollController.removeListener(_relativeTimeDisplayTrigger);
+    _onFocusPointScrollController.dispose();
+    _stackedLinesScrollController.removeListener(_relativeToNowOpacityTrigger);
     _stackedLinesScrollController.dispose();
+    _valuesAnimationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final double stackedLineSnapOffset = (MediaQuery.of(context).size.width / 6) - 15.5;
-
+    // calculated snap offset
+    final double screenSize = MediaQuery.of(context).size.width;
+    final double screenSizeOffset = screenSize - (screenSize * 0.9999);
+    final double stackedLineSnapOffset = ((screenSize) / (8 - screenSizeOffset)).roundToDouble();
+    // chart data from devices provider
     List<SensorNodeSnapshot> chartData = context.watch<DevicesProvider>()
         .sensorNodeChartDataMap[widget.deviceId] ?? [];
-    return Stack(
-      children: [
-        _backGround(),
-        _buildStaticTickLines(),
-        _buildStackedLines(chartData, stackedLineSnapOffset),
-        _buildLegends(),
-        _relativeToNowDisplay()
-      ],
+
+    return Listener(
+      onPointerUp: (_) {
+        setState(() {
+          _highLightedPointIndex = -1;
+          double max = _stackedLinesScrollController.position.maxScrollExtent;
+          double current = _stackedLinesScrollController.offset;
+          double threshold = 15;
+          _showRelativeTimeDisplay = (max - current) < threshold;
+        });
+        _focusedPointTrigger();
+      },
+      child: Stack(
+        children: [
+          _renderBackground(),
+          _staticTickLines(),
+          Container(
+            margin: const EdgeInsets.only(top: 25),
+            child: _onFocusChartBase(chartData),
+          ),
+          Container(
+            margin: const EdgeInsets.only(top: 25),
+            child: _chartBase(chartData, stackedLineSnapOffset),
+          ),
+          Builder(
+            builder: (context) {
+              if (_highLightedPointIndex != -1) {
+                int indexOffset = DatabaseHelper.maxChartLength - chartData.length;
+                int finalIndex = _highLightedPointIndex - indexOffset;
+                return _focusedPointValues(chartData[finalIndex]);
+              } else {
+                return _legends();
+              }
+            },
+          ),
+          _relativeToNowDisplay(),
+        ],
+      ),
     );
   }
 
-  Widget _backGround() {
+  Widget _renderBackground() {
     return ClipRRect(
       borderRadius: const BorderRadius.all(Radius.circular(25)),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
-          color: Colors.black.withOpacity(0.5),
+          color: Colors.black.withOpacity(0.6),
           height: 300,
         ),
       ),
     );
   }
 
-  Widget _buildLegends() {
-    List<String> legends = ['Soil Moisture', 'Temperature', 'Humidity'];
+  Widget _staticTickLines() {
+    // gradient settings
+    List<Color> pointsFocused = [
+      Colors.white.withOpacity(0.1),
+      Colors.white.withOpacity(0.1)
+    ];
+    List<Color> defaultGradient = [
+      Colors.white.withOpacity(0.1),
+      Colors.white.withOpacity(0.2),
+      Colors.white.withOpacity(1)
+    ];
+    LinearGradient gradient = LinearGradient(
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+      colors: _highLightedPointIndex != -1
+          ? pointsFocused
+          : defaultGradient,
+    );
+
+    return ShaderMask(
+      shaderCallback: (Rect bounds) {
+        return gradient.createShader(bounds);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 35),
+        alignment: Alignment.center,
+        height: _cardHeight,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            ...List.generate(6, (i) => i).map((index) {
+              return Container(
+                width: 1,
+                color: Colors.white,
+              );
+            })
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _legends() {
+    // legend fields
+    List<String> legends = [
+      'Soil Moisture',
+      'Temperature',
+      'Humidity'
+    ];
+    double circleSize = 6.0;
+
+    List<Widget> legendTitles = legends.map((legend) {
+      // the colored circle indicator for each field
+      Widget coloredCircle = Container(
+        width: circleSize,
+        height: circleSize,
+        decoration: BoxDecoration(
+            color: _generateColor(
+                legend.toLowerCase()
+            )!.withOpacity(0.5),
+            borderRadius: const BorderRadius.all(
+                Radius.circular(50)
+            )
+        ),
+      );
+      // title of the legend
+      Widget text = Text(
+        legend,
+        style: TextStyle(
+            color: Colors.white.withOpacity(0.5),
+            fontFamily: 'Inter',
+            fontSize: 12,
+            fontWeight: FontWeight.w400
+        ),
+      );
+      return SizedBox(
+        height: 20,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            coloredCircle,
+            const SizedBox(width: 5),
+            text
+          ],
+        ),
+      );
+    }).toList();
+
     return Positioned(
-      bottom: 50,
+      bottom: 60,
       left: 45,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ...legends.map((legend) {
-            return SizedBox(
-              height: 20,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                        color: _generateColor(legend.toLowerCase())!.withOpacity(0.5),
-                        borderRadius: const BorderRadius.all(Radius.circular(50))
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    legend,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400
-                    ),
-                  )
-                ],
-              ),
-            );
-          })
+          ...legendTitles
         ],
       ),
     );
   }
 
-  Widget _buildStackedLines(List<SensorNodeSnapshot> chartData, double snapOffset) {
-    return Container(
-      padding: const EdgeInsets.only(top: 50, right: 36),
-      height: 175,
+  Widget _focusedPointValues(SensorNodeSnapshot focusedData) {
+    // field value titles
+    List<String> values = [
+      'soil moisture',
+      'temperature',
+      'humidity'
+    ];
+
+    // field value widget variables
+    double fieldValueHeight = 50;
+    double fieldValueWidth = 85;
+    TextStyle valueTextStyle = const TextStyle(
+        color: Colors.white,
+        fontFamily: 'Inter',
+        fontSize: 23,
+        fontWeight: FontWeight.w400
+    );
+    TextStyle symbolTextStyle = const TextStyle(
+        color: Colors.white,
+        fontFamily: 'Inter',
+        fontSize: 15,
+        fontWeight: FontWeight.w400
+    );
+    TextStyle titleTextStyle = TextStyle(
+        color: Colors.white.withOpacity(0.5),
+        fontFamily: 'Inter',
+        fontSize: 12,
+        fontWeight: FontWeight.w400
+    );
+    
+    Widget buildColoredUnderline(String fieldTitle) {
+      return Positioned(
+        left: 0,
+        bottom: 3,
+        child: AnimatedBuilder(
+            animation: _valueColoredLineAnimation,
+            builder: (context, child) {
+              return Container(
+                width: _valueColoredLineAnimation.value,
+                height: 2,
+                decoration: BoxDecoration(
+                    color: _generateColor(fieldTitle),
+                    borderRadius: const BorderRadius.all(
+                        Radius.circular(25)
+                    )
+                ),
+              );
+            }
+        ),
+      );
+    }
+
+    Widget buildFieldValue((int, String) fieldVars) {
+      TextSpan fieldSymbol = TextSpan(
+          text: fieldVars.$2 == ValueType.temperature.name
+              ? '°C\n'
+              : fieldVars.$2 == ValueType.soilMoisture.name ||
+              fieldVars.$2 == ValueType.humidity.name
+              ? '%\n'
+              : '?\n',
+          style: symbolTextStyle
+      );
+
+      return Container(
+        margin: const EdgeInsets.only(right: 10),
+        height: fieldValueHeight,
+        width: fieldValueWidth,
+        child: AnimatedBuilder(
+            animation: _valuesAnimationList[fieldVars.$1],
+            builder: (context, child) {
+              String value = _valuesAnimationList[fieldVars.$1].value.toString();
+              String finalValue = value.substring(0, value.length > 3 ? 4 : 3);
+              return RichText(
+                text: TextSpan(
+                    text: finalValue,
+                    style: valueTextStyle,
+                    children: [fieldSymbol]
+                ),
+              );
+            }
+        ),
+      );
+    }
+
+    Widget buildFieldTitle(String title) {
+      return Text(
+          '${title.substring(0,1).toUpperCase()}'
+              '${title.substring(1, title.length)}',
+          style: titleTextStyle
+      );
+    }
+    
+    Widget stackWrapper((int, String) fieldVars) {
+      return Stack(
+        children: [
+          buildColoredUnderline(fieldVars.$2),
+          buildFieldValue(fieldVars),
+          Positioned(
+            top: 25,
+            child: buildFieldTitle(fieldVars.$2),
+          ),
+        ],
+      );
+    }
+    
+    return Positioned(
+      bottom: 65,
+      left: 45,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...values.indexed.map((field) => stackWrapper(field))
+        ],
+      ),
+    );
+  }
+
+  // chart variables
+  double chartWidth = 500;
+  double chartHeight = 175;
+
+  Widget _chartBase(List<SensorNodeSnapshot> chartData, double snapOffset) {
+    // widget variables
+    ScrollPhysics scrollPhysics = chartData.length < 6
+        ? const NeverScrollableScrollPhysics()
+        : const AlwaysScrollableScrollPhysics();
+
+    // the actual chart base
+    SfCartesianChart cartesianChart = SfCartesianChart(
+        plotAreaBorderWidth: 0.0,
+        primaryXAxis: const CategoryAxis(
+          rangePadding: ChartRangePadding.none,
+          axisLine: AxisLine(
+              color: Colors.transparent
+          ),
+          labelStyle: TextStyle(
+              fontSize: 0,
+              color: Colors.transparent
+          ),
+          tickPosition: TickPosition.inside,
+          isVisible: false,
+          labelPlacement: LabelPlacement.onTicks,
+        ),
+        primaryYAxis: const NumericAxis(
+          maximum: 100,
+          minimum: 0,
+          isVisible: false,
+        ),
+        series: <CartesianSeries>[
+          ..._buildStackedLines(chartData)
+        ]
+    );
+
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    return SizedBox(
+      height: chartHeight,
       child: Listener(
         onPointerUp: (_) => _stackedLineSnapToOffset(snapOffset),
         child: SingleChildScrollView(
-          physics: chartData.length < 6
-              ? const NeverScrollableScrollPhysics()
-              : const AlwaysScrollableScrollPhysics(),
+          physics: scrollPhysics,
           controller: _stackedLinesScrollController,
           scrollDirection: Axis.horizontal,
           child: Container(
-            width: 500,
-            margin: const EdgeInsets.only(left: 39),
-            child: SfCartesianChart(
-                plotAreaBorderWidth: 0.0,
-                primaryXAxis: const CategoryAxis(
-                  rangePadding: ChartRangePadding.none,
-                  axisLine: AxisLine(
-                      color: Colors.transparent
-                  ),
-                  labelStyle: TextStyle(fontSize: 0, color: Colors.transparent),
-                  tickPosition: TickPosition.inside,
-                  isVisible: false,
-                  labelPlacement: LabelPlacement.onTicks,
-                ),
-                primaryYAxis: const NumericAxis(
-                  maximum: 100,
-                  minimum: 0,
-                  isVisible: false,
-                ),
-                series: <CartesianSeries>[
-                  ..._buildLines(chartData)
-                ]
+            padding: EdgeInsets.symmetric(horizontal: screenWidth - (screenWidth * 0.9)),
+            width: ((screenWidth - 70) / 6) * 10,
+            child: AnimatedOpacity(
+              opacity: _highLightedPointIndex != -1 ? 0.2 : 1,
+              duration: const Duration(seconds: 1),
+              curve: Curves.easeOutExpo,
+              child: cartesianChart,
             ),
           ),
         ),
@@ -204,65 +520,227 @@ class _StackedLineChartState extends State<StackedLineChart> {
     );
   }
 
-  List<CartesianSeries> _buildLines(List<SensorNodeSnapshot> chartData) {
+  List<CartesianSeries> _buildStackedLines(List<SensorNodeSnapshot> chartData) {
     List<CartesianSeries> cartesianSeriesList = [];
-    List<SensorNodeSnapshot?> cData = chartData.map((element) => element).toList();
-    cData = List<SensorNodeSnapshot?>.generate(
-        DatabaseHelper.maxChartLength - chartData.length, (index) => null) + cData;
+
+    // pad chart with null values if actual chart data is less that
+    // the max chart length
+    List<SensorNodeSnapshot?> paddedChart = List<SensorNodeSnapshot?>.generate(
+        DatabaseHelper.maxChartLength - chartData.length, (index) => null) + chartData;
+
+    // stacked line variables
+    MarkerSettings buildMarker(String fieldName) {
+      return MarkerSettings(
+          color: _generateColor(fieldName),
+          isVisible: true,
+          height: _highLightedPointIndex != -1 ? 4 : 6,
+          width: _highLightedPointIndex != -1 ? 4 : 6
+      );
+    }
+    DataLabelSettings labelSettings = const DataLabelSettings(
+      isVisible: false
+    );
+    double animationDuration = 500;
+    
+    // mappers, wrapper functions
+    Color? pointColorGenerator(int point, String fieldName) {
+      if (point != _highLightedPointIndex) {
+        return _generateColor(fieldName)!.withOpacity(0);
+      }
+      return null;
+    }
+    void doubleTapTrigger(ChartPointDetails point) {
+      int pointIndex = point.pointIndex ?? paddedChart.length - 2;
+      setState(() {
+        _highLightedPointIndex = pointIndex + 1;
+        _showRelativeTimeDisplay = false;
+      });
+      setState(() {
+        _focusedPointSoilMoisture = paddedChart[_highLightedPointIndex]!.soilMoisture;
+        _focusedPointHumidity = paddedChart[_highLightedPointIndex]!.humidity;
+        _focusedPointTemperature = paddedChart[_highLightedPointIndex]!.temperature;
+      });
+      _focusedPointTrigger();
+    }
+    String? timeAxisGenerator(SensorNodeSnapshot? data, int falseHourIncrement) {
+      if (data != null) {
+        return _dateTimeFormatting.formatTimeClearZero(data.timestamp);
+      } else {
+        return _dateTimeFormatting.formatTimeClearZero(
+            DateTime.fromMillisecondsSinceEpoch(0).add(
+                Duration(hours: falseHourIncrement)
+            )
+        );
+      }
+    }
+    num? numericAxisGenerator(SensorNodeSnapshot? data, String fieldName) {
+      if (data != null) {
+        if (fieldName == ValueType.soilMoisture.name) {
+          return data.soilMoisture;
+        } else if (fieldName == ValueType.temperature.name) {
+          return _scaleTemp(data.temperature.toInt());
+        } else if (fieldName == ValueType.humidity.name) {
+          return data.humidity;
+        }
+      }
+      return null;
+    }
+    
     for (ValueType field in ValueType.values.toList()) {
       int increment = 0;
       cartesianSeriesList.add(
         StackedLineSeries<SensorNodeSnapshot?, String>(
-            markerSettings: MarkerSettings(
-                color: _generateColor(field.name),
-                isVisible: true,
-                height: 6,
-                width: 6
-            ),
-            dataLabelSettings: DataLabelSettings(
-                isVisible: false
-            ),
-            animationDuration: 500,
+            markerSettings: buildMarker(field.name),
+            dataLabelSettings: labelSettings,
+            pointColorMapper: (SensorNodeSnapshot? data, point) {
+              return pointColorGenerator(
+                  point,
+                  field.name
+              );
+            },
+            onPointDoubleTap: (ChartPointDetails point) {
+              doubleTapTrigger(point);
+            },
+            animationDuration: animationDuration,
             color: _generateColor(field.name),
             groupName: field.name,
-            dataSource: cData,
+            dataSource: paddedChart,
             xValueMapper: (SensorNodeSnapshot? data, _) {
               increment++;
-              if (data != null) {
-                return _dateTimeFormatting.formatTimeClearZero(data.timestamp);
-              } else {
-                return _dateTimeFormatting.formatTimeClearZero(
-                    DateTime.fromMillisecondsSinceEpoch(0).add(
-                        Duration(hours: increment)
-                    )
-                );
-              }
+              return timeAxisGenerator(data, increment);
             },
             yValueMapper: (SensorNodeSnapshot? data, _) {
-              if (data != null) {
-                if (field.name == ValueType.soilMoisture.name) {
-                  return data.soilMoisture;
-                } else if (field.name == ValueType.temperature.name) {
-                  return _scaleTemp(data.temperature.toInt());
-                } else if (field.name == ValueType.humidity.name) {
-                  return data.humidity;
-                }
-              }
-              return null;
+              return numericAxisGenerator(data, field.name);
             }
         ),
       );
     }
+    
+    return cartesianSeriesList;
+  }
+
+  Widget _onFocusChartBase(List<SensorNodeSnapshot> chartData) {
+    SfCartesianChart cartesianChart = SfCartesianChart(
+        plotAreaBorderWidth: 0.0,
+        primaryXAxis: const CategoryAxis(
+          isVisible: false,
+          labelPlacement: LabelPlacement.onTicks,
+        ),
+        primaryYAxis: const NumericAxis(
+          maximum: 100,
+          minimum: 0,
+          isVisible: false,
+        ),
+        series: <CartesianSeries>[
+          ..._onFocusPointerDisplay(chartData)
+        ]
+    );
+
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    return SizedBox(
+      height: chartHeight,
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        controller: _onFocusPointScrollController,
+        scrollDirection: Axis.horizontal,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: screenWidth - (screenWidth * 0.9)),
+          width: ((screenWidth - 70) / 6) * 10,
+          height: chartHeight,
+          child: cartesianChart,
+        ),
+      ),
+    );
+  }
+
+  List<CartesianSeries> _onFocusPointerDisplay(List<SensorNodeSnapshot> chartData) {
+    List<CartesianSeries> cartesianSeriesList = [];
+
+    // pad chart data with null values if less than max chart length
+    List<SensorNodeSnapshot?> paddedChartData = chartData.map((element) => element).toList();
+    paddedChartData = List<SensorNodeSnapshot?>.generate(
+        DatabaseHelper.maxChartLength - chartData.length, (index) => null) + paddedChartData;
+
+    // the chart data that is actually used by the stacked line series,
+    // filled with null values
+    List<SensorNodeSnapshot?> displayedChartData = List<SensorNodeSnapshot?>.generate(
+      10, (index) => null
+    );
+
+    if (_highLightedPointIndex != -1) {
+      displayedChartData.insert(
+          _highLightedPointIndex + 1,
+          paddedChartData[_highLightedPointIndex]
+      );
+      displayedChartData.removeAt(0);
+    }
+
+    // stacked line variables
+    MarkerSettings buildMarker(String fieldName) {
+      return MarkerSettings(
+          color: _generateColor(fieldName)!.withOpacity(
+              _highLightedPointIndex != -1 ? 0 : 1
+          ),
+          isVisible: true,
+          height: 3,
+          width: 3,
+          borderWidth: 3
+      );
+    }
+
+    // generator functions
+    String timeAxisGenerator(int falseHourIncrement) {
+      return _dateTimeFormatting.formatTimeClearZero(
+          DateTime.fromMillisecondsSinceEpoch(0).add(
+              Duration(hours: falseHourIncrement)
+          )
+      );
+    }
+    num? numericAxisGenerator(SensorNodeSnapshot? data, String fieldName) {
+      if (data != null) {
+        if (fieldName == ValueType.soilMoisture.name) {
+          return data.soilMoisture;
+        } else if (fieldName == ValueType.temperature.name) {
+          return _scaleTemp(data.temperature.toInt());
+        } else if (fieldName == ValueType.humidity.name) {
+          return data.humidity;
+        }
+      }
+      return null;
+    }
+    
+    for (ValueType field in ValueType.values.toList()) {
+      int increment = 0;
+      cartesianSeriesList.add(
+        StackedLineSeries<SensorNodeSnapshot?, String>(
+            markerSettings: buildMarker(field.name),
+            animationDuration: _highLightedPointIndex != -1 ? 150 : 0,
+            color: _generateColor(field.name),
+            groupName: field.name,
+            dataSource: displayedChartData,
+            xValueMapper: (SensorNodeSnapshot? data, _) {
+              increment++;
+              return timeAxisGenerator(increment);
+            },
+            yValueMapper: (SensorNodeSnapshot? data, _) {
+              return numericAxisGenerator(data, field.name);
+            }
+        ),
+      );
+    }
+
     return cartesianSeriesList;
   }
 
   Widget _relativeToNowDisplay() {
     return Positioned(
-      bottom: 65,
+      bottom: 75,
       right: 53 - 10.5,
       child: AnimatedOpacity(
         opacity: _showRelativeTimeDisplay ? 1 : 0,
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOutExpo,
         child: Row(
           children: [
             Container(
@@ -308,68 +786,5 @@ class _StackedLineChartState extends State<StackedLineChart> {
     );
   }
 
-  Widget _buildStaticTickLines() {
-    List<SensorNodeSnapshot?> nullChart = List<SensorNodeSnapshot?>.generate(6, (index) => null);
-    int increment = 0;
-    return ShaderMask(
-      shaderCallback: (Rect bounds) {
-        return LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            Colors.white.withOpacity(0.1),
-            Colors.white.withOpacity(0.1),
-            Colors.white.withOpacity(1),
-          ],
-        ).createShader(bounds);
-      },
-      blendMode: BlendMode.srcIn, // Ensures the gradient fills the child.
-      child: Container(
-        padding: const EdgeInsets.only(top: 40, right: 35),
-        height: 265,
-        width: 600,
-        margin: const EdgeInsets.only(left: 39.2),
-        child: SfCartesianChart(
-            plotAreaBorderWidth: 0.0,
-            primaryXAxis: const CategoryAxis(
-              majorGridLines: MajorGridLines(
-                width: 1
-              ),
-              majorTickLines: MajorTickLines(
-                width: 0
-              ),
-              axisLine: AxisLine(color: Colors.transparent),
-              tickPosition: TickPosition.inside,
-              isVisible: true,
-              labelPlacement: LabelPlacement.onTicks,
-              labelStyle: TextStyle(
-                  fontSize: 0,
-                  color: Colors.transparent
-              ),
-            ),
-            primaryYAxis: const NumericAxis(
-              isVisible: false,
-            ),
-            series: <CartesianSeries>[
-              StackedLineSeries<SensorNodeSnapshot?, String>(
-                  animationDuration: 500,
-                  dataSource: nullChart,
-                  xValueMapper: (SensorNodeSnapshot? data, _) {
-                    increment += 1;
-                    return _dateTimeFormatting.formatTimeClearZero(
-                        DateTime.fromMillisecondsSinceEpoch(0).add(
-                            Duration(hours: increment)
-                        )
-                    );
-                  },
-                  yValueMapper: (SensorNodeSnapshot? data, _) {
-                    return null;
-                  }
-              ),
-            ]
-        ),
-      ),
-    );
 
-  }
 }

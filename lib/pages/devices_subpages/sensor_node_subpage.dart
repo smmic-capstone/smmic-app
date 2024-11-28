@@ -6,7 +6,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/components/devices/sensor_node_subpage/stacked_line.dart';
 import 'package:smmic/components/devices/sensor_node_subpage/sensor_node_card_expanded.dart';
-import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import '../../models/device_data_models.dart';
 
@@ -97,8 +96,9 @@ class _SensorNodePageState extends State<SensorNodePage> with TickerProviderStat
                   children: [
                     const SizedBox(height: 120),
                     _expandedSeCard(),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 20),
                     StackedLineChart(deviceId: widget.deviceID),
+                    const SizedBox(height: 30)
                   ],
                 ),
               ),
