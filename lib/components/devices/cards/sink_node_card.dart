@@ -48,7 +48,8 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
   @override
   Widget build(BuildContext context) {
     SinkNodeState sinkState = context.watch<DevicesProvider>()
-        .sinkNodeStateMap[widget.deviceInfo.deviceID]!;
+        .sinkNodeStateMap[widget.deviceInfo.deviceID]
+        ?? SinkNodeState.initObj(widget.deviceInfo.deviceID);
     return Container(
       margin: EdgeInsets.only(left: 25, right: 25, bottom: widget.bottomMargin ?? 0),
       child: Stack(
