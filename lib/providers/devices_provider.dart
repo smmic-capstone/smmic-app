@@ -75,10 +75,10 @@ class DevicesProvider extends ChangeNotifier {
 
     notifyListeners();
 
-    // if (connectivity != ConnectivityResult.none) {
-    //   _loadSinkReadingsFromApi();
-    //   _loadSensorReadingsFromApi();
-    // }
+    if (connectivity != ConnectivityResult.none) {
+      _loadSinkReadingsFromApi();
+      _loadSensorReadingsFromApi();
+    }
 
     // set *updated* list to shared preferences
     await _setToSharedPrefs();

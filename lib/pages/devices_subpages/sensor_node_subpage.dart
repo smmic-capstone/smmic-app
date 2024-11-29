@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:smmic/components/devices/sensor_node_subpage/stacked_line.dart';
 import 'package:smmic/components/devices/sensor_node_subpage/sensor_node_card_expanded.dart';
 import 'package:smmic/providers/theme_provider.dart';
+import 'package:smmic/utils/device_utils.dart';
 import '../../models/device_data_models.dart';
 
 class SensorNodePage extends StatefulWidget {
@@ -30,6 +31,8 @@ class SensorNodePage extends StatefulWidget {
 }
 
 class _SensorNodePageState extends State<SensorNodePage> with TickerProviderStateMixin {
+  final DeviceUtils _deviceUtils = DeviceUtils();
+
   final ScrollController _scrollController = ScrollController();
   late AnimationController _appBarBgAnimController;
   late Animation<double> _appBarBgAnimation;
@@ -91,15 +94,24 @@ class _SensorNodePageState extends State<SensorNodePage> with TickerProviderStat
               controller: _scrollController,
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 25),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 120),
-                    _expandedSeCard(),
-                    const SizedBox(height: 20),
-                    StackedLineChart(deviceId: widget.deviceID),
-                    const SizedBox(height: 30)
-                  ],
+                child: StreamBuilder(
+                    stream: _deviceUtils.timeTickerSeconds(),
+                    builder: (context, snapshot) {
+                      DateTime currentDateTime = snapshot.data ?? DateTime.now();
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 120),
+                          _expandedSeCard(currentDateTime),
+                          const SizedBox(height: 20),
+                          StackedLineChart(
+                            deviceId: widget.deviceID,
+                            currentDateTime: currentDateTime
+                          ),
+                          const SizedBox(height: 30)
+                        ],
+                      );
+                    }
                 ),
               ),
             ),
@@ -220,9 +232,10 @@ class _SensorNodePageState extends State<SensorNodePage> with TickerProviderStat
     );
   }
 
-  Widget _expandedSeCard() {
+  Widget _expandedSeCard(DateTime currentDateTime) {
     return SensorNodeCardExpanded(
       deviceID: widget.deviceID,
+      currentDateTime: currentDateTime,
     );
   }
 

@@ -12,6 +12,7 @@ import 'package:smmic/providers/user_data_provider.dart';
 import 'package:smmic/subcomponents/weatherComponents/weatherWidgets.dart';
 import 'package:smmic/pages/forcastpage.dart';
 import 'package:smmic/providers/theme_provider.dart';
+import 'package:smmic/utils/device_utils.dart';
 
 class DashBoard extends StatefulWidget {
   const DashBoard({super.key});
@@ -21,6 +22,8 @@ class DashBoard extends StatefulWidget {
 }
 
 class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
+  final DeviceUtils _deviceUtils = DeviceUtils();
+
   final ScrollController _scrollController = ScrollController();
   late AnimationController _appBarBgAnimController;
   late Animation<double> _appBarBgAnimation ;
@@ -139,11 +142,19 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
               ),
               SingleChildScrollView(
                   controller: _scrollController,
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 315),
-                      ..._buildSinkCards(context.watch<DevicesProvider>().sinkNodeMap),
-                    ],
+                  child: StreamBuilder<DateTime>(
+                      stream: _deviceUtils.timeTickerSeconds(),
+                      builder: (context, snapshot) {
+                        return Column(
+                          children: [
+                            const SizedBox(height: 315),
+                            ..._buildSinkCards(
+                                context.watch<DevicesProvider>().sinkNodeMap,
+                                snapshot.data ?? DateTime.now()
+                            ),
+                          ],
+                        );
+                      }
                   )
               )
             ],
@@ -161,7 +172,7 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
     );
   }
 
-  List<Widget> _buildSinkCards(Map<String, SinkNode> sinkNodeMap) {
+  List<Widget> _buildSinkCards(Map<String, SinkNode> sinkNodeMap, DateTime currentDateTime) {
     return sinkNodeMap.keys.indexed.map((id) {
       return Container(
         margin: EdgeInsets.only(
@@ -170,7 +181,8 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
                 : 15
         ),
         child: SinkNodeCard(
-            deviceInfo: sinkNodeMap[id.$2]!
+          deviceInfo: sinkNodeMap[id.$2]!,
+          currentDateTime: currentDateTime,
         ),
       );
     }).toList();

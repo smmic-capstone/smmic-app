@@ -13,12 +13,14 @@ class SinkNodeCard extends StatefulWidget {
     super.key,
     required this.deviceInfo,
     this.bottomMargin,
-    this.expanded = true
+    this.expanded = true,
+    required this.currentDateTime
   });
 
   final SinkNode deviceInfo;
   final double? bottomMargin;
   final bool expanded;
+  final DateTime currentDateTime;
 
   @override
   State<SinkNodeCard> createState() => _SinkNodeCardState();
@@ -118,26 +120,23 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
         Column(
           children: [
             const SizedBox(height: 15),
-            StreamBuilder(
-                stream: _deviceUtils.timeTickerSeconds(),
-                builder: (context, snapshot) {
-                  Color iconColor = Colors.white.withOpacity(0.6);
-                  if (snapshot.hasData) {
-                    if (snapshot.data!.compareTo(
-                        lastTransmission.add(const Duration(hours: 10))) == -1) {
-                      iconColor = const Color.fromRGBO(23, 255, 50, 1);
-                    }
-                  }
-                  return SvgPicture.asset(
-                    'assets/icons/signal.svg',
-                    width: iconSize,
-                    height: iconSize,
-                    colorFilter: ColorFilter.mode(
-                        iconColor,
-                        BlendMode.srcATop
-                    ),
-                  );
+            Builder(
+              builder: (context) {
+                Color iconColor = Colors.white.withOpacity(0.6);
+                if (widget.currentDateTime.compareTo(
+                    lastTransmission.add(const Duration(hours: 10))) == -1) {
+                  iconColor = const Color.fromRGBO(23, 255, 50, 1);
                 }
+                return SvgPicture.asset(
+                  'assets/icons/signal.svg',
+                  width: iconSize,
+                  height: iconSize,
+                  colorFilter: ColorFilter.mode(
+                      iconColor,
+                      BlendMode.srcATop
+                  ),
+                );
+              },
             )
           ],
         ),
@@ -174,12 +173,11 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
 
   Widget _lastTransmission({required DateTime latestTimestamp}) {
     // stream builder to get data from time ticker function
-    return StreamBuilder<DateTime>(
-        stream: _deviceUtils.timeTickerSeconds(),
-        builder: (context, snapshot) {
+    return Builder(
+        builder: (context) {
           String displayText = _deviceUtils.relativeTimeDisplay(
               latestTimestamp,
-              snapshot.data ?? DateTime.now()
+              widget.currentDateTime
           );
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,

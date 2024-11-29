@@ -10,6 +10,7 @@ import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
 import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
+import 'package:smmic/utils/device_utils.dart';
 import 'package:smmic/utils/logs.dart';
 
 class Devices extends StatefulWidget {
@@ -20,6 +21,8 @@ class Devices extends StatefulWidget {
 }
 
 class _Devices extends State<Devices> with TickerProviderStateMixin {
+  final DeviceUtils _deviceUtils = DeviceUtils();
+
   final ScrollController _scrollController = ScrollController();
   late AnimationController _appBarBgAnimController;
   late Animation<double> _appBarBgAnimation;
@@ -77,10 +80,16 @@ class _Devices extends State<Devices> with TickerProviderStateMixin {
       body: Stack(
         children: [
           _drawCircle(),
-          _buildList(
-            sinkNodeMap: context.watch<DevicesProvider>().sinkNodeMap,
-            sensorNodeMap: context.watch<DevicesProvider>().sensorNodeMap,
-            options: context.watch<DeviceListOptionsNotifier>().enabledConditions,
+          StreamBuilder<DateTime>(
+              stream: _deviceUtils.timeTickerSeconds(),
+              builder: (context, snapshot) {
+                return _buildList(
+                  sinkNodeMap: context.watch<DevicesProvider>().sinkNodeMap,
+                  sensorNodeMap: context.watch<DevicesProvider>().sensorNodeMap,
+                  options: context.watch<DeviceListOptionsNotifier>().enabledConditions,
+                  currentDateTime: snapshot.data ?? DateTime.now()
+                );
+              }
           ),
           Positioned(
             top: 45,
@@ -206,7 +215,8 @@ class _Devices extends State<Devices> with TickerProviderStateMixin {
   Widget _buildList({
     required Map<String, SinkNode> sinkNodeMap,
     required Map<String, SensorNode> sensorNodeMap,
-    required Map<String, bool Function(Widget)> options,}){
+    required Map<String, bool Function(Widget)> options,
+    required DateTime currentDateTime}){
 
     return SingleChildScrollView(
       controller: _scrollController,
@@ -216,7 +226,8 @@ class _Devices extends State<Devices> with TickerProviderStateMixin {
           ..._buildCards(
               sinkNodeMap: sinkNodeMap,
               sensorNodeMap: sensorNodeMap,
-              options: options
+              options: options,
+              currentDateTime: currentDateTime
           ),
         ],
       ),
@@ -226,7 +237,8 @@ class _Devices extends State<Devices> with TickerProviderStateMixin {
   List<Widget> _buildCards({
     required Map<String, SinkNode> sinkNodeMap,
     required Map<String, SensorNode> sensorNodeMap,
-    required Map<String, bool Function(Widget)> options}){
+    required Map<String, bool Function(Widget)> options,
+    required DateTime currentDateTime}){
 
     List<Widget> cards = [];
 
@@ -236,6 +248,7 @@ class _Devices extends State<Devices> with TickerProviderStateMixin {
           deviceInfo: sinkNodeMap[sinkId]!,
           bottomMargin: 15,
           expanded: false,
+          currentDateTime: currentDateTime,
         ),
       );
       for (String sensorId in sinkNodeMap[sinkId]!.registeredSensorNodes) {
@@ -243,6 +256,7 @@ class _Devices extends State<Devices> with TickerProviderStateMixin {
           SensorNodeCard(
             deviceInfo: sensorNodeMap[sensorId]!,
             bottomMargin: 15,
+            currentDateTime: currentDateTime,
           )
         );
       }

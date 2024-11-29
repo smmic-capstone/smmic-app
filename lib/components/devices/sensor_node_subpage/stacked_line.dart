@@ -1,5 +1,9 @@
+import 'dart:convert';
 import 'dart:ui';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/providers/devices_provider.dart';
@@ -12,8 +16,11 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 class StackedLineChart extends StatefulWidget {
   const StackedLineChart({
     super.key,
-    required this.deviceId
+    required this.deviceId,
+    required this.currentDateTime
   });
+
+  final DateTime currentDateTime;
   final String deviceId;
 
   @override
@@ -26,11 +33,12 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
   final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
 
   // card variables
-  double _cardHeight = 300;
+  double cardHeight = 300;
 
   // stacked line variables
   final ScrollController _stackedLinesScrollController = ScrollController();
   final ScrollController _onFocusPointScrollController = ScrollController();
+  final ScrollController _followingTickLinesScrollController = ScrollController();
   bool _showRelativeTimeDisplay = false; //ignore: prefer_final_fields
   int _highLightedPointIndex = -1; // ignore: prefer_final_fields
 
@@ -47,12 +55,23 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
   double _focusedPointSoilMoisture = 0; // ignore: prefer_final_fields
   double _focusedPointTemperature = 0; // ignore: prefer_final_fields
   double _focusedPointHumidity = 0; // ignore: prefer_final_fields
+  late AnimationController _valueColoredLineAnimationController;
   late Animation _valueColoredLineAnimation;
+  double _stackedLineScrollOffset = 0; // ignore: prefer_final_fields
+  int _chartDataHash = -1; // ignore: prefer_final_fields
 
   // trigger focused point behavior
   void _focusedPointTrigger() {
     if (_highLightedPointIndex != -1) {
       setState(() {
+        if (_valuesAnimationController.isCompleted) {
+          _soilMoistureTween.begin = _soilMoistureTween.end;
+          _humidityTween.begin = _humidityTween.end;
+          _temperatureTween.begin = _temperatureTween.end;
+          _valuesAnimationController.reset();
+        } else {
+          _valueColoredLineAnimationController.forward();
+        }
         _soilMoistureTween.end = _focusedPointSoilMoisture;
         _temperatureTween.end = _focusedPointTemperature;
         _humidityTween.end = _focusedPointHumidity;
@@ -61,8 +80,39 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       return;
     } else {
       setState(() {
+        _soilMoistureTween.begin = 0;
+        _humidityTween.begin = 0;
+        _temperatureTween.begin = 0;
+        _valueColoredLineAnimationController.reset();
         _valuesAnimationController.reset();
       });
+    }
+  }
+
+  late DevicesProvider _devicesProvider;
+  void _updateWhileFocusedTrigger() {
+    List<SensorNodeSnapshot>? chartList = _devicesProvider.sensorNodeChartDataMap[widget.deviceId];
+
+    if (chartList == null || chartList.isEmpty) {
+      return;
+    }
+
+    if (_chartDataHash == Object.hashAll(chartList)) {
+      return;
+    }
+
+    setState(() {
+      _chartDataHash = Object.hashAll(chartList);
+    });
+
+    if (_highLightedPointIndex != -1) {
+      setState(() {
+        _focusedPointSoilMoisture = chartList[_highLightedPointIndex].soilMoisture;
+        _focusedPointTemperature = chartList[_highLightedPointIndex].temperature;
+        _focusedPointHumidity = chartList[_highLightedPointIndex].humidity;
+        _focusedPointTrigger();
+      });
+      return;
     }
   }
 
@@ -81,27 +131,36 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
     }
   }
 
+  void _syncScrollOffsets() {
+    _followingTickLinesScrollController.jumpTo(_stackedLinesScrollController.offset);
+  }
+
   // snaps the stacked line chart points to match background tick lines
   void _stackedLineSnapToOffset(double snapOffset) {
     double currentOffset = _stackedLinesScrollController.offset;
-    double snapPoint = (currentOffset / snapOffset).round() * snapOffset;
+    double calculatedSnapPoint = (currentOffset / snapOffset).round() * snapOffset;
     double maxScrollExtent = _stackedLinesScrollController.position.maxScrollExtent;
+    double finalSnapPoint = calculatedSnapPoint;
     if (currentOffset != maxScrollExtent) {
-      if (snapPoint > maxScrollExtent) {
+      if (calculatedSnapPoint > maxScrollExtent) {
+        finalSnapPoint = _stackedLinesScrollController.position.maxScrollExtent;
         _stackedLinesScrollController.animateTo(
-            _stackedLinesScrollController.position.maxScrollExtent,
+            finalSnapPoint,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutExpo
         );
       } else {
         _stackedLinesScrollController.animateTo(
-            snapPoint,
+            finalSnapPoint,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutExpo
         );
       }
     }
-    _onFocusPointScrollController.jumpTo(snapPoint);
+    setState(() {
+      _stackedLineScrollOffset = finalSnapPoint;
+    });
+    _onFocusPointScrollController.jumpTo(finalSnapPoint);
   }
 
   // generate a color for fields
@@ -132,10 +191,16 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       ),
     );
 
+    _valueColoredLineAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(
+          milliseconds: 500
+      ),
+    );
     // underline field indicator animation
     _valueColoredLineAnimation = Tween<double>(begin: 0,end: 25).animate(
         CurvedAnimation(
-            parent: _valuesAnimationController,
+            parent: _valueColoredLineAnimationController,
             curve: Curves.easeInOutExpo
         )
     );
@@ -158,14 +223,21 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
 
     // init to end of list
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      double maxScrollExtent = _stackedLinesScrollController.position.maxScrollExtent;
+      setState(() {
+        _stackedLineScrollOffset = maxScrollExtent;
+      });
       _stackedLinesScrollController.jumpTo(
-          _stackedLinesScrollController.position.maxScrollExtent
+          maxScrollExtent
       );
       _onFocusPointScrollController.jumpTo(
-        _stackedLinesScrollController.position.maxScrollExtent
+          maxScrollExtent
       );
+      _devicesProvider = context.read<DevicesProvider>();
+      context.read<DevicesProvider>().addListener(_updateWhileFocusedTrigger);
     });
     _stackedLinesScrollController.addListener(_relativeToNowOpacityTrigger);
+    _stackedLinesScrollController.addListener(_syncScrollOffsets);
 
     super.initState();
   }
@@ -174,6 +246,8 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
   void dispose() {
     _onFocusPointScrollController.dispose();
     _stackedLinesScrollController.removeListener(_relativeToNowOpacityTrigger);
+    _stackedLinesScrollController.removeListener(_syncScrollOffsets);
+    _devicesProvider.removeListener(_updateWhileFocusedTrigger);
     _stackedLinesScrollController.dispose();
     _valuesAnimationController.dispose();
     super.dispose();
@@ -189,6 +263,10 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
     List<SensorNodeSnapshot> chartData = context.watch<DevicesProvider>()
         .sensorNodeChartDataMap[widget.deviceId] ?? [];
 
+    setState(() {
+      _chartDataHash = Object.hashAll(chartData);
+    });
+
     return Listener(
       onPointerUp: (_) {
         setState(() {
@@ -203,7 +281,11 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       child: Stack(
         children: [
           _renderBackground(),
-          _staticTickLines(),
+          //_staticTickLines(),
+          Container(
+            margin: const EdgeInsets.only(top: 25),
+            child: _followingTickLines(chartData.length),
+          ),
           Container(
             margin: const EdgeInsets.only(top: 25),
             child: _onFocusChartBase(chartData),
@@ -223,7 +305,26 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
               }
             },
           ),
-          _relativeToNowDisplay(),
+          Builder(
+            builder: (context) {
+              int indexOffset = DatabaseHelper.maxChartLength - chartData.length;
+              int finalIndex = _highLightedPointIndex - indexOffset;
+              double opacity = 0;
+              if (_highLightedPointIndex != -1) {
+                opacity = 1;
+                return _focusedPointRelativeToNowDisplay(
+                  chartData[finalIndex].timestamp,
+                  opacity,
+                  stackedLineSnapOffset
+                );
+              } else {
+                return const SizedBox();
+              }
+            },
+          ),
+          chartData.isEmpty
+              ? const SizedBox()
+              : _relativeToNowDisplay(chartData.last.timestamp),
         ],
       ),
     );
@@ -234,9 +335,16 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       borderRadius: const BorderRadius.all(Radius.circular(25)),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          color: Colors.black.withOpacity(0.6),
-          height: 300,
+        child: AnimatedOpacity(
+          opacity: _highLightedPointIndex != -1
+              ? 0.8
+              : 0.65,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutExpo,
+          child: Container(
+            color: Colors.black,
+            height: 300,
+          ),
         ),
       ),
     );
@@ -268,7 +376,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 35),
         alignment: Alignment.center,
-        height: _cardHeight,
+        height: cardHeight,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -279,6 +387,92 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
               );
             })
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _followingTickLines(int charDataLength) {
+    List<SensorNodeSnapshot?> nullChartList = List<SensorNodeSnapshot?>
+        .generate(10, (index) => null);
+
+    int dummyTimeHourIncrement = 0;
+    SfCartesianChart cartesianChart = SfCartesianChart(
+        plotAreaBorderWidth: 0.0,
+        primaryXAxis: const CategoryAxis(
+          rangePadding: ChartRangePadding.none,
+          axisLine: AxisLine(
+              color: Colors.transparent
+          ),
+          labelStyle: TextStyle(
+              fontSize: 0,
+              color: Colors.transparent
+          ),
+          tickPosition: TickPosition.inside,
+          isVisible: true,
+          labelPlacement: LabelPlacement.onTicks,
+        ),
+        primaryYAxis: const NumericAxis(
+          maximum: 100,
+          minimum: 0,
+          isVisible: false,
+        ),
+        series: <CartesianSeries>[
+          StackedLineSeries<SensorNodeSnapshot?, String>(
+              dataSource: nullChartList,
+              xValueMapper: (SensorNodeSnapshot? data, _) {
+                dummyTimeHourIncrement++;
+                return _dateTimeFormatting.formatTimeClearZero(
+                    DateTime.fromMillisecondsSinceEpoch(0).add(
+                        Duration(
+                            hours: dummyTimeHourIncrement
+                        )
+                    )
+                );
+              },
+              yValueMapper: (SensorNodeSnapshot? data, _) {
+                return null;
+              }
+          )
+        ]
+    );
+
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    // gradient settings
+    List<Color> pointsFocused = [
+      Colors.white.withOpacity(0.1),
+      Colors.white.withOpacity(0.1)
+    ];
+    List<Color> defaultGradient = [
+      Colors.white.withOpacity(0.1),
+      Colors.white.withOpacity(0.5),
+      Colors.white.withOpacity(1)
+    ];
+    LinearGradient gradient = LinearGradient(
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+      colors: _highLightedPointIndex != -1
+          ? pointsFocused
+          : defaultGradient,
+    );
+
+    return SizedBox(
+      height: 250,
+      child: SingleChildScrollView(
+        controller: _followingTickLinesScrollController,
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: screenWidth - (screenWidth * 0.91)),
+          width: ((screenWidth - 70) / 6) * 10,
+          height: 250,
+          child: ShaderMask(
+            shaderCallback: (Rect bounds) {
+              return gradient.createShader(bounds);
+            },
+            child: cartesianChart,
+          ),
         ),
       ),
     );
@@ -357,7 +551,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
         color: Colors.white,
         fontFamily: 'Inter',
         fontSize: 23,
-        fontWeight: FontWeight.w400
+        fontWeight: FontWeight.w500
     );
     TextStyle symbolTextStyle = const TextStyle(
         color: Colors.white,
@@ -433,7 +627,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
           style: titleTextStyle
       );
     }
-    
+
     Widget stackWrapper((int, String) fieldVars) {
       return Stack(
         children: [
@@ -455,6 +649,75 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
         children: [
           ...values.indexed.map((field) => stackWrapper(field))
         ],
+      ),
+    );
+  }
+
+  Widget _focusedPointRelativeToNowDisplay(DateTime timestamp, double opacity, double snapOffset) {
+
+    // get the display index of the focused points relative to the view
+    double currentViewIndexStart = _stackedLineScrollOffset / snapOffset;
+    int displayIndexRelativeToView = ((currentViewIndexStart - _highLightedPointIndex) * -1).toInt();
+
+    // text styles
+    TextStyle primaryTextStyle = const TextStyle(
+        color: Colors.white,
+        fontFamily: 'Inter',
+        fontSize: 23,
+        fontWeight: FontWeight.w500
+    );
+    TextStyle secondaryTextStyle = const TextStyle(
+      color: Colors.white,
+      fontFamily: 'Inter',
+      fontSize: 15,
+      fontWeight: FontWeight.w400
+    );
+    TextStyle tertiaryTextStyle = TextStyle(
+        color: Colors.white.withOpacity(0.75),
+        fontFamily: 'Inter',
+        fontSize: 12,
+        fontWeight: FontWeight.w400
+    );
+
+    return Positioned(
+      top: 70,
+      left: displayIndexRelativeToView >= 3 ? 45 : null,
+      right: displayIndexRelativeToView <= 2 ? 55 : null,
+      child: Container(
+        alignment: displayIndexRelativeToView >= 3
+            ? Alignment.centerLeft
+            : Alignment.centerRight,
+        height: 70,
+        width: 150,
+        child: StreamBuilder(
+            stream: _deviceUtils.timeTickerSeconds(),
+            builder: (context, snapshot) {
+              String finalText = _deviceUtils.relativeTimeDisplay(
+                timestamp,
+                snapshot.data ?? DateTime.now(),
+              );
+              return RichText(
+                textAlign: displayIndexRelativeToView >= 3
+                    ? TextAlign.start
+                    : TextAlign.end,
+                text: TextSpan(
+                  text: finalText.split(' ').first,
+                  style: primaryTextStyle,
+                  children: [
+                    TextSpan(
+                      text: ' ${finalText.split(' ')[1]} '
+                          '${finalText.split(' ')[2]}',
+                      style: secondaryTextStyle
+                    ),
+                    TextSpan(
+                        text: '\n\n${DateFormat("h:mm a\nMMMM d").format(timestamp)}',
+                        style: tertiaryTextStyle
+                    ),
+                  ]
+                ),
+              );
+            }
+        ),
       ),
     );
   }
@@ -506,10 +769,10 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
           controller: _stackedLinesScrollController,
           scrollDirection: Axis.horizontal,
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: screenWidth - (screenWidth * 0.9)),
+            padding: EdgeInsets.symmetric(horizontal: screenWidth - (screenWidth * 0.91)),
             width: ((screenWidth - 70) / 6) * 10,
             child: AnimatedOpacity(
-              opacity: _highLightedPointIndex != -1 ? 0.2 : 1,
+              opacity: _highLightedPointIndex != -1 ? 0.15 : 1,
               duration: const Duration(seconds: 1),
               curve: Curves.easeOutExpo,
               child: cartesianChart,
@@ -549,6 +812,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       }
       return null;
     }
+
     void doubleTapTrigger(ChartPointDetails point) {
       int pointIndex = point.pointIndex ?? paddedChart.length - 2;
       setState(() {
@@ -562,6 +826,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       });
       _focusedPointTrigger();
     }
+
     String? timeAxisGenerator(SensorNodeSnapshot? data, int falseHourIncrement) {
       if (data != null) {
         return _dateTimeFormatting.formatTimeClearZero(data.timestamp);
@@ -597,6 +862,9 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
                   point,
                   field.name
               );
+            },
+            onPointLongPress: (ChartPointDetails point) {
+              doubleTapTrigger(point);
             },
             onPointDoubleTap: (ChartPointDetails point) {
               doubleTapTrigger(point);
@@ -645,7 +913,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
         controller: _onFocusPointScrollController,
         scrollDirection: Axis.horizontal,
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: screenWidth - (screenWidth * 0.9)),
+          padding: EdgeInsets.symmetric(horizontal: screenWidth - (screenWidth * 0.91)),
           width: ((screenWidth - 70) / 6) * 10,
           height: chartHeight,
           child: cartesianChart,
@@ -697,6 +965,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
           )
       );
     }
+
     num? numericAxisGenerator(SensorNodeSnapshot? data, String fieldName) {
       if (data != null) {
         if (fieldName == ValueType.soilMoisture.name) {
@@ -733,10 +1002,11 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
     return cartesianSeriesList;
   }
 
-  Widget _relativeToNowDisplay() {
+  Widget _relativeToNowDisplay(DateTime lastReadingTimestamp) {
+    double screenWidth = MediaQuery.of(context).size.width;
     return Positioned(
       bottom: 75,
-      right: 53 - 10.5,
+      right: screenWidth - (screenWidth * 0.894),
       child: AnimatedOpacity(
         opacity: _showRelativeTimeDisplay ? 1 : 0,
         duration: const Duration(milliseconds: 500),
@@ -747,14 +1017,12 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
               padding: const EdgeInsets.symmetric(
                   horizontal: 7
               ),
-              child: StreamBuilder(
-                  stream: _deviceUtils.timeTickerSeconds(),
-                  builder: (context, snapshot) {
+              child: Builder(
+                  builder: (context) {
                     return Text(
                       _deviceUtils.relativeTimeDisplay(
-                          context.watch<DevicesProvider>()
-                              .sensorNodeChartDataMap[widget.deviceId]!.last.timestamp,
-                          snapshot.data ?? DateTime.now()
+                          lastReadingTimestamp,
+                          widget.currentDateTime
                       ),
                       style: const TextStyle(
                           color: Colors.white,
@@ -785,6 +1053,4 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       ),
     );
   }
-
-
 }
