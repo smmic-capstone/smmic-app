@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:ui';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:intl/intl.dart';
@@ -53,13 +55,23 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
   double _focusedPointSoilMoisture = 0; // ignore: prefer_final_fields
   double _focusedPointTemperature = 0; // ignore: prefer_final_fields
   double _focusedPointHumidity = 0; // ignore: prefer_final_fields
+  late AnimationController _valueColoredLineAnimationController;
   late Animation _valueColoredLineAnimation;
   double _stackedLineScrollOffset = 0; // ignore: prefer_final_fields
+  int _chartDataHash = -1; // ignore: prefer_final_fields
 
   // trigger focused point behavior
   void _focusedPointTrigger() {
     if (_highLightedPointIndex != -1) {
       setState(() {
+        if (_valuesAnimationController.isCompleted) {
+          _soilMoistureTween.begin = _soilMoistureTween.end;
+          _humidityTween.begin = _humidityTween.end;
+          _temperatureTween.begin = _temperatureTween.end;
+          _valuesAnimationController.reset();
+        } else {
+          _valueColoredLineAnimationController.forward();
+        }
         _soilMoistureTween.end = _focusedPointSoilMoisture;
         _temperatureTween.end = _focusedPointTemperature;
         _humidityTween.end = _focusedPointHumidity;
@@ -68,8 +80,39 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       return;
     } else {
       setState(() {
+        _soilMoistureTween.begin = 0;
+        _humidityTween.begin = 0;
+        _temperatureTween.begin = 0;
+        _valueColoredLineAnimationController.reset();
         _valuesAnimationController.reset();
       });
+    }
+  }
+
+  late DevicesProvider _devicesProvider;
+  void _updateWhileFocusedTrigger() {
+    List<SensorNodeSnapshot>? chartList = _devicesProvider.sensorNodeChartDataMap[widget.deviceId];
+
+    if (chartList == null || chartList.isEmpty) {
+      return;
+    }
+
+    if (_chartDataHash == Object.hashAll(chartList)) {
+      return;
+    }
+
+    setState(() {
+      _chartDataHash = Object.hashAll(chartList);
+    });
+
+    if (_highLightedPointIndex != -1) {
+      setState(() {
+        _focusedPointSoilMoisture = chartList[_highLightedPointIndex].soilMoisture;
+        _focusedPointTemperature = chartList[_highLightedPointIndex].temperature;
+        _focusedPointHumidity = chartList[_highLightedPointIndex].humidity;
+        _focusedPointTrigger();
+      });
+      return;
     }
   }
 
@@ -148,10 +191,16 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       ),
     );
 
+    _valueColoredLineAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(
+          milliseconds: 500
+      ),
+    );
     // underline field indicator animation
     _valueColoredLineAnimation = Tween<double>(begin: 0,end: 25).animate(
         CurvedAnimation(
-            parent: _valuesAnimationController,
+            parent: _valueColoredLineAnimationController,
             curve: Curves.easeInOutExpo
         )
     );
@@ -184,6 +233,8 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       _onFocusPointScrollController.jumpTo(
           maxScrollExtent
       );
+      _devicesProvider = context.read<DevicesProvider>();
+      context.read<DevicesProvider>().addListener(_updateWhileFocusedTrigger);
     });
     _stackedLinesScrollController.addListener(_relativeToNowOpacityTrigger);
     _stackedLinesScrollController.addListener(_syncScrollOffsets);
@@ -196,6 +247,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
     _onFocusPointScrollController.dispose();
     _stackedLinesScrollController.removeListener(_relativeToNowOpacityTrigger);
     _stackedLinesScrollController.removeListener(_syncScrollOffsets);
+    _devicesProvider.removeListener(_updateWhileFocusedTrigger);
     _stackedLinesScrollController.dispose();
     _valuesAnimationController.dispose();
     super.dispose();
@@ -210,6 +262,10 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
     // chart data from devices provider
     List<SensorNodeSnapshot> chartData = context.watch<DevicesProvider>()
         .sensorNodeChartDataMap[widget.deviceId] ?? [];
+
+    setState(() {
+      _chartDataHash = Object.hashAll(chartData);
+    });
 
     return Listener(
       onPointerUp: (_) {
@@ -756,6 +812,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       }
       return null;
     }
+
     void doubleTapTrigger(ChartPointDetails point) {
       int pointIndex = point.pointIndex ?? paddedChart.length - 2;
       setState(() {
@@ -769,6 +826,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       });
       _focusedPointTrigger();
     }
+
     String? timeAxisGenerator(SensorNodeSnapshot? data, int falseHourIncrement) {
       if (data != null) {
         return _dateTimeFormatting.formatTimeClearZero(data.timestamp);
@@ -907,6 +965,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
           )
       );
     }
+
     num? numericAxisGenerator(SensorNodeSnapshot? data, String fieldName) {
       if (data != null) {
         if (fieldName == ValueType.soilMoisture.name) {
