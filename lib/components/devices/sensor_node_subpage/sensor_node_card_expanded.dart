@@ -17,9 +17,11 @@ class SensorNodeCardExpanded extends StatefulWidget {
   const SensorNodeCardExpanded({
     super.key,
     required this.deviceID,
+    required this.currentDateTime
   });
 
   final String deviceID;
+  final DateTime currentDateTime;
 
   @override
   State<SensorNodeCardExpanded> createState() => _SensorNodeCardExpandedState();
