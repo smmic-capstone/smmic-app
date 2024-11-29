@@ -19,11 +19,13 @@ class SensorNodeCard extends StatefulWidget {
   const SensorNodeCard({
     super.key,
     required this.deviceInfo,
-    this.bottomMargin
+    this.bottomMargin,
+    required this.currentDateTime
   });
 
   final SensorNode deviceInfo;
   final double? bottomMargin;
+  final DateTime currentDateTime;
 
   @override
   State<SensorNodeCard> createState() => _SensorNodeCardState();

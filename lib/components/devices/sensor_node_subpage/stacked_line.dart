@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/providers/devices_provider.dart';
@@ -26,7 +27,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
   final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
 
   // card variables
-  double _cardHeight = 300;
+  double cardHeight = 300;
 
   // stacked line variables
   final ScrollController _stackedLinesScrollController = ScrollController();
@@ -48,6 +49,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
   double _focusedPointTemperature = 0; // ignore: prefer_final_fields
   double _focusedPointHumidity = 0; // ignore: prefer_final_fields
   late Animation _valueColoredLineAnimation;
+  double _stackedLineScrollOffset = 0; // ignore: prefer_final_fields
 
   // trigger focused point behavior
   void _focusedPointTrigger() {
@@ -84,24 +86,29 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
   // snaps the stacked line chart points to match background tick lines
   void _stackedLineSnapToOffset(double snapOffset) {
     double currentOffset = _stackedLinesScrollController.offset;
-    double snapPoint = (currentOffset / snapOffset).round() * snapOffset;
+    double calculatedSnapPoint = (currentOffset / snapOffset).round() * snapOffset;
     double maxScrollExtent = _stackedLinesScrollController.position.maxScrollExtent;
+    double finalSnapPoint = calculatedSnapPoint;
     if (currentOffset != maxScrollExtent) {
-      if (snapPoint > maxScrollExtent) {
+      if (calculatedSnapPoint > maxScrollExtent) {
+        finalSnapPoint = _stackedLinesScrollController.position.maxScrollExtent;
         _stackedLinesScrollController.animateTo(
-            _stackedLinesScrollController.position.maxScrollExtent,
+            finalSnapPoint,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutExpo
         );
       } else {
         _stackedLinesScrollController.animateTo(
-            snapPoint,
+            finalSnapPoint,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutExpo
         );
       }
     }
-    _onFocusPointScrollController.jumpTo(snapPoint);
+    setState(() {
+      _stackedLineScrollOffset = finalSnapPoint;
+    });
+    _onFocusPointScrollController.jumpTo(finalSnapPoint);
   }
 
   // generate a color for fields
@@ -158,11 +165,15 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
 
     // init to end of list
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      double maxScrollExtent = _stackedLinesScrollController.position.maxScrollExtent;
+      setState(() {
+        _stackedLineScrollOffset = maxScrollExtent;
+      });
       _stackedLinesScrollController.jumpTo(
-          _stackedLinesScrollController.position.maxScrollExtent
+          maxScrollExtent
       );
       _onFocusPointScrollController.jumpTo(
-        _stackedLinesScrollController.position.maxScrollExtent
+          maxScrollExtent
       );
     });
     _stackedLinesScrollController.addListener(_relativeToNowOpacityTrigger);
@@ -223,6 +234,23 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
               }
             },
           ),
+          Builder(
+            builder: (context) {
+              int indexOffset = DatabaseHelper.maxChartLength - chartData.length;
+              int finalIndex = _highLightedPointIndex - indexOffset;
+              double opacity = 0;
+              if (_highLightedPointIndex != -1) {
+                opacity = 1;
+                return _focusedPointRelativeToNowDisplay(
+                  chartData[finalIndex].timestamp,
+                  opacity,
+                  stackedLineSnapOffset
+                );
+              } else {
+                return const SizedBox();
+              }
+            },
+          ),
           _relativeToNowDisplay(),
         ],
       ),
@@ -234,9 +262,16 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       borderRadius: const BorderRadius.all(Radius.circular(25)),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          color: Colors.black.withOpacity(0.6),
-          height: 300,
+        child: AnimatedOpacity(
+          opacity: _highLightedPointIndex != -1
+              ? 0.8
+              : 0.65,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutExpo,
+          child: Container(
+            color: Colors.black,
+            height: 300,
+          ),
         ),
       ),
     );
@@ -268,7 +303,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 35),
         alignment: Alignment.center,
-        height: _cardHeight,
+        height: cardHeight,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -357,7 +392,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
         color: Colors.white,
         fontFamily: 'Inter',
         fontSize: 23,
-        fontWeight: FontWeight.w400
+        fontWeight: FontWeight.w500
     );
     TextStyle symbolTextStyle = const TextStyle(
         color: Colors.white,
@@ -433,7 +468,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
           style: titleTextStyle
       );
     }
-    
+
     Widget stackWrapper((int, String) fieldVars) {
       return Stack(
         children: [
@@ -455,6 +490,78 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
         children: [
           ...values.indexed.map((field) => stackWrapper(field))
         ],
+      ),
+    );
+  }
+
+  Widget _focusedPointRelativeToNowDisplay(
+      DateTime timestamp,
+      double opacity,
+      double snapOffset) {
+
+    // get the display index of the focused points relative to the view
+    double currentViewIndexStart = _stackedLineScrollOffset / snapOffset;
+    int displayIndexRelativeToView = ((currentViewIndexStart - _highLightedPointIndex) * -1).toInt();
+
+    // text styles
+    TextStyle primaryTextStyle = const TextStyle(
+        color: Colors.white,
+        fontFamily: 'Inter',
+        fontSize: 23,
+        fontWeight: FontWeight.w500
+    );
+    TextStyle secondaryTextStyle = const TextStyle(
+      color: Colors.white,
+      fontFamily: 'Inter',
+      fontSize: 15,
+      fontWeight: FontWeight.w400
+    );
+    TextStyle tertiaryTextStyle = TextStyle(
+        color: Colors.white.withOpacity(0.75),
+        fontFamily: 'Inter',
+        fontSize: 12,
+        fontWeight: FontWeight.w400
+    );
+
+    return Positioned(
+      top: 70,
+      left: displayIndexRelativeToView >= 3 ? 45 : null,
+      right: displayIndexRelativeToView <= 2 ? 55 : null,
+      child: Container(
+        alignment: displayIndexRelativeToView >= 3
+            ? Alignment.centerLeft
+            : Alignment.centerRight,
+        height: 70,
+        width: 150,
+        child: StreamBuilder(
+            stream: _deviceUtils.timeTickerSeconds(),
+            builder: (context, snapshot) {
+              String finalText = _deviceUtils.relativeTimeDisplay(
+                timestamp,
+                snapshot.data ?? DateTime.now(),
+              );
+              return RichText(
+                textAlign: displayIndexRelativeToView >= 3
+                    ? TextAlign.start
+                    : TextAlign.end,
+                text: TextSpan(
+                  text: finalText.split(' ').first,
+                  style: primaryTextStyle,
+                  children: [
+                    TextSpan(
+                      text: ' ${finalText.split(' ')[1]} '
+                          '${finalText.split(' ')[2]}',
+                      style: secondaryTextStyle
+                    ),
+                    TextSpan(
+                        text: '\n\n${DateFormat("h:mm a\nMMMM d").format(timestamp)}',
+                        style: tertiaryTextStyle
+                    ),
+                  ]
+                ),
+              );
+            }
+        ),
       ),
     );
   }
@@ -509,7 +616,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
             padding: EdgeInsets.symmetric(horizontal: screenWidth - (screenWidth * 0.9)),
             width: ((screenWidth - 70) / 6) * 10,
             child: AnimatedOpacity(
-              opacity: _highLightedPointIndex != -1 ? 0.2 : 1,
+              opacity: _highLightedPointIndex != -1 ? 0.15 : 1,
               duration: const Duration(seconds: 1),
               curve: Curves.easeOutExpo,
               child: cartesianChart,
@@ -597,6 +704,9 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
                   point,
                   field.name
               );
+            },
+            onPointLongPress: (ChartPointDetails point) {
+              doubleTapTrigger(point);
             },
             onPointDoubleTap: (ChartPointDetails point) {
               doubleTapTrigger(point);
@@ -785,6 +895,4 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       ),
     );
   }
-
-
 }

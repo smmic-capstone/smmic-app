@@ -106,7 +106,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
         child: Container(
           padding: const EdgeInsets.all(40),
           decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withOpacity(0.65),
               borderRadius: BorderRadius.all(Radius.circular(25))
           ),
           child: child,
