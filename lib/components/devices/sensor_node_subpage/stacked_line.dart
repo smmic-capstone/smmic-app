@@ -1,8 +1,5 @@
-import 'dart:convert';
 import 'dart:ui';
-import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/models/device_data_models.dart';
@@ -31,100 +28,169 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
   // helpers, configs
   final DeviceUtils _deviceUtils = DeviceUtils();
   final DateTimeFormatting _dateTimeFormatting = DateTimeFormatting();
+  late DevicesProvider _devicesProvider;
 
   // card variables
-  double cardHeight = 300;
+  final double _cardHeight = 300;
 
   // stacked line variables
-  final ScrollController _stackedLinesScrollController = ScrollController();
-  final ScrollController _onFocusPointScrollController = ScrollController();
-  final ScrollController _followingTickLinesScrollController = ScrollController();
-  bool _showRelativeTimeDisplay = false; //ignore: prefer_final_fields
-  int _highLightedPointIndex = -1; // ignore: prefer_final_fields
+  final ScrollController _stackedLinesController = ScrollController();
+  final ScrollController _focusedPointsController = ScrollController();
+  final ScrollController _followingTickLinesController = ScrollController();
 
-  // focused value variables
+  // focused value animation variables
   late AnimationController _valuesAnimationController;
   late CurvedAnimation _valuesAnimationCurve;
+
   late Animation<double> _soilMoistureAnimation;
   final Tween<double> _soilMoistureTween = Tween<double>(begin: 0, end: 0);
   late Animation<double> _temperatureAnimation;
   final Tween<double> _temperatureTween = Tween<double>(begin: 0, end: 0);
   late Animation<double> _humidityAnimation;
   final Tween<double> _humidityTween = Tween<double>(begin: 0, end: 0);
+
   late List<Animation<double>> _valuesAnimationList;
-  double _focusedPointSoilMoisture = 0; // ignore: prefer_final_fields
-  double _focusedPointTemperature = 0; // ignore: prefer_final_fields
-  double _focusedPointHumidity = 0; // ignore: prefer_final_fields
-  late AnimationController _valueColoredLineAnimationController;
+  late List<Tween<double>> _valuesTweenList;
+
+  late AnimationController _coloredLineIndicatorController;
   late Animation _valueColoredLineAnimation;
+
   double _stackedLineScrollOffset = 0; // ignore: prefer_final_fields
   int _chartDataHash = -1; // ignore: prefer_final_fields
 
-  // trigger focused point behavior
-  void _focusedPointTrigger() {
+  // state variables
+  bool _showRelativeTimeDisplay = false; //ignore: prefer_final_fields
+  int _highLightedPointIndex = -1; // ignore: prefer_final_fields
+
+  @override
+  void initState() {
+    // init animation variables
+    _valuesAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(
+          milliseconds: 500
+      ),
+    );
+
+    _coloredLineIndicatorController = AnimationController(
+      vsync: this,
+      duration: const Duration(
+        milliseconds: 500
+      )
+    );
+
+    _valueColoredLineAnimation = Tween<double>(begin: 0,end: 25).animate(
+        CurvedAnimation(
+            parent: _coloredLineIndicatorController,
+            curve: Curves.easeInOutExpo
+        )
+    );
+
+    // values animation variables
+    _valuesAnimationCurve = CurvedAnimation(
+        parent: _valuesAnimationController,
+        curve: Curves.easeInOutExpo
+    );
+    _soilMoistureAnimation = _soilMoistureTween.animate(_valuesAnimationCurve);
+    _temperatureAnimation = _temperatureTween.animate(_valuesAnimationCurve);
+    _humidityAnimation = _humidityTween.animate(_valuesAnimationCurve);
+
+    // set to list to access by index
+    _valuesAnimationList = [
+      _soilMoistureAnimation,
+      _temperatureAnimation,
+      _humidityAnimation
+    ];
+
+    _valuesTweenList = [
+      _soilMoistureTween,
+      _temperatureTween,
+      _humidityTween
+    ];
+
+    // init to end of list
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      double maxScrollExtent = _stackedLinesController.position.maxScrollExtent;
+      setState(() {_stackedLineScrollOffset = maxScrollExtent;});
+
+      _stackedLinesController.jumpTo(maxScrollExtent);
+      _focusedPointsController.jumpTo(maxScrollExtent);
+      _followingTickLinesController.jumpTo(maxScrollExtent);
+      _devicesProvider = context.read<DevicesProvider>();
+      _devicesProvider.addListener(_updateWhileFocusedTrigger);
+
+    });
+
+    _stackedLinesController.addListener(_relativeToNowOpacityTrigger);
+    _stackedLinesController.addListener(_syncScrollOffsets);
+
+    super.initState();
+  }
+
+  // trigger focused point animation
+  void _focusedPointTriggerForward(double newSm, double newTm, double newHm) {
     if (_highLightedPointIndex != -1) {
       setState(() {
-        if (_valuesAnimationController.isCompleted) {
-          _soilMoistureTween.begin = _soilMoistureTween.end;
-          _humidityTween.begin = _humidityTween.end;
-          _temperatureTween.begin = _temperatureTween.end;
-          _valuesAnimationController.reset();
-        } else {
-          _valueColoredLineAnimationController.forward();
-        }
-        _soilMoistureTween.end = _focusedPointSoilMoisture;
-        _temperatureTween.end = _focusedPointTemperature;
-        _humidityTween.end = _focusedPointHumidity;
+        _soilMoistureTween.end = newSm;
+        _temperatureTween.end = newTm;
+        _humidityTween.end = newHm;
+        _coloredLineIndicatorController.forward();
         _valuesAnimationController.forward();
       });
       return;
-    } else {
-      setState(() {
-        _soilMoistureTween.begin = 0;
-        _humidityTween.begin = 0;
-        _temperatureTween.begin = 0;
-        _valueColoredLineAnimationController.reset();
-        _valuesAnimationController.reset();
-      });
     }
   }
 
-  late DevicesProvider _devicesProvider;
+  void _focusedPointTriggerReverse() {
+    setState(() {
+      _soilMoistureTween.begin = 0;
+      _humidityTween.begin = 0;
+      _temperatureTween.begin = 0;
+      _coloredLineIndicatorController.reset();
+      _valuesAnimationController.reset();
+    });
+  }
+
+  // update the values of currently focused points
+  // and trigger animation if points are focused
   void _updateWhileFocusedTrigger() {
     List<SensorNodeSnapshot>? chartList = _devicesProvider.sensorNodeChartDataMap[widget.deviceId];
 
     if (chartList == null || chartList.isEmpty) {
       return;
-    }
-
-    if (_chartDataHash == Object.hashAll(chartList)) {
+    } else if (_chartDataHash == Object.hashAll(chartList)) {
       return;
     }
 
-    setState(() {
-      _chartDataHash = Object.hashAll(chartList);
-    });
+    setState(() {_chartDataHash = Object.hashAll(chartList);});
 
     if (_highLightedPointIndex != -1) {
       setState(() {
-        _focusedPointSoilMoisture = chartList[_highLightedPointIndex].soilMoisture;
-        _focusedPointTemperature = chartList[_highLightedPointIndex].temperature;
-        _focusedPointHumidity = chartList[_highLightedPointIndex].humidity;
-        _focusedPointTrigger();
+        // if the animation is completed *and* start from end of tween
+        // and end with new values
+        if (_valuesAnimationController.isCompleted) {
+          _soilMoistureTween.begin = _soilMoistureTween.end;
+          _soilMoistureTween.end = chartList[_highLightedPointIndex].soilMoisture;
+          _humidityTween.begin = _humidityTween.end;
+          _humidityTween.end = chartList[_highLightedPointIndex].humidity;
+          _temperatureTween.begin = _temperatureTween.end;
+          _temperatureTween.end = chartList[_highLightedPointIndex].temperature;
+          _valuesAnimationController.reset();
+          _valuesAnimationController.forward();
+        }
       });
-      return;
     }
   }
 
   // triggers opacity of the relative time display
   void _relativeToNowOpacityTrigger() {
-    if (_stackedLinesScrollController.position.maxScrollExtent
-        - _stackedLinesScrollController.offset < 15) {
+    if (_stackedLinesController.position.maxScrollExtent
+        - _stackedLinesController.offset < 15) {
       setState(() {
         _showRelativeTimeDisplay = true;
       });
-    } else if (_stackedLinesScrollController.position.maxScrollExtent
-        - _stackedLinesScrollController.offset > 15) {
+    } else if (_stackedLinesController.position.maxScrollExtent
+        - _stackedLinesController.offset > 15) {
       setState(() {
         _showRelativeTimeDisplay = false;
       });
@@ -132,25 +198,25 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
   }
 
   void _syncScrollOffsets() {
-    _followingTickLinesScrollController.jumpTo(_stackedLinesScrollController.offset);
+    _followingTickLinesController.jumpTo(_stackedLinesController.offset);
   }
 
   // snaps the stacked line chart points to match background tick lines
   void _stackedLineSnapToOffset(double snapOffset) {
-    double currentOffset = _stackedLinesScrollController.offset;
+    double currentOffset = _stackedLinesController.offset;
     double calculatedSnapPoint = (currentOffset / snapOffset).round() * snapOffset;
-    double maxScrollExtent = _stackedLinesScrollController.position.maxScrollExtent;
+    double maxScrollExtent = _stackedLinesController.position.maxScrollExtent;
     double finalSnapPoint = calculatedSnapPoint;
     if (currentOffset != maxScrollExtent) {
       if (calculatedSnapPoint > maxScrollExtent) {
-        finalSnapPoint = _stackedLinesScrollController.position.maxScrollExtent;
-        _stackedLinesScrollController.animateTo(
+        finalSnapPoint = _stackedLinesController.position.maxScrollExtent;
+        _stackedLinesController.animateTo(
             finalSnapPoint,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutExpo
         );
       } else {
-        _stackedLinesScrollController.animateTo(
+        _stackedLinesController.animateTo(
             finalSnapPoint,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutExpo
@@ -160,7 +226,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
     setState(() {
       _stackedLineScrollOffset = finalSnapPoint;
     });
-    _onFocusPointScrollController.jumpTo(finalSnapPoint);
+    _focusedPointsController.jumpTo(finalSnapPoint);
   }
 
   // generate a color for fields
@@ -182,73 +248,12 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
   }
 
   @override
-  void initState() {
-    // init animation variables
-    _valuesAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(
-          milliseconds: 500
-      ),
-    );
-
-    _valueColoredLineAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(
-          milliseconds: 500
-      ),
-    );
-    // underline field indicator animation
-    _valueColoredLineAnimation = Tween<double>(begin: 0,end: 25).animate(
-        CurvedAnimation(
-            parent: _valueColoredLineAnimationController,
-            curve: Curves.easeInOutExpo
-        )
-    );
-
-    // values animation variables
-    _valuesAnimationCurve = CurvedAnimation(
-        parent: _valuesAnimationController,
-        curve: Curves.easeInOutExpo
-    );
-    _soilMoistureAnimation = _soilMoistureTween.animate(_valuesAnimationCurve);
-    _temperatureAnimation = _temperatureTween.animate(_valuesAnimationCurve);
-    _humidityAnimation = _humidityTween.animate(_valuesAnimationCurve);
-
-    // set to list to access by index
-    _valuesAnimationList = [
-      _soilMoistureAnimation,
-      _temperatureAnimation,
-      _humidityAnimation
-    ];
-
-    // init to end of list
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      double maxScrollExtent = _stackedLinesScrollController.position.maxScrollExtent;
-      setState(() {
-        _stackedLineScrollOffset = maxScrollExtent;
-      });
-      _stackedLinesScrollController.jumpTo(
-          maxScrollExtent
-      );
-      _onFocusPointScrollController.jumpTo(
-          maxScrollExtent
-      );
-      _devicesProvider = context.read<DevicesProvider>();
-      context.read<DevicesProvider>().addListener(_updateWhileFocusedTrigger);
-    });
-    _stackedLinesScrollController.addListener(_relativeToNowOpacityTrigger);
-    _stackedLinesScrollController.addListener(_syncScrollOffsets);
-
-    super.initState();
-  }
-
-  @override
   void dispose() {
-    _onFocusPointScrollController.dispose();
-    _stackedLinesScrollController.removeListener(_relativeToNowOpacityTrigger);
-    _stackedLinesScrollController.removeListener(_syncScrollOffsets);
+    _focusedPointsController.dispose();
+    _stackedLinesController.removeListener(_relativeToNowOpacityTrigger);
+    _stackedLinesController.removeListener(_syncScrollOffsets);
     _devicesProvider.removeListener(_updateWhileFocusedTrigger);
-    _stackedLinesScrollController.dispose();
+    _stackedLinesController.dispose();
     _valuesAnimationController.dispose();
     super.dispose();
   }
@@ -271,12 +276,12 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       onPointerUp: (_) {
         setState(() {
           _highLightedPointIndex = -1;
-          double max = _stackedLinesScrollController.position.maxScrollExtent;
-          double current = _stackedLinesScrollController.offset;
+          double max = _stackedLinesController.position.maxScrollExtent;
+          double current = _stackedLinesController.offset;
           double threshold = 15;
           _showRelativeTimeDisplay = (max - current) < threshold;
         });
-        _focusedPointTrigger();
+        _focusedPointTriggerReverse();
       },
       child: Stack(
         children: [
@@ -376,7 +381,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 35),
         alignment: Alignment.center,
-        height: cardHeight,
+        height: _cardHeight,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -460,7 +465,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
     return SizedBox(
       height: 250,
       child: SingleChildScrollView(
-        controller: _followingTickLinesScrollController,
+        controller: _followingTickLinesController,
         scrollDirection: Axis.horizontal,
         physics: const NeverScrollableScrollPhysics(),
         child: Container(
@@ -766,7 +771,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
         onPointerUp: (_) => _stackedLineSnapToOffset(snapOffset),
         child: SingleChildScrollView(
           physics: scrollPhysics,
-          controller: _stackedLinesScrollController,
+          controller: _stackedLinesController,
           scrollDirection: Axis.horizontal,
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: screenWidth - (screenWidth * 0.91)),
@@ -819,12 +824,11 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
         _highLightedPointIndex = pointIndex + 1;
         _showRelativeTimeDisplay = false;
       });
-      setState(() {
-        _focusedPointSoilMoisture = paddedChart[_highLightedPointIndex]!.soilMoisture;
-        _focusedPointHumidity = paddedChart[_highLightedPointIndex]!.humidity;
-        _focusedPointTemperature = paddedChart[_highLightedPointIndex]!.temperature;
-      });
-      _focusedPointTrigger();
+      _focusedPointTriggerForward(
+          paddedChart[_highLightedPointIndex]!.soilMoisture,
+          paddedChart[_highLightedPointIndex]!.temperature,
+          paddedChart[_highLightedPointIndex]!.humidity
+      );
     }
 
     String? timeAxisGenerator(SensorNodeSnapshot? data, int falseHourIncrement) {
@@ -910,7 +914,7 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
       height: chartHeight,
       child: SingleChildScrollView(
         physics: const NeverScrollableScrollPhysics(),
-        controller: _onFocusPointScrollController,
+        controller: _focusedPointsController,
         scrollDirection: Axis.horizontal,
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: screenWidth - (screenWidth * 0.91)),
