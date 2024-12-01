@@ -1,13 +1,23 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/constants/api.dart';
+import 'package:smmic/models/auth_models.dart';
+import 'package:smmic/models/user_data_model.dart';
 import 'package:smmic/pages/QRcode.dart';
 import 'package:smmic/pages/accountinfo.dart';
 import 'package:smmic/pages/lab.dart';
 import 'package:smmic/pages/local_connect.dart';
 import 'package:smmic/pages/settings.dart';
+import 'package:smmic/providers/auth_provider.dart';
+import 'package:smmic/providers/user_data_provider.dart';
 import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/auth_utils.dart';
+import 'package:smmic/utils/imageSource.dart';
+import 'package:smmic/utils/logs.dart';
 
 class ComponentDrawer extends StatefulWidget {
   const ComponentDrawer({super.key});
@@ -17,33 +27,54 @@ class ComponentDrawer extends StatefulWidget {
 }
 
 class ComponentDrawerState extends State<ComponentDrawer> {
+  Uint8List? _image;
+
+  void selectImage() async {
+    Uint8List img = await pickImage(ImageSource.gallery);
+    setState(() {
+      _image = img;
+    });
+  }
+
   final AuthUtils _authUtils = AuthUtils();
   final ApiRequest _apiRequest = ApiRequest();
+  final Logs _logs = Logs(tag: 'accountinfo.dart');
 
   @override
   Widget build(BuildContext context) {
+    User? userData = context.watch<UserDataProvider>().user;
+    UserAccess? accessData = context.watch<AuthProvider>().accessData;
 
+    if (userData == null) {
+      _logs.warning(
+          message: 'userData from UserDataProvider is null: $userData');
+
+      _logs.warning(
+          message: 'userData from UserDataProvider is null: $accessData');
+      throw Exception('error: user data == null!');
+    }
     return Drawer(
       child: ListView(
         children: [
-          const DrawerHeader(
+          DrawerHeader(
               child: Row(
             children: [
               Center(
                   child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.grey,
-                  child: Icon(
-                    Icons.person,
-                    size: 30,
-                    color: Colors.white,
-                  ),
-                ),
+                padding: const EdgeInsets.all(8.0),
+                child: _image != null
+                    ? CircleAvatar(
+                        radius: 30,
+                        backgroundImage: MemoryImage(_image!),
+                      )
+                    : const CircleAvatar(
+                        radius: 30,
+                        backgroundImage: NetworkImage(
+                            'https://static.thenounproject.com/png/5034901-200.png'),
+                      ),
               )),
               Text(
-                'Jozua Cyd, Rubio',
+                userData.firstName,
                 style: TextStyle(fontWeight: FontWeight.bold),
               )
             ],
@@ -59,7 +90,7 @@ class ComponentDrawerState extends State<ComponentDrawer> {
           GestureDetector(
             child: ListTile(
               leading: const Icon(Icons.person),
-              title: Text('Manage Account'),
+              title: const Text('Manage Account'),
               onTap: () {
                 Navigator.push(
                     context,
@@ -82,10 +113,17 @@ class ComponentDrawerState extends State<ComponentDrawer> {
           ),
           GestureDetector(
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => ExpiryColorChangeWidget(expiryTime: DateTime.now().add(Duration(seconds: 10),))));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => ExpiryColorChangeWidget(
+                              expiryTime: DateTime.now().add(
+                            const Duration(seconds: 10),
+                          ))));
             },
             child: const ListTile(
-              leading: Icon(Icons.science_outlined), title: Text('Lab'),
+              leading: Icon(Icons.science_outlined),
+              title: Text('Lab'),
             ),
           ),
           GestureDetector(
@@ -99,7 +137,7 @@ class ComponentDrawerState extends State<ComponentDrawer> {
             ),
           ),
           GestureDetector(
-            onTap: (){
+            onTap: () {
               print("Hello World");
               _apiRequest.sendIntervalCommand(
                   eventName: EventNames.irrigationCommand.events);
@@ -110,11 +148,11 @@ class ComponentDrawerState extends State<ComponentDrawer> {
             ),
           ),
           GestureDetector(
-            onTap: (){
+            onTap: () {
               print("Hello World z");
               _apiRequest.sendIrrigationCommand(
                   eventName: EventNames.irrigationCommand.events,
-              commands: Commands.irrigationON.command);
+                  commands: Commands.irrigationON.command);
             },
             child: const ListTile(
               leading: Icon(Icons.water_drop_outlined),
@@ -122,7 +160,7 @@ class ComponentDrawerState extends State<ComponentDrawer> {
             ),
           ),
           GestureDetector(
-            onTap: (){
+            onTap: () {
               _authUtils.logoutUser(context);
             },
             child: const ListTile(
