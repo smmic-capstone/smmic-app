@@ -78,20 +78,32 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
           const SizedBox(height: 25),
           SizedBox(
             height: 170,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
+            child: Stack(
               children: [
                 _radialGauge(
                     snapshot.soilMoisture,
                     connectionStatus
                 ),
                 _digitalDisplays(
-                    snapshot.temperature,
-                    snapshot.humidity
+                  snapshot.temperature,
+                  snapshot.humidity
                 )
               ],
             ),
+            // child: Row(
+            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //   crossAxisAlignment: CrossAxisAlignment.end,
+            //   children: [
+            //     _radialGauge(
+            //         snapshot.soilMoisture,
+            //         connectionStatus
+            //     ),
+            //     _digitalDisplays(
+            //         snapshot.temperature,
+            //         snapshot.humidity
+            //     )
+            //   ],
+            // ),
           ),
           const SizedBox(height: 35),
           _irrigation()
@@ -140,8 +152,8 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
   }
 
   Widget _radialGauge(double soilMoisture, ConnectivityResult deviceConnStatus) {
-    return Container(
-      width: 165,
+    return SizedBox(
+      width: 160,
       height: 170,
       child: RadialGauge(
         valueType: ValueType.soilMoisture,

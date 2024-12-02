@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -8,7 +7,7 @@ import 'package:smmic/components/devices/sensor_node_subpage/stacked_line.dart';
 import 'package:smmic/components/devices/sensor_node_subpage/sensor_node_card_expanded.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/utils/device_utils.dart';
-import '../../models/device_data_models.dart';
+import 'package:smmic/models/device_data_models.dart';
 
 class SensorNodePage extends StatefulWidget {
   const SensorNodePage({

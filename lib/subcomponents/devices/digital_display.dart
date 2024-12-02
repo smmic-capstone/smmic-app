@@ -145,6 +145,7 @@ class _SensorDigitalDisplayState extends State<SensorDigitalDisplay> {
             ),
           ),
           Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               SvgPicture.asset(
                 colorFilter: ColorFilter.mode(
