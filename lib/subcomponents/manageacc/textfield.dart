@@ -24,7 +24,7 @@ class ManageAccountTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 25.0, right: 25, bottom: 25),
+      padding: const EdgeInsets.only(left: 5.0, right: 5, bottom: 5),
       child: Opacity(
         opacity: opacity,
         child: TextField(
@@ -35,15 +35,18 @@ class ManageAccountTextField extends StatelessWidget {
             prefix: icon != null ? Icon(icon) : null,
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(5),
-              borderSide: const BorderSide(color: Colors.white),
+              borderSide: BorderSide(
+                  color: context.watch<UiProvider>().isDark
+                      ? const Color.fromRGBO(0, 0, 0, 0)
+                      : const Color.fromRGBO(255, 255, 255, 0)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(5),
               borderSide: const BorderSide(color: Colors.white),
             ),
             fillColor: context.watch<UiProvider>().isDark
-                ? Colors.black
-                : Colors.white,
+                ? const Color.fromRGBO(0, 0, 0, 0)
+                : const Color.fromRGBO(255, 255, 255, 0),
             filled: true,
             hintText: hintText,
             hintStyle: TextStyle(
