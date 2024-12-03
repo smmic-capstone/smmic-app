@@ -179,7 +179,6 @@ class _AuthGateState extends State<AuthGate> {
                       _apiRequest.openConnection,
                     ]
                 ),
-
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     // TODO add loading screen
@@ -198,7 +197,8 @@ class _AuthGateState extends State<AuthGate> {
                       BottomNavBar(initialIndexPage: 0),
                     ],
                   );
-                });
+                }
+            );
           }
           return const Center(
             child: Text('AuthPage._authCheck has returned a null value'),

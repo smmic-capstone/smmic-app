@@ -10,6 +10,7 @@ import 'package:smmic/providers/connections_provider.dart';
 import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/subcomponents/devices/digital_display.dart';
+import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
 import 'package:smmic/subcomponents/devices/gauge.dart';
 
@@ -27,23 +28,9 @@ class SensorNodeCardExpanded extends StatefulWidget {
   State<SensorNodeCardExpanded> createState() => _SensorNodeCardExpandedState();
 }
 
-double getOpacity(ConnectivityResult connection) {
-  double opacity = 1;
-  switch (connection) {
-    case ConnectivityResult.wifi:
-      opacity = 1;
-      break;
-    case ConnectivityResult.mobile:
-      opacity = 1;
-      break;
-    default:
-      opacity = 0.25;
-      break;
-  }
-  return opacity;
-}
-
 class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
+  final ApiRequest _apiRequest = ApiRequest();
+
   final TextStyle _primaryTextStyle = const TextStyle(
       fontSize: 43,
       fontFamily: 'Inter',
@@ -62,6 +49,25 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
       fontWeight: FontWeight.w400,
       color: Colors.white.withOpacity(0.5)
   );
+
+  double _getOpacity(ConnectivityResult connection) {
+    double opacity = 1;
+    switch (connection) {
+      case ConnectivityResult.wifi:
+        opacity = 1;
+        break;
+      case ConnectivityResult.mobile:
+        opacity = 1;
+        break;
+      default:
+        opacity = 0.25;
+        break;
+    }
+    return opacity;
+  }
+
+  // irrigation command variables
+  ConnectionState _irrigationCommandState = ConnectionState.done; // ignore: prefer_final_fields
 
   @override
   Widget build(BuildContext context) {
@@ -90,20 +96,6 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                 )
               ],
             ),
-            // child: Row(
-            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //   crossAxisAlignment: CrossAxisAlignment.end,
-            //   children: [
-            //     _radialGauge(
-            //         snapshot.soilMoisture,
-            //         connectionStatus
-            //     ),
-            //     _digitalDisplays(
-            //         snapshot.temperature,
-            //         snapshot.humidity
-            //     )
-            //   ],
-            // ),
           ),
           const SizedBox(height: 35),
           _irrigation()
@@ -121,7 +113,9 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
           padding: const EdgeInsets.all(40),
           decoration: BoxDecoration(
               color: Colors.black.withOpacity(0.65),
-              borderRadius: BorderRadius.all(Radius.circular(25))
+              borderRadius: const BorderRadius.all(
+                  Radius.circular(25)
+              )
           ),
           child: child,
         ),
@@ -142,11 +136,15 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
               BlendMode.srcATop
           ),
         ),
-        Icon(
-          CupertinoIcons.refresh,
-          size: 30,
-          color: Colors.white.withOpacity(0.5),
-        )
+        SvgPicture.asset(
+          'assets/icons/settings.svg',
+          width: 28,
+          height: 28,
+          colorFilter: const ColorFilter.mode(
+              Colors.white,
+              BlendMode.srcATop
+          ),
+        ),
       ],
     );
   }
@@ -160,7 +158,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
         value: soilMoisture,
         limit: 100,
         scaleMultiplier: 1.5,
-        opacity: getOpacity(deviceConnStatus),
+        opacity: _getOpacity(deviceConnStatus),
         valueTextStyle: _primaryTextStyle,
         labelTextStyle: _tertiaryTextStyle,
         symbolTextStyle: _secondaryTextStyle,
@@ -197,59 +195,115 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
   }
 
   Widget _irrigation() {
+    // variables
+    bool isDarkMode = context.watch<UiProvider>().isDark;
+
+    Color buttonBg = isDarkMode
+        ? const Color.fromRGBO(98, 245, 255, 0.15)
+        : Colors.black.withOpacity(0.2);
+
+    Color buttonIconColor = isDarkMode
+        ? Color.fromRGBO(98, 245, 255, 1)
+        : const Color.fromRGBO(98, 245, 255, 1);
+
+    Widget dropletIcon = Positioned(
+      top: 12.3,
+      left: 0,
+      right: 0,
+      child: SvgPicture.asset(
+        colorFilter: ColorFilter.mode(
+            buttonIconColor,
+            BlendMode.srcIn
+        ),
+        clipBehavior: Clip.antiAlias,
+        'assets/icons/droplet.svg',
+        height: 26,
+        width: 26,
+      ),
+    );
+
+    Widget awaitingCommandSent = Positioned(
+      top: 14,
+      left: 15,
+      child: SizedBox(
+        width: 21,
+        height: 21,
+        child: CircularProgressIndicator(
+          strokeWidth: 2.25,
+          color: Colors.white.withOpacity(0.7),
+        ),
+      ),
+    );
+
+    Widget button = Stack(
+      children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            //color: Color.fromRGBO(23, 255, 50, 1),
+            color: buttonBg,
+            borderRadius: BorderRadius.all(
+                Radius.circular(13)
+            ),
+          ),
+        ),
+        _irrigationCommandState == ConnectionState.waiting
+            ? awaitingCommandSent
+            : dropletIcon
+      ],
+    );
+
+    String finalText = _irrigationCommandState == ConnectionState.waiting
+        ? 'Sending command...'
+        : 'Irrigation in progress...';
+
+    Widget text = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          finalText,
+          style: const TextStyle(
+              fontFamily: 'Inter',
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w500
+          ),
+        ),
+        Text(
+          'Last Irrigation',
+          style: TextStyle(
+              fontFamily: 'Inter',
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 13
+          ),
+        )
+      ],
+    );
+
     return Row(
       children: [
-        Stack(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                //color: Color.fromRGBO(23, 255, 50, 1),
-                color: Colors.black.withOpacity(0.5),
-                borderRadius: BorderRadius.all(Radius.circular(15)),
-              ),
-            ),
-            Positioned(
-              top: 12.5,
-              left: 0,
-              right: 0,
-              child: SvgPicture.asset(
-                colorFilter: ColorFilter.mode(
-                  Colors.white.withOpacity(1),
-                  BlendMode.srcIn
-                ),
-                clipBehavior: Clip.antiAlias,
-                'assets/icons/droplet.svg',
-                height: 25,
-                width: 25,
-              ),
-            )
-          ],
+        InkWell(
+          onTap: () async {
+            setState(() {
+              _irrigationCommandState = ConnectionState.waiting;
+            });
+            await _apiRequest.sendIrrigationCommand(
+              deviceId: widget.deviceID,
+              command: 1
+            );
+            await Future.delayed(const Duration(seconds: 1));
+            // when sent
+            if (context.mounted) {
+              setState(() {
+                _irrigationCommandState = ConnectionState.done;
+              });
+            }
+          },
+          child: button,
         ),
         const SizedBox(width: 15),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '<1 minute ago',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w500
-              ),
-            ),
-            Text(
-              'Last Irrigation',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                color: Colors.white.withOpacity(0.5),
-                fontSize: 13
-              ),
-            )
-          ],
-        )
+        text
       ],
     );
   }

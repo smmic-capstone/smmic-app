@@ -250,11 +250,15 @@ class ApiRequest {
     );
   }
 
-  Future<void> sendIrrigationCommand({required String eventName, required String commands}) async {
+  Future<void> sendIrrigationCommand({
+    String eventName = 'client-irrigation',
+    required String deviceId,
+    required int command}) async {
+
     await _pusher.trigger(PusherEvent(
         channelName: _apiRoutes.commands,
         eventName: eventName,
-        data: commands
+        data: '$deviceId;$command;${DateTime.now()}'
     ));
   }
 

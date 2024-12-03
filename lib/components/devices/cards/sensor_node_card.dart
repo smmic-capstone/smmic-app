@@ -48,13 +48,6 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
       color: Colors.white.withOpacity(0.5)
   );
 
-  Stream<DateTime> _timeTickerSeconds() async* {
-    while (true) {
-      yield DateTime.now();
-      await Future.delayed(const Duration(seconds: 1));
-    }
-  }
-
   @override
   void initState(){
     super.initState();
