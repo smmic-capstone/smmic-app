@@ -10,29 +10,76 @@ class DatabaseHelper {
   // dependencies
   final Logs _logs = Logs(tag: 'DatabaseHelper');
 
-  static const int _version = 1;
-  static const String dbName = "Readings.db";
+  static final DatabaseHelper _instance = DatabaseHelper._();
+  DatabaseHelper._();
+  static DatabaseHelper get instance => _instance;
 
-  static Future<Database> _getDB() async {
-    return openDatabase(join(await getDatabasesPath(), dbName),
-        onCreate: (db, version) async {
-      await db.execute(
-          "CREATE TABLE IF NOT EXISTS SMSensorReadings ("
-              "hash_id TEXT PRIMARY KEY NOT NULL, "
-              "device_id TEXT NOT NULL, "
-              "timestamp DATETIME, "
-              "soil_moisture DECIMAL(10,7), "
-              "temperature DECIMAL(10,7), "
-              "humidity DECIMAL(10,7), "
-              "battery_level DECIMAL(10,7)"
-              ")"
-      );
-      ///TODO: Add more tables if necessary
-    }, version: _version);
+  Database? _database;
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    _database = await _getDatabase();
+    return _database!;
+  }
+  
+  static Future<Database> _getDatabase() async {
+    final databasePath = await getDatabasesPath();
+    final path = join(databasePath, _databaseName);
+    return openDatabase(
+      path,
+      version: _version,
+    );
+  }
+  
+  static const int _version = 1;
+  static const String _databaseName = "smmic_data.db";
+
+  static const String _sinkDataTable =
+      "CREATE TABLE IF NOT EXISTS SinkData ("
+          "hash_id TEXT PRIMARY KEY, "
+          "device_id TEXT NOT NULL, "
+          "timestamp DATETIME, "
+          "connected_clients INT, "
+          "total_clients INT, "
+          "sub_count INT, "
+          "bytes_sent INT, "
+          "bytes_received INT, "
+          "messages_sent INT, "
+          "messages_received INT, "
+          "battery_level DECIMAL(10, 7) "
+          ")";
+  
+  static const String _sensorDataTable =
+      "CREATE TABLE IF NOT EXISTS SMSensorReadings  ("
+          "hash_id TEXT PRIMARY KEY NOT NULL, "
+          "device_id TEXT NOT NULL, "
+          "timestamp DATETIME, "
+          "soil_moisture DECIMAL(10,7), "
+          "temperature DECIMAL(10,7), "
+          "humidity DECIMAL(10,7), "
+          "battery_level DECIMAL(10,7)"
+          ")";
+  
+  Future<void> initLocalStorage() async {
+    final databasePath = await getDatabasesPath();
+    final path = join(databasePath, _databaseName);
+    Database db = await openDatabase(
+        path,
+        version: _version,
+        onOpen: (db) async {
+          await db.execute(
+              _sinkDataTable
+          );
+          await db.execute(
+              _sensorDataTable
+          );
+        },
+    );
+    db.close();
+    _logs.info2(message: 'local storage initialized');
   }
 
   static Future<void> addReadings(List<SensorNodeSnapshot> readings) async {
-    final db = await _getDB();
+    final db = await _getDatabase();
     List<int> results = [];
     for (SensorNodeSnapshot snapshot in readings) {
       Map<String, dynamic> jsonSnapshot = snapshot.toJson();
@@ -60,7 +107,7 @@ class DatabaseHelper {
   }
 
   static Future<SensorNodeSnapshot?> getSeReading(String deviceID) async {
-    final db = await _getDB();
+    final db = await _getDatabase();
     final List<Map<String, dynamic>> queryResult = await db.query("SMSensorReadings",
         where: 'device_id = ?',
         whereArgs: [deviceID],
@@ -79,7 +126,7 @@ class DatabaseHelper {
   }
 
   static Future<void> readingsLimit(String deviceID) async {
-    final db = await _getDB();
+    final db = await _getDatabase();
 
     final countResult = await db.rawQuery(
       "SELECT COUNT(*) AS count FROM SMSensorReadings WHERE device_id = ?",
@@ -101,7 +148,7 @@ class DatabaseHelper {
   
   static int maxChartLength = 10;
   static Future<List<SensorNodeSnapshot>?>chartReadings(String deviceID) async {
-    final db = await _getDB();
+    final db = await _getDatabase();
 
     final List<Map<String,dynamic>> queryResult = await db.query(
       "SMSensorReadings",

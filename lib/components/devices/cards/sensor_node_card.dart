@@ -48,13 +48,6 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
       color: Colors.white.withOpacity(0.5)
   );
 
-  Stream<DateTime> _timeTickerSeconds() async* {
-    while (true) {
-      yield DateTime.now();
-      await Future.delayed(const Duration(seconds: 1));
-    }
-  }
-
   @override
   void initState(){
     super.initState();
@@ -85,8 +78,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
   Widget build(BuildContext context) {
 
     // device connectivity status
-    ConnectivityResult deviceConnectionStatus = context
-        .watch<ConnectionProvider>().connectionStatus;
+    bool isConnected = context
+        .watch<ConnectionProvider>().deviceIsConnected;
 
     // sensor data
     SensorNodeSnapshot seSnapshotData = context.watch<DevicesProvider>()
@@ -97,8 +90,9 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
         );
 
     // sensor states
-    int sensorConnectionState = context.watch<DevicesProvider>()
-        .sensorStatesMap[widget.deviceInfo.deviceID]!.connectionState.value1;
+    SMSensorState sensorState = context.watch<DevicesProvider>()
+        .sensorStatesMap[widget.deviceInfo.deviceID]
+        ?? SMSensorState.initObj(widget.deviceInfo.deviceID);
 
     return GestureDetector(
       onTap: () {
@@ -134,7 +128,8 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                     child: Stack(
                       children: [
                         _topRightIcons(
-                            seSnapshotData.timestamp
+                            isConnected,
+                            sensorState.connectionState
                         ),
                         Align(
                           alignment: Alignment.bottomRight,
@@ -195,25 +190,38 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
     );
   }
 
-  Widget _topRightIcons(DateTime lastTransmission) {
+  Widget _topRightIcons(
+      bool isConnected,
+      (int, DateTime, DateTime) seConnectionState) {
+
+    Widget signalIcon() {
+      Color finalColor = const Color.fromRGBO(23, 255, 50, 1);
+
+      if (!isConnected) {
+        finalColor = Colors.white.withOpacity(0.35);
+      } else if (seConnectionState.$1 != SMSensorAlertCodes.connectedState.code) {
+        finalColor = Colors.white.withOpacity(0.35);
+      } else if (seConnectionState.$2.isBefore(widget.currentDateTime)) {
+        finalColor = const Color.fromRGBO(23, 255, 50, 0.25);
+      }
+
+      return SvgPicture.asset(
+        'assets/icons/signal.svg',
+        width: 16,
+        height: 16,
+        colorFilter: ColorFilter.mode(
+            finalColor,
+            BlendMode.srcIn
+        ),
+      );
+    }
+
     return Positioned(
       top: 10,
       right: 0,
       child: Row(
         children: [
-          SvgPicture.asset(
-            'assets/icons/signal.svg',
-            width: 16,
-            height: 16,
-            colorFilter: ColorFilter.mode(
-                context.watch<DevicesProvider>()
-                    .sensorStatesMap[widget.deviceInfo.deviceID]!
-                    .connectionState.value1 == SMSensorAlertCodes.disconnectedState.code
-                        ? Colors.white.withOpacity(0.5)
-                        : const Color.fromRGBO(23, 255, 50, 1),
-                BlendMode.srcATop
-            ),
-          )
+          signalIcon()
         ],
       ),
     );

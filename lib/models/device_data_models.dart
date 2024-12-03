@@ -399,19 +399,19 @@ class SMSensorState {
   /// The device connection state (0, 1),
   /// the timestamp of the last transmission,
   /// and the expiry of the transmission.
-  Tuple3<int, DateTime, DateTime> connectionState;
+  (int, DateTime, DateTime) connectionState;
   /// The soil moisture state, timestamp of the transmission
   /// and the expected expiry
-  Tuple3<int, DateTime, DateTime> soilMoistureState;
+  (int, DateTime, DateTime) soilMoistureState;
   /// The humidity state, timestamp of the transmission
   /// and the expected expiry
-  Tuple3<int, DateTime, DateTime> humidityState;
+  (int, DateTime, DateTime) humidityState;
   /// The temperature state, timestamp of the transmission
   /// and the expected expiry
-  Tuple3<int, DateTime, DateTime> temperatureState;
+  (int, DateTime, DateTime) temperatureState;
   /// The battery state, timestamp of the transmission
   /// and the expected expiry
-  Tuple3<int, DateTime, DateTime> batteryState;
+  (int, DateTime, DateTime) batteryState;
 
   SMSensorState._internal({
     required this.deviceID,
@@ -430,27 +430,27 @@ class SMSensorState {
     return SMSensorState._internal(
         deviceID: sensorId,
         lastUpdate: DateTime.now(),
-        connectionState: Tuple3(
+        connectionState: (
             SMSensorAlertCodes.disconnectedState.code,
             DateTime.now(),
             DateTime.now().add(keepStateTime)
         ),
-      soilMoistureState: Tuple3(
+      soilMoistureState: (
           SMSensorAlertCodes.soilMoistureNormal.code,
           DateTime.now(),
           DateTime.now().add(keepStateTime)
       ),
-      humidityState: Tuple3(
+      humidityState: (
           SMSensorAlertCodes.humidityNormal.code,
           DateTime.now(),
           DateTime.now().add(keepStateTime)
       ),
-      temperatureState: Tuple3(
+      temperatureState: (
           SMSensorAlertCodes.temperatureNormal.code,
           DateTime.now(),
           DateTime.now().add(keepStateTime)
       ),
-      batteryState: Tuple3(
+      batteryState: (
           SMSensorAlertCodes.normalBattery.code,
           DateTime.now(),
           DateTime.now().add(keepStateTime)
@@ -467,7 +467,7 @@ class SMSensorState {
     int alertType = alertCode ~/ 10;
 
     if (alertCode == 1 || alertCode == 0) {
-      connectionState = Tuple3(
+      connectionState = (
           alertCode,
           alertTimeStamp,
           alertTimeStamp.add(keepStateTime)
@@ -476,19 +476,19 @@ class SMSensorState {
     }
 
     if (alertType == SMSensorAlertCodes.soilMoistureAlert.code) {
-      soilMoistureState = Tuple3(
+      soilMoistureState = (
           alertCode,
           alertTimeStamp,
           alertTimeStamp.add(keepStateTime)
       );
     } else if (alertType == SMSensorAlertCodes.temperatureAlert.code) {
-      temperatureState = Tuple3(
+      temperatureState = (
           alertCode,
           alertTimeStamp,
           alertTimeStamp.add(keepStateTime)
       );
     } else if (alertType == SMSensorAlertCodes.humidityAlert.code) {
-      humidityState = Tuple3(
+      humidityState = (
           alertCode,
           alertTimeStamp,
           alertTimeStamp.add(keepStateTime)
@@ -497,7 +497,7 @@ class SMSensorState {
 
     // update connection state to 1 if received alert is
     // not a connection state alert
-    connectionState = Tuple3(
+    connectionState = (
         1,
         alertTimeStamp,
         alertTimeStamp.add(keepStateTime)

@@ -164,10 +164,11 @@ class ApiRequest {
     return result;
   }
 
-  Future<Map<String, dynamic>> patch(
-      {required String route,
-      Map<String, String>? headers,
-      Object? body}) async {
+  Future<Map<String, dynamic>> patch({
+    required String route,
+    Map<String, String>? headers,
+    Object? body}) async {
+
     _logs.info(
         message:
             'patch() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
@@ -178,11 +179,19 @@ class ApiRequest {
     return result;
   }
 
-
   //Open connection to Channels
   Future<void> openConnection(BuildContext context) async {
     _internalBuildContext = context;
     _logs.warning(message: "openConnection running");
+
+    void onSubError(String channelName) {
+      _logs.warning(message: 'failed subscription to channel -> $channelName');
+    }
+
+    void onSubSucceeded(String channelName) {
+      _logs.info2(message: 'subscribed to channel -> $channelName');
+      context.read<ConnectionProvider>().updateChannelSubState(channelName, true);
+    }
 
     try {
       await _pusher.init(
@@ -195,27 +204,38 @@ class ApiRequest {
 
       ///Pusher commands channels
       await _pusher.subscribe(
-          channelName: _apiRoutes.commands);
+          channelName: _apiRoutes.userCommands,
+          onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.userCommands)),
+          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.userCommands))
+      );
 
       ///Pusher readings channels
       await _pusher.subscribe(
           channelName: _apiRoutes.seReadingsWs,
           onEvent: (dynamic data) {
             _seReadingsWsListener(data as PusherEvent);
-          });
+          },
+          onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.seReadingsWs)),
+          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.seReadingsWs))
+      );
 
       ///Pusher alerts channels
       await _pusher.subscribe(
           channelName: _apiRoutes.seAlertsWs,
           onEvent: (dynamic data) {
             _seAlertsWsListener(data as PusherEvent);
-          });
+          },
+          onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.seAlertsWs)),
+          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.seAlertsWs))
+      );
 
       await _pusher.subscribe(
           channelName: _apiRoutes.sinkReadingsWs,
           onEvent: (dynamic data) {
             _sinkSnapshotListener(data as PusherEvent);
-          }
+          },
+          onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.sinkReadingsWs)),
+          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.sinkReadingsWs))
       );
 
       await _pusher.connect();
@@ -242,20 +262,32 @@ class ApiRequest {
     return jsonResponse;
   }
 
-  Future<void> sendIntervalCommand({required String eventName, /*required String/int command code?*/ }) async {
-    await _pusher.trigger(PusherEvent(
-        channelName: "private-user_commands",
-        eventName: eventName,
-        data: "what the fuck?",)
+  Future<void> sendIntervalCommand({required String eventName}) async {
+    await _pusher.trigger(
+        PusherEvent(
+          channelName: _apiRoutes.userCommands,
+          eventName: eventName,
+          data: "what the fuck?"
+        )
     );
   }
 
-  Future<void> sendIrrigationCommand({required String eventName, required String commands}) async {
-    await _pusher.trigger(PusherEvent(
-        channelName: _apiRoutes.commands,
-        eventName: eventName,
-        data: commands
-    ));
+  Future<void> sendIrrigationCommand({
+    String eventName = 'client-irrigation',
+    required String deviceId,
+    required int command}) async {
+
+    try {
+      await _pusher.trigger(
+          PusherEvent(
+              channelName: _apiRoutes.userCommands,
+              eventName: eventName,
+              data: '$deviceId;$command;${DateTime.now()}'
+          )
+      );
+    } catch (e) {
+      _logs.error(message: e.toString());
+    }
   }
 
   Future<String?> _waitForSocketID() async {
