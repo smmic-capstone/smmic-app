@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
 import 'package:smmic/providers/connections_provider.dart';
 import 'package:smmic/providers/devices_provider.dart';
@@ -30,6 +31,7 @@ class SensorNodeCardExpanded extends StatefulWidget {
 
 class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
   final ApiRequest _apiRequest = ApiRequest();
+  final ApiRoutes _apiRoutes = ApiRoutes();
 
   final TextStyle _primaryTextStyle = const TextStyle(
       fontSize: 43,
@@ -50,24 +52,32 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
       color: Colors.white.withOpacity(0.5)
   );
 
-  double _getOpacity(ConnectivityResult connection) {
-    double opacity = 1;
-    switch (connection) {
-      case ConnectivityResult.wifi:
-        opacity = 1;
-        break;
-      case ConnectivityResult.mobile:
-        opacity = 1;
-        break;
-      default:
-        opacity = 0.25;
-        break;
-    }
-    return opacity;
-  }
-
   // irrigation command variables
   ConnectionState _irrigationCommandState = ConnectionState.done; // ignore: prefer_final_fields
+
+  Future<bool> _sendIrrigationCommand(String deviceId, int command) async {
+    bool result = false;
+
+    setState(() {
+      _irrigationCommandState = ConnectionState.waiting;
+    });
+
+    // await _apiRequest.sendIrrigationCommand(
+    //   deviceId: deviceId,
+    //   command: command
+    // );
+
+    await Future.delayed(const Duration(seconds: 1));
+
+    // when sent
+    if (context.mounted) {
+      setState(() {
+        _irrigationCommandState = ConnectionState.done;
+      });
+    }
+
+    return result;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,20 +85,29 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
     final SensorNodeSnapshot snapshot = context.watch<DevicesProvider>()
         .sensorNodeSnapshotMap[widget.deviceID]
         ?? SensorNodeSnapshot.placeHolder(deviceId: widget.deviceID);
-    // connectivity status
-    final ConnectivityResult connectionStatus = context.watch<ConnectionProvider>().connectionStatus;
+
+    // device connectivity status
+    final bool isConnected = context.watch<ConnectionProvider>().deviceIsConnected;
+
+    // sensor state
+    final SMSensorState sensorState = context.watch<DevicesProvider>()
+        .sensorStatesMap[widget.deviceID]
+        ?? SMSensorState.initObj(widget.deviceID);
+
     return _background(
       child: Column(
         children: [
-          _topIcons(),
+          _topIcons(
+              isConnected,
+              sensorState.connectionState
+          ),
           const SizedBox(height: 25),
           SizedBox(
             height: 170,
             child: Stack(
               children: [
                 _radialGauge(
-                    snapshot.soilMoisture,
-                    connectionStatus
+                    snapshot.soilMoisture
                 ),
                 _digitalDisplays(
                   snapshot.temperature,
@@ -123,33 +142,50 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
     );
   }
 
-  Widget _topIcons() {
+  Widget _topIcons(
+      bool isConnected,
+      (int, DateTime, DateTime) seConnectionState) {
+
+    Widget signalIcon() {
+      Color finalColor = const Color.fromRGBO(23, 255, 50, 1);
+
+      if (!isConnected) {
+        finalColor = Colors.white.withOpacity(0.35);
+      } else if (seConnectionState.$1 != SMSensorAlertCodes.connectedState.code) {
+        finalColor = Colors.white.withOpacity(0.35);
+      } else if (seConnectionState.$2.isBefore(widget.currentDateTime)) {
+        finalColor = const Color.fromRGBO(23, 255, 50, 0.25);
+      }
+
+      return SvgPicture.asset(
+        'assets/icons/signal.svg',
+        width: 28,
+        height: 28,
+        colorFilter: ColorFilter.mode(
+            finalColor,
+            BlendMode.srcIn
+        ),
+      );
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        SvgPicture.asset(
-          'assets/icons/signal.svg',
-          width: 28,
-          height: 28,
-          colorFilter: const ColorFilter.mode(
-              Color.fromRGBO(23, 255, 50, 1),
-              BlendMode.srcATop
-          ),
-        ),
+        signalIcon(),
         SvgPicture.asset(
           'assets/icons/settings.svg',
           width: 28,
           height: 28,
           colorFilter: const ColorFilter.mode(
               Colors.white,
-              BlendMode.srcATop
+              BlendMode.srcIn
           ),
         ),
       ],
     );
   }
 
-  Widget _radialGauge(double soilMoisture, ConnectivityResult deviceConnStatus) {
+  Widget _radialGauge(double soilMoisture) {
     return SizedBox(
       width: 160,
       height: 170,
@@ -158,7 +194,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
         value: soilMoisture,
         limit: 100,
         scaleMultiplier: 1.5,
-        opacity: _getOpacity(deviceConnStatus),
+        opacity: 1,
         valueTextStyle: _primaryTextStyle,
         labelTextStyle: _tertiaryTextStyle,
         symbolTextStyle: _secondaryTextStyle,
@@ -195,16 +231,45 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
   }
 
   Widget _irrigation() {
-    // variables
-    bool isDarkMode = context.watch<UiProvider>().isDark;
+    // subscription state of the commands channel
+    bool irrChannelSubState = context.watch<ConnectionProvider>()
+        .channelsSubStateMap[_apiRoutes.userCommands] ?? false;
 
-    Color buttonBg = isDarkMode
-        ? const Color.fromRGBO(98, 245, 255, 0.15)
-        : Colors.black.withOpacity(0.2);
+    // other variables
+    bool isDarkMode = context.watch<UiProvider>()
+        .isDark;
+    bool isConnected = context.watch<ConnectionProvider>()
+        .deviceIsConnected;
 
-    Color buttonIconColor = isDarkMode
-        ? Color.fromRGBO(98, 245, 255, 1)
-        : const Color.fromRGBO(98, 245, 255, 1);
+    Color buttonBg() {
+      Color finalColor = Colors.white;
+
+      if (!isConnected) {
+        return Colors.white.withOpacity(0.075);
+      }
+
+      if (irrChannelSubState) {
+        finalColor = const Color.fromRGBO(98, 245, 255, 0.15);
+      } else {
+        finalColor = Colors.white.withOpacity(0.075);
+      }
+      return finalColor;
+    }
+
+    Color buttonIconColor() {
+      Color finalColor = Colors.white;
+
+      if (!isConnected) {
+        return Colors.white.withOpacity(0.5);
+      }
+
+      if (irrChannelSubState) {
+        finalColor = const Color.fromRGBO(98, 245, 255, 1);
+      } else {
+        finalColor = Colors.white.withOpacity(0.5);
+      }
+      return finalColor;
+    }
 
     Widget dropletIcon = Positioned(
       top: 12.3,
@@ -212,7 +277,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
       right: 0,
       child: SvgPicture.asset(
         colorFilter: ColorFilter.mode(
-            buttonIconColor,
+            buttonIconColor(),
             BlendMode.srcIn
         ),
         clipBehavior: Clip.antiAlias,
@@ -242,8 +307,8 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
           height: 50,
           decoration: BoxDecoration(
             //color: Color.fromRGBO(23, 255, 50, 1),
-            color: buttonBg,
-            borderRadius: BorderRadius.all(
+            color: buttonBg(),
+            borderRadius: const BorderRadius.all(
                 Radius.circular(13)
             ),
           ),
@@ -254,15 +319,45 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
       ],
     );
 
-    String finalText = _irrigationCommandState == ConnectionState.waiting
-        ? 'Sending command...'
-        : 'Irrigation in progress...';
+    String finalText() {
+      String text = '';
+
+      if (!irrChannelSubState || !isConnected) {
+        return 'Unavailable';
+      }
+
+      if (_irrigationCommandState == ConnectionState.waiting) {
+        text = 'Waiting';
+      } else if (_irrigationCommandState == ConnectionState.done) {
+        text = 'Irrigating';
+      }
+
+      return text;
+    }
+
+    String finalSubText() {
+      String text = 'Last Irrigation';
+
+      if (!isConnected) {
+        return 'Your device is not connected!';
+      } else if (!irrChannelSubState) {
+        return 'Service is unavailable';
+      }
+
+      if (_irrigationCommandState == ConnectionState.waiting) {
+        text = 'Sending Command...';
+      } else if (_irrigationCommandState == ConnectionState.done) {
+        text = 'Irrigation is in progress...';
+      }
+
+      return text;
+    }
 
     Widget text = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          finalText,
+          finalText(),
           style: const TextStyle(
               fontFamily: 'Inter',
               color: Colors.white,
@@ -271,7 +366,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
           ),
         ),
         Text(
-          'Last Irrigation',
+          finalSubText(),
           style: TextStyle(
               fontFamily: 'Inter',
               color: Colors.white.withOpacity(0.5),
@@ -285,19 +380,13 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
       children: [
         InkWell(
           onTap: () async {
-            setState(() {
-              _irrigationCommandState = ConnectionState.waiting;
-            });
-            await _apiRequest.sendIrrigationCommand(
-              deviceId: widget.deviceID,
-              command: 1
-            );
-            await Future.delayed(const Duration(seconds: 1));
-            // when sent
-            if (context.mounted) {
-              setState(() {
-                _irrigationCommandState = ConnectionState.done;
-              });
+            if (irrChannelSubState && isConnected) {
+              if (_irrigationCommandState != ConnectionState.waiting) {
+                _sendIrrigationCommand(
+                    widget.deviceID,
+                    1
+                );
+              }
             }
           },
           child: button,

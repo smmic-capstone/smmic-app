@@ -39,7 +39,7 @@ class DevicesProvider extends ChangeNotifier {
   Map<String, List<SensorNodeSnapshot>> _sensorNodeChartDataMap = {}; // ignore: prefer_final_fields
   Map<String, List<SensorNodeSnapshot>> get sensorNodeChartDataMap => _sensorNodeChartDataMap;
 
-  Future<void> init({required ConnectivityResult connectivity, required BuildContext context}) async {
+  Future<void> init({required bool isConnected, required BuildContext context}) async {
     // register context
     try {
       _internalContext = context;
@@ -64,7 +64,7 @@ class DevicesProvider extends ChangeNotifier {
 
     // if connection sources are available,
     // attempt setting device list from the api
-    if (connectivity != ConnectivityResult.none) {
+    if (isConnected) {
       await _setDeviceListFromApi(userData: userData, tokens: tokens);
     }
 
@@ -75,10 +75,10 @@ class DevicesProvider extends ChangeNotifier {
 
     notifyListeners();
 
-    // if (connectivity != ConnectivityResult.none) {
-    //   _loadSinkReadingsFromApi();
-    //   _loadSensorReadingsFromApi();
-    // }
+    if (isConnected) {
+      _loadSinkReadingsFromApi();
+      _loadSensorReadingsFromApi();
+    }
 
     // set *updated* list to shared preferences
     await _setToSharedPrefs();

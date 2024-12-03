@@ -14,6 +14,7 @@ import 'package:smmic/providers/mqtt_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/providers/user_data_provider.dart';
+import 'package:smmic/sqlitedb/db.dart';
 import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/global_navigator.dart';
 import 'package:smmic/utils/logs.dart';
@@ -108,6 +109,7 @@ class _AuthGateState extends State<AuthGate> {
   final SharedPrefsUtils _sharedPrefsUtils = SharedPrefsUtils();
   final ApiRequest _apiRequest = ApiRequest();
   final ApiRoutes _apiRoutes = ApiRoutes();
+  final DatabaseHelper _databaseHelper = DatabaseHelper.instance;
 
   Future<bool> _authCheck() async {
     _logs.info2(message: 'executing _authCheck()');
@@ -176,7 +178,7 @@ class _AuthGateState extends State<AuthGate> {
                       context.read<ConnectionProvider>().init,
                       context.read<AuthProvider>().init,
                       context.read<UserDataProvider>().init,
-                      _apiRequest.openConnection,
+                      _databaseHelper.initLocalStorage
                     ]
                 ),
                 builder: (context, snapshot) {
@@ -188,7 +190,7 @@ class _AuthGateState extends State<AuthGate> {
                   context.read<MqttProvider>().registerContext(context: context);
 
                   context.read<DevicesProvider>().init(
-                      connectivity: context.read<ConnectionProvider>().connectionStatus,
+                      isConnected: context.read<ConnectionProvider>().deviceIsConnected,
                       context: context
                   );
 

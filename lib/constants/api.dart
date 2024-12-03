@@ -70,7 +70,7 @@ class ApiRoutes {
   String get pusherAuth => '$_baseURL$_pusherAuth';
 
   ///Get sendCommands
-  String get commands => _getSendCommands;
+  String get userCommands => _getSendCommands;
 
   ///FCM Notifications
   String get deviceNotifications => '$_baseURL$_notifications';
