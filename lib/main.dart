@@ -172,10 +172,10 @@ class _AuthGateState extends State<AuthGate> {
                 future: _loadFirstOrderProviders(
                     context: context,
                     initFunctions: [
-                      context.read<FcmProvider>().init,
                       context.read<ConnectionProvider>().init,
                       context.read<AuthProvider>().init,
                       context.read<UserDataProvider>().init,
+                      context.read<FcmProvider>().init,
                       _apiRequest.openConnection,
                     ]
                 ),
