@@ -262,7 +262,7 @@ class SensorNodeSnapshot {
     final dataValues = data.containsKey('data') ? data['data'] : data;
     return SensorNodeSnapshot._internal(
       deviceID: data[SMSensorSnapshotKeys.deviceID.key],
-      timestamp: DateTime.parse(data[SMSensorSnapshotKeys.timestamp.key]),
+      timestamp: DateTime.parse(data[SMSensorSnapshotKeys.timestamp.key]).toLocal(),
       soilMoisture: double.parse(
           dataValues[SMSensorSnapshotKeys.soilMoisture.key]
               .toString()
