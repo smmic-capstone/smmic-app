@@ -1,56 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:provider/provider.dart';
-
-enum WsConnectionStatus {
-  disconnected,
-  connected
-}
+import 'package:smmic/utils/api.dart';
+import 'package:smmic/utils/logs.dart';
 
 class ConnectionProvider extends ChangeNotifier {
+  // helpers, configs
+  final Logs _log = Logs(tag: 'Connection Provider');
+  final ApiRequest _apiRequest = ApiRequest();
+  
   // the current connectivity of the device
   ConnectivityResult _connectionStatus = ConnectivityResult.none; // ignore: prefer_final_fields
   ConnectivityResult get connectionStatus => _connectionStatus;
 
-  // ignore: prefer_final_fields
-  Stream<List<ConnectivityResult>> _connectivityStream = Connectivity().onConnectivityChanged;
-  Stream<List<ConnectivityResult>> get connectivityStream => _connectivityStream;
-  void init() {
-    _connectivityStream.listen((List<ConnectivityResult> connection) {
-      switch (connection[0]) {
+  final List<ConnectivityResult> _sourceConnections = [
+    ConnectivityResult.wifi,
+    ConnectivityResult.mobile
+  ];
 
-        case ConnectivityResult.wifi:
-          _connectionStatus = ConnectivityResult.wifi;
-          break;
+  final Stream<List<ConnectivityResult>> _connectivityStream = Connectivity()
+      .onConnectivityChanged;
 
-        case ConnectivityResult.mobile:
-          _connectionStatus = ConnectivityResult.mobile;
-          break;
+  bool _deviceIsConnected = false; // ignore: prefer_final_fields
+  bool get deviceIsConnected => _deviceIsConnected;
 
-        default:
-          _connectionStatus = ConnectivityResult.none;
-          break;
+  Future<void> init(BuildContext context) async {
+    _connectivityStream.listen(_connectivityListener);
+    //await _apiRequest.openConnection(context);
+    await _apiRequest.openConnection(context);
+  }
+
+  void _connectivityListener(List<ConnectivityResult> connections) {
+    bool onChangedConnected;
+
+    if (connections.any((con) => _sourceConnections.contains(con))) {
+      onChangedConnected = true;
+    } else {
+      onChangedConnected = false;
+    }
+
+    if (onChangedConnected != _deviceIsConnected) {
+      if (!onChangedConnected) {
+        _log.error(message: 'Device not connected on any of the source connections');
+      } else {
+        _log.info2(message: 'Device is connected');
       }
-
+      _deviceIsConnected = onChangedConnected;
       notifyListeners();
-    });
+    }
   }
 
-  // sensor readings web socket connection status
-  // ignore: prefer_final_fields
-  WsConnectionStatus _seWsConnectionStatus = WsConnectionStatus.disconnected;
-  WsConnectionStatus get seReadingsWsConnectionStatus => _seWsConnectionStatus;
-  void sensorWsConnectStatus(WsConnectionStatus connectionStatus) {
-    _seWsConnectionStatus = connectionStatus;
-    //notifyListeners();
-  }
-
-  // alerts web socket connection status
-  // ignore: prefer_final_fields
-  WsConnectionStatus _alertsConnectionStatus = WsConnectionStatus.disconnected;
-  WsConnectionStatus get seAlertsWsConnectionStatus => _alertsConnectionStatus;
-  void alertWsConnectStatus(WsConnectionStatus connectionStatus) {
-    _seWsConnectionStatus = connectionStatus;
+  Map<String, bool> _channelsSubStateMap = {}; // ignore: prefer_final_fields
+  Map<String, bool> get channelsSubStateMap => _channelsSubStateMap;
+  
+  void updateChannelSubState(String channelName, bool isConnected) {
+    _channelsSubStateMap[channelName] = isConnected;
     notifyListeners();
   }
 

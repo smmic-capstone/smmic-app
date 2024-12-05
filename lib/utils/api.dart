@@ -165,10 +165,11 @@ class ApiRequest {
     return result;
   }
 
-  Future<Map<String, dynamic>> patch(
-      {required String route,
-      Map<String, String>? headers,
-      Object? body}) async {
+  Future<Map<String, dynamic>> patch({
+    required String route,
+    Map<String, String>? headers,
+    Object? body}) async {
+
     _logs.info(
         message:
             'patch() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
@@ -186,6 +187,15 @@ class ApiRequest {
     _internalBuildContext = context;
     _logs.warning(message: "openConnection running");
 
+    void onSubError(String channelName) {
+      _logs.warning(message: 'failed subscription to channel -> $channelName');
+    }
+
+    void onSubSucceeded(String channelName) {
+      _logs.info2(message: 'subscribed to channel -> $channelName');
+      context.read<ConnectionProvider>().updateChannelSubState(channelName, true);
+    }
+
     try {
       await _pusher.init(
           apiKey: 'd0f649dd91498f8916b8',
@@ -197,31 +207,42 @@ class ApiRequest {
 
       ///Pusher commands channels
       await _pusher.subscribe(
-          channelName: _apiRoutes.commands);
+          channelName: _apiRoutes.userCommands,
+          onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.userCommands)),
+          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.userCommands))
+      );
 
       ///Pusher readings channels
       await _pusher.subscribe(
           channelName: _apiRoutes.seReadingsWs,
           onEvent: (dynamic data) {
             _seReadingsWsListener(data as PusherEvent);
-          });
+          },
+          onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.seReadingsWs)),
+          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.seReadingsWs))
+      );
 
       ///Pusher alerts channels
       await _pusher.subscribe(
           channelName: _apiRoutes.seAlertsWs,
           onEvent: (dynamic data) {
             _seAlertsWsListener(data as PusherEvent);
-          });
+          },
+          onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.seAlertsWs)),
+          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.seAlertsWs))
+      );
 
       await _pusher.subscribe(
           channelName: _apiRoutes.sinkReadingsWs,
           onEvent: (dynamic data) {
             _sinkSnapshotListener(data as PusherEvent);
-          }
+          },
+          onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.sinkReadingsWs)),
+          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.sinkReadingsWs))
       );
 
       await pusher.subscribe(
-          channelName: _apiRoutes.commands,
+          channelName: _apiRoutes.userCommands,
           onEvent: (dynamic data){
             final event = data as PusherEvent;
             if(event.eventName == 'commands-success'){
@@ -255,26 +276,54 @@ class ApiRequest {
     return jsonResponse;
   }
 
-  Future<void> sendIntervalCommand({required String eventName, /*required String/int command code?*/ }) async {
-    await _pusher.trigger(PusherEvent(
-        channelName: "private-user_commands",
-        eventName: eventName,
-        data: "what the fuck?",)
+  Future<void> sendIntervalCommand({required String eventName}) async {
+    await _pusher.trigger(
+        PusherEvent(
+          channelName: _apiRoutes.userCommands,
+          eventName: eventName,
+          data: "what the fuck?"
+        )
     );
   }
 
-  Future<void> sendIrrigationCommand({required String eventName, required String commands}) async {
-    await _pusher.trigger(PusherEvent(
-        channelName: _apiRoutes.commands,
-        eventName: eventName,
-        data: commands
-    ));
+  Future<void> sendIrrigationCommand({
+    String eventName = 'client-irrigation',
+    required String deviceId,
+    required int command}) async {
+
+    try {
+      await _pusher.trigger(
+          PusherEvent(
+              channelName: _apiRoutes.userCommands,
+              eventName: eventName,
+              data: '$deviceId;$command;${DateTime.now()}'
+          )
+      );
+    } catch (e) {
+      _logs.error(message: e.toString());
+    }
   }
 
   void _commandsSuccessListener(PusherEvent data){
-    final Map<String,dynamic> decodedData = jsonDecode(data.data);
-
+    final Map<String, dynamic> decodedData = jsonDecode(data.data);
     _logs.info(message:"commandsData : $decodedData");
+}
+  Future<String?> _waitForSocketID() async {
+    // Wait and check connection state periodically
+    const int maxRetries = 5;
+    const Duration retryDelay = Duration(seconds: 1);
+
+    for (int i = 0; i < maxRetries; i++) {
+      if (_pusher.connectionState == "CONNECTED") {
+        // Return the socket ID when connected
+        return await _pusher.getSocketId();
+      }
+      await Future.delayed(retryDelay);
+    }
+
+    // Return null if socket ID isn't retrieved within the retries
+    _logs.warning(message: "Failed to retrieve socket ID after retries.");
+    return null;
   }
 
   // the internal websocket listener wrapper function for
