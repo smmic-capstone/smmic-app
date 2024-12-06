@@ -136,6 +136,10 @@ flutter:
     - assets/icons/sun.svg
     - assets/icons/wind.svg
     - assets/icons/droplet.svg
+    - assets/icons/smmicSVG.svg
+    - assets/icons/smmic.png
+    - assets/icons/smmicDark.png
+    - assets/icons/smmicGold.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

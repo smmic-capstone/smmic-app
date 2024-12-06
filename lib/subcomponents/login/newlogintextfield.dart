@@ -4,10 +4,12 @@ import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
 import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/subcomponents/register/textfieldRegister.dart';
 
-class MyTextField extends StatefulWidget{
+class NewMyTextField extends StatefulWidget{
   final TextEditingController controller;
   final String hintText;
   final bool obscureText;
+  final Color textFieldBorderColor;
+  final Color hintTextColor;
   final bool? disableInput;
   final IconData? icon;
   final Widget? suffixIcon;
@@ -15,9 +17,10 @@ class MyTextField extends StatefulWidget{
   final String? Function(String?) validator;
   final EdgeInsets? padding;
 
-
-  const MyTextField(
+  const NewMyTextField(
       {super.key,
+        required this.textFieldBorderColor,
+        required this.hintTextColor,
         required this.validator,
         required this.controller,
         required this.hintText,
@@ -30,10 +33,10 @@ class MyTextField extends StatefulWidget{
       });
 
   @override
-  State<MyTextField> createState() => _MyTextFieldState();
+  State<NewMyTextField> createState() => _NewMyTextFieldState();
 }
 
-class _MyTextFieldState extends State<MyTextField> {
+class _NewMyTextFieldState extends State<NewMyTextField> {
 
   @override
   Widget build(BuildContext context) {
@@ -49,17 +52,17 @@ class _MyTextFieldState extends State<MyTextField> {
           decoration: InputDecoration(
             prefix: widget.icon != null ? Icon(widget.icon) : null,
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(5),
-              borderSide: const BorderSide(color: Colors.white),
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide(color: widget.textFieldBorderColor),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(5),
-              borderSide: const BorderSide(color: Colors.white),
+              borderRadius: BorderRadius.circular(15),
+              borderSide:  BorderSide(color: widget.textFieldBorderColor),
             ),
-            fillColor: Colors.white,
+            fillColor: Colors.transparent,
             filled: true,
             hintText: widget.hintText,
-            hintStyle: const TextStyle(color: Colors.black),
+            hintStyle: TextStyle(color: widget.hintTextColor),
             suffixIcon: widget.suffixIcon,
           ),
         ),
