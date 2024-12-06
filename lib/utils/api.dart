@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import 'package:pusher_channels_flutter/pusher-js/core/pusher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
@@ -248,8 +247,9 @@ class ApiRequest {
             if(event.eventName == 'commands-success'){
               _commandsSuccessListener(event);
             }
-
-        }
+        },
+        onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.userCommands)),
+        onSubscriptionError: ((dynamic) => onSubSucceeded(_apiRoutes.userCommands)),
       );
 
       await _pusher.connect();
@@ -308,24 +308,6 @@ class ApiRequest {
     final Map<String, dynamic> decodedData = jsonDecode(data.data);
     _logs.info(message:"commandsData : $decodedData");
 }
-  Future<String?> _waitForSocketID() async {
-    // Wait and check connection state periodically
-    const int maxRetries = 5;
-    const Duration retryDelay = Duration(seconds: 1);
-
-    for (int i = 0; i < maxRetries; i++) {
-      if (_pusher.connectionState == "CONNECTED") {
-        // Return the socket ID when connected
-        return await _pusher.getSocketId();
-      }
-      await Future.delayed(retryDelay);
-    }
-
-    // Return null if socket ID isn't retrieved within the retries
-    _logs.warning(message: "Failed to retrieve socket ID after retries.");
-    return null;
-  }
-
   // the internal websocket listener wrapper function for
   // the sensor readings websocket
   void _seReadingsWsListener(PusherEvent data) {
