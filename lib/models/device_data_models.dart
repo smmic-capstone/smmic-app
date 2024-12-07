@@ -345,9 +345,9 @@ class SensorNodeSnapshot {
 enum SMSensorAlertCodes {
   connectedState(1),
   disconnectedState(0),
+  unverifiedState(-1),
 
   // alertCode identifiers
-  connectionState(-1),
   soilMoistureAlert(4),
   temperatureAlert(3),
   humidityAlert(2),
@@ -440,7 +440,7 @@ class SMSensorState {
         deviceID: sensorId,
         lastUpdate: DateTime.now(),
         connectionState: (
-            SMSensorAlertCodes.disconnectedState.code,
+            SMSensorAlertCodes.unverifiedState.code,
             DateTime.now(),
             DateTime.now().add(keepStateTime)
         ),

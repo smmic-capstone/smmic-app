@@ -33,6 +33,9 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
   final ApiRequest _apiRequest = ApiRequest();
   final ApiRoutes _apiRoutes = ApiRoutes();
 
+  final Duration awaitIrrResponseDuration = const Duration(seconds: 30);
+  DateTime lastIrrCommandSent = DateTime.fromMillisecondsSinceEpoch(0);
+
   final TextStyle _primaryTextStyle = const TextStyle(
       fontSize: 43,
       fontFamily: 'Inter',
@@ -52,29 +55,17 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
       color: Colors.white.withOpacity(0.5)
   );
 
-  // irrigation command variables
-  ConnectionState _irrigationCommandState = ConnectionState.done; // ignore: prefer_final_fields
-
   Future<bool> _sendIrrigationCommand(String deviceId, int command) async {
     bool result = false;
 
     setState(() {
-      _irrigationCommandState = ConnectionState.waiting;
+      lastIrrCommandSent = DateTime.now();
     });
 
     await _apiRequest.sendIrrigationCommand(
       deviceId: deviceId,
       command: command
     );
-
-    await Future.delayed(const Duration(seconds: 1));
-
-    // when sent
-    if (context.mounted) {
-      setState(() {
-        _irrigationCommandState = ConnectionState.done;
-      });
-    }
 
     return result;
   }
@@ -149,12 +140,18 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
     Widget signalIcon() {
       Color finalColor = const Color.fromRGBO(23, 255, 50, 1);
 
+      if (widget.currentDateTime.difference(seConnectionState.$2) > const Duration(seconds: 10)) {
+        if (seConnectionState.$1 == SMSensorAlertCodes.connectedState.code) {
+          finalColor = const Color.fromRGBO(23, 255, 50, 0.25);
+        } else if (seConnectionState.$1 == SMSensorAlertCodes.disconnectedState.code) {
+          finalColor = const Color.fromRGBO(255, 23, 25, 0.25);
+        } else if (seConnectionState.$1 == SMSensorAlertCodes.unverifiedState.code) {
+          finalColor = Colors.white.withOpacity(0.35);
+        }
+      }
+
       if (!isConnected) {
         finalColor = Colors.white.withOpacity(0.35);
-      } else if (seConnectionState.$1 != SMSensorAlertCodes.connectedState.code) {
-        finalColor = Colors.white.withOpacity(0.35);
-      } else if (seConnectionState.$2.isBefore(widget.currentDateTime)) {
-        finalColor = const Color.fromRGBO(23, 255, 50, 0.25);
       }
 
       return SvgPicture.asset(
@@ -231,6 +228,13 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
   }
 
   Widget _irrigation(SMSensorState sensorState) {
+    Duration diff = widget.currentDateTime.difference(lastIrrCommandSent);
+
+    if (sensorState.irrigationState.$2.isAfter(lastIrrCommandSent)) {
+      setState(() {
+        lastIrrCommandSent = DateTime.fromMillisecondsSinceEpoch(0);
+      });
+    }
 
     // subscription state of the commands channel
     bool irrChannelSubState = context.watch<ConnectionProvider>()
@@ -326,7 +330,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
             ),
           ),
         ),
-        _irrigationCommandState == ConnectionState.waiting
+        diff < awaitIrrResponseDuration
             ? awaitingCommandSent
             : dropletIcon
       ],
@@ -343,9 +347,9 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
         return 'Irrigating';
       }
 
-      if (_irrigationCommandState == ConnectionState.waiting) {
+      if (diff < awaitIrrResponseDuration) {
         text = 'Waiting';
-      } else if (_irrigationCommandState == ConnectionState.done) {
+      } else if (diff > awaitIrrResponseDuration) {
         text = 'Irrigate';
       }
 
@@ -365,9 +369,9 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
         return 'Irrigation in progress...';
       }
 
-      if (_irrigationCommandState == ConnectionState.waiting) {
+      if (diff < awaitIrrResponseDuration) {
         text = 'Sending command...';
-      } else if (_irrigationCommandState == ConnectionState.done) {
+      } else if (diff > awaitIrrResponseDuration) {
         text = 'Send an irrigation command...';
       }
 
@@ -402,7 +406,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
         InkWell(
           onTap: () async {
             if (irrChannelSubState && isConnected) {
-              if (_irrigationCommandState != ConnectionState.waiting) {
+              if (diff > awaitIrrResponseDuration) {
                 _sendIrrigationCommand(
                     widget.deviceID,
                     isIrrigating() ? 0 : 1
