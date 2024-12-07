@@ -272,7 +272,7 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
                 },
               ),
               Text(
-                'Hi ${context.watch<UserDataProvider>().user!.firstName.split(' ').first}!',
+                'Hi ${context.watch<UserDataProvider>().user?.firstName.split(' ').first}!',
                 style: _headerItemsTextStyle,
               ),
               const SizedBox(width: 10),

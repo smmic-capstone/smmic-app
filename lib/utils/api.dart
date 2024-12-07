@@ -179,6 +179,8 @@ class ApiRequest {
     return result;
   }
 
+///Pusher Connection and Events below here
+
   //Open connection to Channels
   Future<void> openConnection(BuildContext context) async {
     _internalBuildContext = context;
@@ -239,6 +241,18 @@ class ApiRequest {
           },
           onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.sinkReadingsWs)),
           onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.sinkReadingsWs))
+      );
+
+      await pusher.subscribe(
+          channelName: _apiRoutes.userCommands,
+          onEvent: (dynamic data){
+            final event = data as PusherEvent;
+            if(event.eventName == 'commands-success'){
+              _commandsSuccessListener(event);
+            }
+        },
+        onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.userCommands)),
+        onSubscriptionError: ((dynamic) => onSubSucceeded(_apiRoutes.userCommands)),
       );
 
       await _pusher.connect();
@@ -308,24 +322,10 @@ class ApiRequest {
     }
   }
 
-  Future<String?> _waitForSocketID() async {
-    // Wait and check connection state periodically
-    const int maxRetries = 5;
-    const Duration retryDelay = Duration(seconds: 1);
-
-    for (int i = 0; i < maxRetries; i++) {
-      if (_pusher.connectionState == "CONNECTED") {
-        // Return the socket ID when connected
-        return await _pusher.getSocketId();
-      }
-      await Future.delayed(retryDelay);
-    }
-
-    // Return null if socket ID isn't retrieved within the retries
-    _logs.warning(message: "Failed to retrieve socket ID after retries.");
-    return null;
-  }
-
+  void _commandsSuccessListener(PusherEvent data){
+    final Map<String, dynamic> decodedData = jsonDecode(data.data);
+    _logs.info(message:"commandsData : $decodedData");
+}
   // the internal websocket listener wrapper function for
   // the sensor readings websocket
   void _seReadingsWsListener(PusherEvent data) {

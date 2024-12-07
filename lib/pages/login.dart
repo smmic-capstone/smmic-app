@@ -183,7 +183,7 @@ class _LoginPageState extends State<LoginPage> {
             alignment: Alignment.centerRight,
             child: MyButton(onTap: () async {
               await _onSubmitForm(context);
-            })),
+            }, textColor: const Color.fromRGBO(194, 161, 98, 1),)),
         const SizedBox(height: 100)
       ],
     );
