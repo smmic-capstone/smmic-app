@@ -11,6 +11,8 @@ import 'package:smmic/pages/QRcode.dart';
 import 'package:smmic/pages/accountinfo.dart';
 import 'package:smmic/pages/lab.dart';
 import 'package:smmic/pages/local_connect.dart';
+import 'package:smmic/pages/newlogin.dart';
+import 'package:smmic/pages/newregister.dart';
 import 'package:smmic/pages/settings.dart';
 import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/providers/user_data_provider.dart';
@@ -154,6 +156,26 @@ class ComponentDrawerState extends State<ComponentDrawer> {
             child: const ListTile(
               leading: Icon(Icons.power_settings_new),
               title: Text("Logout"),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()));
+            },
+            child: const ListTile(
+              leading: Icon(Icons.power_settings_new),
+              title: Text("New Login Page?"),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const RegisterPage()));
+            },
+            child: const ListTile(
+              leading: Icon(Icons.power_settings_new),
+              title: Text("New Register Page?"),
             ),
           )
         ],

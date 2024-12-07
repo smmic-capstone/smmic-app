@@ -1,7 +1,7 @@
 /// Defines API constants (routes, configs if any)
 class ApiRoutes {
   //10.0.2.2
-  final String _baseURL = 'http://goeasyonme.pythonanywhere.com/api';
+  final String _baseURL = 'https://goeasyonme.pythonanywhere.com/api';
   final String _loginURL = '/auth/jwt/create/';
   final String _logoutURL = '/blacklist/';
   final String _registerURL = '/djoser/users/';
