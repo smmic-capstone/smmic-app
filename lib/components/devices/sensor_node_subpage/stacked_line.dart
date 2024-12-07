@@ -729,8 +729,8 @@ class _StackedLineChartState extends State<StackedLineChart> with TickerProvider
 
   // chart variables
   double chartWidth = 500;
-  double chartHeight = 175;
-
+  double chartHeight = 225;
+  
   Widget _chartBase(List<SensorNodeSnapshot> chartData, double snapOffset) {
     // widget variables
     ScrollPhysics scrollPhysics = chartData.length < 6

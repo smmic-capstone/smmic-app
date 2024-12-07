@@ -351,6 +351,7 @@ enum SMSensorAlertCodes {
   soilMoistureAlert(4),
   temperatureAlert(3),
   humidityAlert(2),
+  irrAlert(1),
 
   // soil moisture
   soilMoistureLow(40),
@@ -369,7 +370,11 @@ enum SMSensorAlertCodes {
 
   // battery
   lowBattery(50),
-  normalBattery(51);
+  normalBattery(51),
+
+  // irrigation states
+  irrOn(11),
+  irrOff(10);
 
   final int code;
   const SMSensorAlertCodes(this.code);
@@ -412,6 +417,9 @@ class SMSensorState {
   /// The battery state, timestamp of the transmission
   /// and the expected expiry
   (int, DateTime, DateTime) batteryState;
+  /// The irrigation state, timestamp of the transmission
+  /// and the expected expiry
+  (int, DateTime, DateTime) irrigationState;
 
   SMSensorState._internal({
     required this.deviceID,
@@ -420,7 +428,8 @@ class SMSensorState {
     required this.soilMoistureState,
     required this.humidityState,
     required this.temperatureState,
-    required this.batteryState
+    required this.batteryState,
+    required this.irrigationState
   });
 
   /// Initiate the soil moisture sensor state with the default values.
@@ -455,11 +464,17 @@ class SMSensorState {
           DateTime.now(),
           DateTime.now().add(keepStateTime)
       ),
+      irrigationState: (
+          SMSensorAlertCodes.irrOff.code,
+          DateTime.now(),
+          DateTime.now().add(keepStateTime)
+      ),
     );
   }
 
   void updateState(Map<String, dynamic> alertMap) {
     lastUpdate = DateTime.parse(alertMap[SensorAlertKeys.timestamp.key]);
+
     DateTime alertTimeStamp = DateTime.parse(
         alertMap[SensorAlertKeys.timestamp.key]
     );
@@ -489,6 +504,12 @@ class SMSensorState {
       );
     } else if (alertType == SMSensorAlertCodes.humidityAlert.code) {
       humidityState = (
+          alertCode,
+          alertTimeStamp,
+          alertTimeStamp.add(keepStateTime)
+      );
+    } else if (alertType == SMSensorAlertCodes.irrAlert.code) {
+      irrigationState = (
           alertCode,
           alertTimeStamp,
           alertTimeStamp.add(keepStateTime)
