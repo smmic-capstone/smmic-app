@@ -19,10 +19,9 @@ class LoginPage extends StatefulWidget {
   State<StatefulWidget> createState() => _LoginPage();
 }
 
-class _LoginPage extends State<LoginPage>{
+class _LoginPage extends State<LoginPage> {
   @override
-  Widget build(BuildContext context){
-
+  Widget build(BuildContext context) {
     final AuthService _authService = AuthService();
     final _formKey = GlobalKey<FormState>();
 
@@ -30,6 +29,7 @@ class _LoginPage extends State<LoginPage>{
     final _passwordController = TextEditingController();
 
     bool obscurePassword = true;
+
     ///MediaQuery width and height
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
@@ -59,8 +59,6 @@ class _LoginPage extends State<LoginPage>{
         ? const Color.fromRGBO(255, 255, 255, .50)
         : const Color.fromRGBO(13, 13, 13, .50);
 
-
-
     /// On Submission of Form or the email and password
     Future<void> _onSubmitForm(BuildContext context) async {
       if (_formKey.currentState?.validate() ?? false) {
@@ -72,7 +70,7 @@ class _LoginPage extends State<LoginPage>{
           Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => const AuthGate()),
-                  (route) => false);
+              (route) => false);
         }
       }
     }
@@ -84,19 +82,15 @@ class _LoginPage extends State<LoginPage>{
         children: [
           Padding(
             padding: EdgeInsets.only(top: height * 0.08),
-            child: const Text("Welcome!",
-              style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 36),
+            child: const Text(
+              "Welcome!",
+              style: TextStyle(fontFamily: 'Inter', fontSize: 36),
             ),
           ),
           Padding(
             padding: EdgeInsets.only(bottom: height * 0.05),
             child: const Text("Login to your SMMIC account",
-                style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14)
-            ),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 14)),
           ),
           NewMyTextField(
             hintTextColor: hintTextColor,
@@ -113,7 +107,11 @@ class _LoginPage extends State<LoginPage>{
             hintText: 'Email',
             obscureText: false,
             suffixIcon: Padding(
-                padding: const EdgeInsets.only(right: 15), child: Icon(Icons.person,color: iconColor,)),
+                padding: const EdgeInsets.only(right: 15),
+                child: Icon(
+                  Icons.person,
+                  color: iconColor,
+                )),
             padding: EdgeInsets.zero,
           ),
           Padding(
@@ -139,12 +137,12 @@ class _LoginPage extends State<LoginPage>{
                         });
                       },
                       color: Colors.black.withOpacity(0.7),
-                      icon: Icon(obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                            color: iconColor,)
-                  )
-              ),
+                      icon: Icon(
+                        obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: iconColor,
+                      ))),
               padding: EdgeInsets.zero,
             ),
           ),
@@ -168,9 +166,13 @@ class _LoginPage extends State<LoginPage>{
             padding: EdgeInsets.only(top: height * 0.1),
             child: Align(
                 alignment: Alignment.center,
-                child: MyButton(onTap: () async {
-                  await _onSubmitForm(context);
-                }, textColor: textFieldBorder,)),
+                child: MyButton(
+                  onTap: () async {
+                    await _onSubmitForm(context);
+                  },
+                  textColor: textFieldBorder,
+                  text: 'Login',
+                )),
           ),
         ],
       );
@@ -179,18 +181,14 @@ class _LoginPage extends State<LoginPage>{
     ///pocket Container Widget
     Widget pocketContainer() {
       return Container(
-        height: height * 0.698,
-        width: width,
-        padding: EdgeInsets.symmetric(horizontal: width * .100 ),
-        decoration: BoxDecoration(
-            color: pocketColor,
-            borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(50),
-                topRight: Radius.circular(50)
-            )
-        ),
-        child: _form(_emailController, _passwordController)
-      );
+          height: height * 0.698,
+          width: width,
+          padding: EdgeInsets.symmetric(horizontal: width * .100),
+          decoration: BoxDecoration(
+              color: pocketColor,
+              borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(50), topRight: Radius.circular(50))),
+          child: _form(_emailController, _passwordController));
     }
 
     @override
@@ -200,38 +198,36 @@ class _LoginPage extends State<LoginPage>{
       super.dispose();
     }
 
-
-
     return Scaffold(
-        body: SafeArea(
-          child: Stack(
-            alignment: AlignmentDirectional.bottomCenter,
-            children: [
-              Container(
+      body: SafeArea(
+        child: Stack(
+          alignment: AlignmentDirectional.bottomCenter,
+          children: [
+            Container(
                 width: width,
                 height: height,
                 color: backgroundColor,
                 alignment: AlignmentDirectional.topCenter,
                 child: Padding(
                   padding: EdgeInsets.only(top: height * 0.005),
-                  child: Image(image: const AssetImage('assets/icons/smmic.png'),width: width * .5 ,height: height *.230,),
-                )
-              ),
-              Container(
-                height: height * 0.710,
-                width: width * 0.8265,
-                decoration: BoxDecoration(
-                    color: backPocketColor,
-                    borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(50),
-                        topRight: Radius.circular(50)
-                    )
-                ),
-              ),
-              pocketContainer()
-            ],
-          ),
-
+                  child: Image(
+                    image: const AssetImage('assets/icons/smmic.png'),
+                    width: width * .5,
+                    height: height * .230,
+                  ),
+                )),
+            Container(
+              height: height * 0.710,
+              width: width * 0.8265,
+              decoration: BoxDecoration(
+                  color: backPocketColor,
+                  borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(50),
+                      topRight: Radius.circular(50))),
+            ),
+            pocketContainer()
+          ],
+        ),
       ),
     );
   }

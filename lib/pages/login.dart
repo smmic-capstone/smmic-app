@@ -181,9 +181,13 @@ class _LoginPageState extends State<LoginPage> {
         const SizedBox(height: 25),
         Align(
             alignment: Alignment.centerRight,
-            child: MyButton(onTap: () async {
-              await _onSubmitForm(context);
-            }, textColor: const Color.fromRGBO(194, 161, 98, 1),)),
+            child: MyButton(
+              onTap: () async {
+                await _onSubmitForm(context);
+              },
+              textColor: const Color.fromRGBO(194, 161, 98, 1),
+              text: 'Login',
+            )),
         const SizedBox(height: 100)
       ],
     );
