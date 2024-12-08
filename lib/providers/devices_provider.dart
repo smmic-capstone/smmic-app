@@ -296,6 +296,8 @@ class DevicesProvider extends ChangeNotifier {
 
     finalSnapshot = SensorNodeSnapshot.dynamicSerializer(data: reading);
 
+    _logs.info2(message: finalSnapshot.toString());
+
     if (finalSnapshot == null) {
       return;
     }

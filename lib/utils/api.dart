@@ -18,11 +18,11 @@ import 'package:smmic/utils/logs.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 
 enum Commands {
-  irrigationOFF("0"),
-  irrigationON("1"),
-  interval("69");
+  irrigationOFF(0),
+  irrigationON(1),
+  interval(69);
 
-  final String command;
+  final int command;
   const Commands(this.command);
 }
 
@@ -207,6 +207,9 @@ class ApiRequest {
       ///Pusher commands channels
       await _pusher.subscribe(
           channelName: _apiRoutes.userCommands,
+          onEvent: (dynamic data) {
+            _userCommandsFeedbackListener(data as PusherEvent);
+          },
           onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.userCommands)),
           onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.userCommands))
       );
@@ -276,12 +279,21 @@ class ApiRequest {
     return jsonResponse;
   }
 
-  Future<void> sendIntervalCommand({required String eventName}) async {
+  Future<void> sendIntervalCommand({
+    String eventName = 'client-interval',
+    required Duration newInterval,
+    required String deviceId}) async {
+
+    Map<String, dynamic> commandData = {
+      SensorNodeKeys.deviceID.key : deviceId,
+      'interval': newInterval.inSeconds
+    };
+
     await _pusher.trigger(
         PusherEvent(
-          channelName: _apiRoutes.userCommands,
-          eventName: eventName,
-          data: "what the fuck?"
+            channelName: _apiRoutes.userCommands,
+            eventName: eventName,
+            data: jsonEncode(commandData)
         )
     );
   }
@@ -291,12 +303,18 @@ class ApiRequest {
     required String deviceId,
     required int command}) async {
 
+    Map<String, dynamic> commandData = {
+      SensorNodeKeys.deviceID.key : deviceId,
+      'command': command,
+    };
+
     try {
       await _pusher.trigger(
           PusherEvent(
               channelName: _apiRoutes.userCommands,
               eventName: eventName,
-              data: '$deviceId;$command;${DateTime.now()}'
+              //data: '$deviceId;$command;${DateTime.now()}'
+              data: jsonEncode(commandData)
           )
       );
     } catch (e) {
@@ -315,7 +333,6 @@ class ApiRequest {
 
     final SensorNodeSnapshot snapshotObj =
         SensorNodeSnapshot.fromJSON(decodedData['message']);
-    _logs.warning(message: "snapshotObj: $snapshotObj");
 
     // pass to stream controller
     // streamController.add(snapshotObj);
@@ -327,17 +344,20 @@ class ApiRequest {
   // listener wrapper function for the sensor node alerts websocket
   void _seAlertsWsListener(PusherEvent data) {
     final Map<String, dynamic> decodedData = jsonDecode(data.data);
-    final SensorNodeSnapshot snapshotObj =
-        SensorNodeSnapshot.fromJSON(decodedData['message']);
 
-    // store data to sqlite
-    DatabaseHelper.readingsLimit(snapshotObj.deviceID);
-    DatabaseHelper.addReadings([snapshotObj]);
+    if ((decodedData['message'] as Map<String, dynamic>)['data'] != {}) {
+      final SensorNodeSnapshot snapshotObj =
+      SensorNodeSnapshot.fromJSON(decodedData['message']);
 
-    // updated sensor snapshot
-    _internalBuildContext
-        .read<DevicesProvider>()
-        .setNewSensorSnapshot(snapshotObj);
+      // store data to sqlite
+      DatabaseHelper.readingsLimit(snapshotObj.deviceID);
+      DatabaseHelper.addReadings([snapshotObj]);
+
+      // updated sensor snapshot
+      _internalBuildContext
+          .read<DevicesProvider>()
+          .setNewSensorSnapshot(snapshotObj);
+    }
 
     // update sensor state
     _internalBuildContext
@@ -350,5 +370,21 @@ class ApiRequest {
     final Map<String, dynamic> sinkSnapshotMap = decodedData['message'];
     _logs.warning(message: sinkSnapshotMap.toString());
     _internalBuildContext.read<DevicesProvider>().updateSinkState(sinkSnapshotMap);
+  }
+
+  void _userCommandsFeedbackListener(PusherEvent data) {
+    if (data.eventName == 'commands-feedback') {
+      final Map<String, dynamic> decodedData = jsonDecode(data.data);
+      _logs.warning(message: decodedData.toString());
+      Map<String, dynamic> asMap = {
+        SensorAlertKeys.deviceID.key : decodedData[SensorAlertKeys.deviceID.key],
+        SensorAlertKeys.alertCode.key : '1${decodedData['command']}',
+        SensorAlertKeys.timestamp.key : decodedData['timestamp'],
+        SensorAlertKeys.data.key : {}
+      };
+      _internalBuildContext
+          .read<DevicesProvider>()
+          .updateSMSensorState(asMap);
+    }
   }
 }
