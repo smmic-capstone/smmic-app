@@ -65,6 +65,8 @@ dependencies:
   pusher_channels_flutter: ^2.3.0
   crypto: ^3.0.6
   image_picker: ^1.1.2
+  smooth_page_indicator: ^1.2.0+3
+
 
 dev_dependencies:
   flutter_test:
