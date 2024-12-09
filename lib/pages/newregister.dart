@@ -2,6 +2,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smmic/pages/newlogin.dart';
 import 'package:smmic/subcomponents/login/mybutton.dart';
 import 'package:smmic/subcomponents/login/newlogintextfield.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -37,34 +38,25 @@ class _RegisterPage extends State<RegisterPage>
   void updateButtonState() {
     setState(() {
       // Enable the button if the TextField is not empty
-      isButtonDisabled = firstname.text.isEmpty;
-      isButtonDisabled = lastname.text.isEmpty;
-      isButtonDisabled = province.text.isEmpty;
-      isButtonDisabled = city.text.isEmpty;
-      isButtonDisabled = barangay.text.isEmpty;
-      isButtonDisabled = zone.text.isEmpty;
-      isButtonDisabled = zipcode.text.isEmpty;
-      isButtonDisabled = emailController.text.isEmpty;
-      isButtonDisabled = passController.text.isEmpty;
-      isButtonDisabled = confirmPassController.text.isEmpty;
+      isButtonDisabled = disableButton();
     });
   }
 
   bool disableButton() {
     if (currentPageIndex == 0) {
-      return firstname.text.isNotEmpty && lastname.text.isNotEmpty;
+      return firstname.text.isEmpty || lastname.text.isEmpty;
     } else if (currentPageIndex == 1) {
-      return province.text.isNotEmpty &&
-          city.text.isNotEmpty &&
-          barangay.text.isNotEmpty &&
-          zone.text.isNotEmpty &&
-          zipcode.text.isNotEmpty;
+      return province.text.isEmpty ||
+          city.text.isEmpty ||
+          barangay.text.isEmpty ||
+          zone.text.isEmpty ||
+          zipcode.text.isEmpty;
     } else if (currentPageIndex == 2) {
-      return emailController.text.isNotEmpty &&
-          passController.text.isNotEmpty &&
-          confirmPassController.text.isNotEmpty;
+      return emailController.text.isEmpty ||
+          passController.text.isEmpty ||
+          confirmPassController.text.isEmpty;
     }
-    return true;
+    return true; // Default to disabling scrolling if something unexpected happens
   }
 
   @override
@@ -236,6 +228,15 @@ class _RegisterPage extends State<RegisterPage>
         ? const Color.fromRGBO(45, 59, 89, 1)
         : const Color.fromRGBO(194, 161, 98, 1);
 
+    Color textColor = context.watch<UiProvider>().isDark
+        ? const Color.fromRGBO(255, 255, 255, .50)
+        : const Color.fromRGBO(13, 13, 13, .50);
+
+
+    String iconPath = context.watch<UiProvider>().isDark
+        ? "assets/icons/smmicDark.png"
+        : "assets/icons/smmicGold.png";
+
     Widget firstTabView() {
       return Column(
         children: List.generate(2, (index) {
@@ -286,70 +287,168 @@ class _RegisterPage extends State<RegisterPage>
       }));
     }
 
+    Widget textPerIndex(){
+      if (currentPageIndex == 0){
+        return const Column(
+          children: [
+            Text("Full Name",
+                style: TextStyle(
+                    fontFamily: "Inter",
+                    fontSize: 36,
+                    fontWeight: FontWeight.w400
+                )
+            ),
+            Text("Enter your full name",
+                style: TextStyle(
+                    fontFamily: "Inter",
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                ),
+            ),
+          ],
+        );
+      }else if(currentPageIndex == 1){
+        return const Column(
+          children: [
+            Text("Address",
+                style: TextStyle(
+                    fontFamily: "Inter",
+                    fontSize: 36,
+                    fontWeight: FontWeight.w400
+                )
+            ),
+            Text("Provide your complete address",
+                style: TextStyle(
+                    fontFamily: "Inter",
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400
+                )
+            )
+          ],
+        );
+      }else{
+        return const Column(
+          children: [
+            Text("Account",
+                style: TextStyle(
+                    fontFamily: "Inter",
+                    fontSize: 36,
+                    fontWeight: FontWeight.w400
+                )),
+            Text("Set up your account details",
+                style: TextStyle(
+                    fontFamily: "Inter",
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400
+                )
+            ),
+          ],
+        );
+      }
+    }
+
+
     return DefaultTabController(
       length: 3,
       child: Scaffold(
         backgroundColor: backgroundColor,
         body: Padding(
           padding: EdgeInsets.symmetric(horizontal: width * .05),
-          child: Column(
-            children: [
-              Container(
-                width: width * 0.4,
-                height: height * 0.4,
-                color: Colors.red,
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Center(
-                  child: SmoothPageIndicator(
-                    controller: pageController,
-                    count: 3,
-                    effect: SlideEffect(
-                        spacing: 8.0,
-                        radius: 100,
-                        dotWidth: 88,
-                        dotHeight: 10,
-                        strokeWidth: 1.5,
-                        dotColor: notActiveTab,
-                        activeDotColor: activeTab),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                SizedBox(
+                  width: width * 0.6,
+                  height: height * 0.4,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Center(
+                          child: Image(
+                              image: AssetImage(iconPath),
+                            width: width * .32,
+                            height: height * .14,
+                          )
+                      ),
+                      Center(
+                        child: textPerIndex(),
+                      )
+                    ],
+                  )
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: SmoothPageIndicator(
+                      controller: pageController,
+                      count: 3,
+                      effect: SlideEffect(
+                          spacing: 8.0,
+                          radius: 100,
+                          dotWidth: 88,
+                          dotHeight: 10,
+                          strokeWidth: 1.5,
+                          dotColor: notActiveTab,
+                          activeDotColor: activeTab),
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                height: height * 0.4,
-                child: PageView(
-                  physics: _RestrictedScrollPhysics(
-                      canScrollForward: disableButton()),
-                  controller: pageController,
-                  onPageChanged: (index) {
-                    setState(() {
-                      currentPageIndex = index;
-                    });
-                  },
+                SizedBox(
+                  height: height * 0.4,
+                  child: PageView(
+                    physics: _RestrictedScrollPhysics(canScrollForward: !disableButton()),
+                    controller: pageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        currentPageIndex = index;
+                      });
+                    },
+                    children: [
+                      Center(child: firstTabView()),
+                      Center(child: secondTabView()),
+                      Center(child: thirdTabView())
+                    ],
+                  ),
+                ),
+                Center(
+                  child: MyButton(
+                    onTap: disableButton()
+                        ? null : () {
+                      if (currentPageIndex < 2) {
+                        pageController.jumpToPage(currentPageIndex + 1,);
+                      }
+                    },
+                    textColor: disableButton() ? Colors.grey : textFieldBorder,
+                    text: currentPageIndex < 2 ? 'Next' : 'Done',
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Center(child: firstTabView()),
-                    Center(child: secondTabView()),
-                    Center(child: thirdTabView())
+                    Text("Already have an account? ",
+                        style: TextStyle(
+                      fontFamily: "Inter",
+                      color: textColor,
+                      fontSize: 12)
+                    ),
+                    GestureDetector(
+                      onTap: (){
+                        Navigator.pushReplacement((context), MaterialPageRoute(builder: (context) => const LoginPage()));
+                      },
+                      child: Text("Login",style: TextStyle(
+                          fontFamily: "Inter",
+                          color: textColor,
+                          decoration: TextDecoration.underline,
+                          fontSize: 12)
+                      ),
+                    )
                   ],
-                ),
-              ),
-              Center(
-                child: MyButton(
-                  onTap: disableButton()
-                      ? () {
-                          if (currentPageIndex < 2) {
-                            pageController.animateToPage(currentPageIndex + 1,
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.bounceInOut);
-                          }
-                        }
-                      : null,
-                  textColor: disableButton() ? textFieldBorder : Colors.grey,
-                  text: currentPageIndex < 2 ? 'Next' : 'Done',
-                ),
-              )
-            ],
+                                ),
+                )
+              ],
+            ),
           ),
         ),
       ),
@@ -358,23 +457,68 @@ class _RegisterPage extends State<RegisterPage>
 }
 
 class _RestrictedScrollPhysics extends ScrollPhysics {
+  bool isGoingRight = false;
   final bool canScrollForward;
 
-  const _RestrictedScrollPhysics(
+   _RestrictedScrollPhysics(
       {required this.canScrollForward, ScrollPhysics? parent})
       : super(parent: parent);
 
   @override
   _RestrictedScrollPhysics applyTo(ScrollPhysics? ancestor) {
-    return _RestrictedScrollPhysics(
-        canScrollForward: canScrollForward, parent: buildParent(ancestor));
+    return _RestrictedScrollPhysics(canScrollForward: canScrollForward, parent: buildParent(ancestor));
   }
 
   @override
+  double applyPhysicsToUserOffset(ScrollMetrics position, double offset) {
+    isGoingRight = offset.sign > 0;
+    return offset;
+  }
+  @override
   double applyBoundaryConditions(ScrollMetrics position, double value) {
-    // Restrict forward scrolling
-    if (!canScrollForward && value > position.pixels) {
-      return value - position.pixels; // Restrict forward scroll
+    //print("applyBoundaryConditions");
+    assert(() {
+      if (value == position.pixels) {
+        throw FlutterError(
+            '$runtimeType.applyBoundaryConditions() was called redundantly.\n'
+                'The proposed new position, $value, is exactly equal to the current position of the '
+                'given ${position.runtimeType}, ${position.pixels}.\n'
+                'The applyBoundaryConditions method should only be called when the value is '
+                'going to actually change the pixels, otherwise it is redundant.\n'
+                'The physics object in question was:\n'
+                '  $this\n'
+                'The position object in question was:\n'
+                '  $position\n');
+      }
+      return true;
+    }());
+    if (value < position.pixels && position.pixels <= position.minScrollExtent) {
+      return value - position.pixels;
+    }
+    if (position.maxScrollExtent <= position.pixels && position.pixels < value) {
+      // overscroll
+      return value - position.pixels;
+    }
+    if (value < position.minScrollExtent &&
+        position.minScrollExtent < position.pixels) {
+      // hit top edge
+
+      return value - position.minScrollExtent;
+    }
+
+    if (position.pixels < position.maxScrollExtent &&
+        position.maxScrollExtent < value) {
+      // hit bottom edge
+      return value - position.maxScrollExtent;
+    }
+    /// if !isGoingRight then that is equal to true which means that value is greater than position.pixels
+    /// if isGoingRight then that is equal to false which means that value is less than position.pixels
+    /// canScrollForward is true default value
+    /// so !canScrollForward is false
+    ///
+
+    if(!canScrollForward && !isGoingRight){
+      return value;
     }
     return 0.0;
   }

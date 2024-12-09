@@ -7,7 +7,7 @@ import 'package:smmic/firebase_options.dart';
 import 'package:smmic/preload/preloaddevices.dart';
 import 'package:smmic/providers/connections_provider.dart';
 import 'package:smmic/providers/device_settings_provider.dart';
-import 'package:smmic/pages/login.dart';
+import 'package:smmic/pages/newlogin.dart';
 import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/providers/fcm_provider.dart';
 import 'package:smmic/providers/mqtt_provider.dart';

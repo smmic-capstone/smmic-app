@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smmic/constants/api.dart';
-import 'package:smmic/pages/login.dart';
+import 'package:smmic/pages/newlogin.dart';
 import 'package:smmic/providers/auth_provider.dart'; //Token status
 import 'package:http/http.dart' as http;
 import 'package:smmic/utils/api.dart';

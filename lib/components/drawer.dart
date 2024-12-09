@@ -159,26 +159,6 @@ class ComponentDrawerState extends State<ComponentDrawer> {
               title: Text("Logout"),
             ),
           ),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()));
-            },
-            child: const ListTile(
-              leading: Icon(Icons.power_settings_new),
-              title: Text("New Login Page?"),
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const RegisterPage()));
-            },
-            child: const ListTile(
-              leading: Icon(Icons.power_settings_new),
-              title: Text("New Register Page?"),
-            ),
-          )
         ],
       ),
     );

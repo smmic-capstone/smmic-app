@@ -1,16 +1,14 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:smmic/pages/newregister.dart';
 import 'package:smmic/subcomponents/login/newlogintextfield.dart';
-import '';
 import '../main.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/auth_services.dart';
 import '../subcomponents/login/mybutton.dart';
-import '../subcomponents/login/textfield.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,15 +18,69 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPage extends State<LoginPage> {
+  final AuthService _authService = AuthService();
+  final _formKey = GlobalKey<FormState>();
+
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  bool obscurePassword = true;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  /// On Submission of Form or the email and password
+  Future<void> _onSubmitForm(BuildContext context) async {
+
+    if (_formKey.currentState?.validate() ?? false) {
+      _formKey.currentState?.save();
+      showDialog(
+        context: context,
+        barrierDismissible: false, // Prevent closing the dialog while loading
+        builder: (context) =>
+        const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text('Logging in...'),
+            ],
+          ),
+        ),
+      );
+      try {
+        await _authService.login(
+            email: _emailController.text, password: _passwordController.text);
+        if (context.mounted) {
+          Navigator.of(context).pop();
+          context.read<AuthProvider>().init();
+          Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const AuthGate()),
+                  (route) => false);
+        }
+      }catch(e){
+        if(context.mounted){
+          Navigator.of(context).pop();
+
+          // Show error SnackBar
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Login failed: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final AuthService _authService = AuthService();
-    final _formKey = GlobalKey<FormState>();
-
-    final _emailController = TextEditingController();
-    final _passwordController = TextEditingController();
-
-    bool obscurePassword = true;
 
     ///MediaQuery width and height
     double width = MediaQuery.of(context).size.width;
@@ -59,24 +111,10 @@ class _LoginPage extends State<LoginPage> {
         ? const Color.fromRGBO(255, 255, 255, .50)
         : const Color.fromRGBO(13, 13, 13, .50);
 
-    /// On Submission of Form or the email and password
-    Future<void> _onSubmitForm(BuildContext context) async {
-      if (_formKey.currentState?.validate() ?? false) {
-        _formKey.currentState?.save();
-        await _authService.login(
-            email: _emailController.text, password: _passwordController.text);
-        if (context.mounted) {
-          context.read<AuthProvider>().init();
-          Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const AuthGate()),
-              (route) => false);
-        }
-      }
-    }
+
 
     ///Form Widget consists of the email and passwords text fields and the Forgot Password
-    Widget _form(TextEditingController emailController,
+    Widget form(TextEditingController emailController,
         TextEditingController passwordController) {
       return Column(
         children: [
@@ -151,7 +189,9 @@ class _LoginPage extends State<LoginPage> {
             child: Align(
               alignment: Alignment.centerRight,
               child: GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  ///TODO: Create logic for forget password
+                },
                 child: Text(
                   'Forgot Password',
                   style: TextStyle(
@@ -168,11 +208,38 @@ class _LoginPage extends State<LoginPage> {
                 alignment: Alignment.center,
                 child: MyButton(
                   onTap: () async {
+                    print("Button is pressed");
                     await _onSubmitForm(context);
                   },
                   textColor: textFieldBorder,
                   text: 'Login',
                 )),
+          ),
+          Padding(
+              padding: EdgeInsets.only(top: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("Don't have an Account? ",
+                  style: TextStyle(
+                      fontFamily: "Inter",
+                      fontSize: 12,
+                      color: iconColor)
+                ),
+                GestureDetector
+                  (onTap: (){
+                    Navigator.push((context), MaterialPageRoute(builder: (context) => const RegisterPage()));
+                },
+                    child: Text("Register",
+                      style: TextStyle(
+                          fontFamily: "Inter",
+                          fontSize: 12,
+                          decoration: TextDecoration.underline,
+                          color: iconColor),
+                    )
+                )
+              ],
+            )
           ),
         ],
       );
@@ -188,18 +255,15 @@ class _LoginPage extends State<LoginPage> {
               color: pocketColor,
               borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(50), topRight: Radius.circular(50))),
-          child: _form(_emailController, _passwordController));
-    }
-
-    @override
-    void dispose() {
-      _emailController.dispose();
-      _passwordController.dispose();
-      super.dispose();
+          child: Form(
+              key: _formKey,
+              child: form(_emailController, _passwordController)
+          )
+      );
     }
 
     return Scaffold(
-      body: SafeArea(
+      body: SingleChildScrollView(
         child: Stack(
           alignment: AlignmentDirectional.bottomCenter,
           children: [

@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:smmic/pages/login.dart';
+import 'package:smmic/pages/newlogin.dart';
 import 'package:smmic/utils/logs.dart';
 import 'package:smmic/utils/shared_prefs.dart';
 
