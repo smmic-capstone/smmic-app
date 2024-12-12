@@ -70,8 +70,8 @@ class DevicesProvider extends ChangeNotifier {
 
     // initially, load readings from the sqlite
     // TODO: add sink states to sqlite
-    await _loadReadingsFromSqlite();
     _initDevicesStates();
+    await _loadReadingsFromSqlite();
 
     notifyListeners();
 
@@ -321,6 +321,7 @@ class DevicesProvider extends ChangeNotifier {
       }
     } else {
       _sensorNodeSnapshotMap[finalSnapshot.deviceID] = finalSnapshot;
+      _sensorStatesMap[finalSnapshot.deviceID]!.updateConnectionState(finalSnapshot.timestamp);
     }
 
     // update connection state

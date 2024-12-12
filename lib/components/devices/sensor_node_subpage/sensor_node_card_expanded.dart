@@ -90,7 +90,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
         children: [
           _topIcons(
               isConnected,
-              sensorState.connectionState
+              snapshot.timestamp
           ),
           const SizedBox(height: 25),
           SizedBox(
@@ -135,20 +135,25 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
 
   Widget _topIcons(
       bool isConnected,
-      (int, DateTime, DateTime) seConnectionState) {
+      DateTime lastTimestamp) {
 
     Widget signalIcon() {
       Color finalColor = const Color.fromRGBO(23, 255, 50, 1);
 
-      if (widget.currentDateTime.difference(seConnectionState.$2) > const Duration(seconds: 10)) {
-        if (seConnectionState.$1 == SMSensorAlertCodes.connectedState.code) {
-          finalColor = const Color.fromRGBO(23, 255, 50, 0.25);
-        } else if (seConnectionState.$1 == SMSensorAlertCodes.disconnectedState.code) {
-          finalColor = const Color.fromRGBO(255, 23, 25, 0.25);
-        } else if (seConnectionState.$1 == SMSensorAlertCodes.unverifiedState.code) {
-          finalColor = Colors.white.withOpacity(0.35);
-        }
+      if (widget.currentDateTime.difference(lastTimestamp) > const Duration(minutes: 5)) {
+        finalColor = Colors.white.withOpacity(0.35);
+        //finalColor = const Color.fromRGBO(23, 255, 50, 0.25);
       }
+
+      // if (widget.currentDateTime.difference(lastTimestamp) > const Duration(minutes: 5)) {
+      //   if (seConnectionState.$1 == SMSensorAlertCodes.connectedState.code) {
+      //     finalColor = const Color.fromRGBO(23, 255, 50, 0.25);
+      //   } else if (seConnectionState.$1 == SMSensorAlertCodes.disconnectedState.code) {
+      //     finalColor = const Color.fromRGBO(255, 23, 25, 0.25);
+      //   } else if (seConnectionState.$1 == SMSensorAlertCodes.unverifiedState.code) {
+      //     finalColor = Colors.white.withOpacity(0.35);
+      //   }
+      // }
 
       if (!isConnected) {
         finalColor = Colors.white.withOpacity(0.35);

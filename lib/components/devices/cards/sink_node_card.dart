@@ -53,7 +53,7 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
     SinkNodeState sinkState = context.watch<DevicesProvider>()
         .sinkNodeStateMap[widget.deviceInfo.deviceID]
         ?? SinkNodeState.initObj(widget.deviceInfo.deviceID);
-
+    
     return Container(
       margin: EdgeInsets.only(left: 25, right: 25, bottom: widget.bottomMargin ?? 0),
       child: Stack(
@@ -68,9 +68,7 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
                 Row(
                   children: [
                     _sensorsConnected(
-                      connected: sinkState.sensorsConnectionStateMap.keys
-                          .where((sensor) => sinkState.sensorsConnectionStateMap[sensor] == ConnectionState.active)
-                          .toList().length,
+                      sensorNodes: widget.deviceInfo.registeredSensorNodes,
                       total: widget.deviceInfo.registeredSensorNodes.length
                     ),
                     const SizedBox(width: 30),
@@ -146,7 +144,21 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
     );
   }
 
-  Widget _sensorsConnected({required int connected, required int total}) {
+  Widget _sensorsConnected({required List<String> sensorNodes, required int total}) {
+
+    int connectedSensorCount = 0;
+
+    Map<String, SensorNodeSnapshot> sensorNodeSnapshotMap = context.watch<DevicesProvider>().sensorNodeSnapshotMap;
+    for (String id in sensorNodes) {
+      if (sensorNodeSnapshotMap[id] == null) {
+        continue;
+      } else {
+        if (widget.currentDateTime.difference(sensorNodeSnapshotMap[id]!.timestamp) > const Duration(minutes: 5)) {
+          connectedSensorCount += 1;
+        }
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.end,
@@ -155,7 +167,7 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
           text: TextSpan(
               children: [
                 TextSpan(
-                    text: connected.toString(),
+                    text: connectedSensorCount.toString(),
                     style: _primaryTextStyle
                 ),
                 TextSpan(
