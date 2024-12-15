@@ -1,7 +1,9 @@
 import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:smmic/pages/QRcode.dart';
 import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/pages/devices.dart';
 import 'package:smmic/pages/settings.dart';
@@ -56,16 +58,10 @@ class _BottomNavBarState extends State<BottomNavBar> {
         ),
       )),
       (
-      const Settings(),
-      SvgPicture.asset(
-        'assets/icons/settings.svg',
-        clipBehavior: Clip.antiAlias,
-        width: 32,
-        height: 32,
-        colorFilter: ColorFilter.mode(
-            isDark ? Colors.white : Colors.black,
-            BlendMode.srcATop
-        ),
+      const QRcode(),
+      Icon(
+        CupertinoIcons.qrcode_viewfinder,
+        size: 36
       )),
     ];
 
@@ -145,7 +141,6 @@ class _BottomNavBarState extends State<BottomNavBar> {
             positionIdentifier: (left, right)
         ),
       );
-
     }).toList();
   }
 

@@ -156,7 +156,9 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
       // }
 
       if (!isConnected) {
-        finalColor = Colors.white.withOpacity(0.35);
+        finalColor = Colors
+            .white
+            .withOpacity(0.35);
       }
 
       return SvgPicture.asset(
@@ -170,11 +172,151 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
       );
     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        signalIcon(),
-        SvgPicture.asset(
+    Widget settingsIcon() {
+      return GestureDetector(
+        onTap: () {
+          showDialog(
+              barrierDismissible: false,
+              context: context,
+              builder: (context) {
+                return BackdropFilter(
+                  filter: ImageFilter.blur(sigmaY: 10, sigmaX: 10),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.all(Radius.circular(15)),
+                      color: Colors.black.withOpacity(0.75),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 40
+                    ),
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 50,
+                        vertical: 200
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                //Navigator.pop(context);
+                              },
+                              child: const Icon(
+                                CupertinoIcons.pencil_circle,
+                                color: Colors.white,
+                                size: 32,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Icon(
+                                CupertinoIcons.xmark_circle,
+                                color: Colors.white,
+                                size: 32,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 25),
+                        Container(
+                          constraints: const BoxConstraints(maxWidth: 150),
+                          child: RichText(
+                            text: TextSpan(
+                                text: context.watch<DevicesProvider>()
+                                    .sensorNodeMap[widget.deviceID]?.deviceName
+                                    ?? 'Unknown',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 25,
+                                    fontFamily: 'Inter'
+                                ),
+                                children: [
+                                  TextSpan(
+                                      text: '\nDevice Name',
+                                      style: _tertiaryTextStyle
+                                  )
+                                ]
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 25),
+                        Container(
+                          constraints: const BoxConstraints(maxWidth: 150),
+                          child: RichText(
+                            text: TextSpan(
+                                text: '5 Minutes',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 25,
+                                    fontFamily: 'Inter'
+                                ),
+                                children: [
+                                  TextSpan(
+                                      text: '\nReading Interval',
+                                      style: _tertiaryTextStyle
+                                  )
+                                ]
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 25),
+                        Container(
+                          constraints: const BoxConstraints(maxWidth: 150),
+                          child: RichText(
+                            text: TextSpan(
+                                text: context.watch<DevicesProvider>()
+                                    .sensorNodeMap[widget.deviceID]?.longitude
+                                    ?? '---',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 25,
+                                    fontFamily: 'Inter'
+                                ),
+                                children: [
+                                  TextSpan(
+                                      text: '\nLongitude',
+                                      style: _tertiaryTextStyle
+                                  )
+                                ]
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 25),
+                        Container(
+                          constraints: const BoxConstraints(maxWidth: 150),
+                          child: RichText(
+                            text: TextSpan(
+                                text: context.watch<DevicesProvider>()
+                                    .sensorNodeMap[widget.deviceID]?.latitude
+                                    ?? '---',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 25,
+                                    fontFamily: 'Inter'
+                                ),
+                                children: [
+                                  TextSpan(
+                                      text: '\nLatitude',
+                                      style: _tertiaryTextStyle
+                                  )
+                                ]
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+          );
+        },
+        child: SvgPicture.asset(
           'assets/icons/settings.svg',
           width: 28,
           height: 28,
@@ -183,6 +325,14 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
               BlendMode.srcIn
           ),
         ),
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        signalIcon(),
+        settingsIcon()
       ],
     );
   }
