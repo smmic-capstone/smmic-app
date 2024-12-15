@@ -147,6 +147,8 @@ class ApiRequest {
     Map<String, dynamic> result = await _request(
         route: route, method: left(http.post), headers: headers, body: body);
 
+    _logs.error(message: result.toString());
+
     return result;
   }
 

@@ -138,6 +138,7 @@ flutter:
     - assets/icons/sun.svg
     - assets/icons/wind.svg
     - assets/icons/droplet.svg
+    - assets/icons/qr_scanner.svg
     - assets/icons/smmicSVG.svg
     - assets/icons/smmic.png
     - assets/icons/smmicDark.png
