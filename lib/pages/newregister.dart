@@ -2,12 +2,15 @@ import 'package:email_validator/email_validator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smmic/constants/api.dart';
 import 'package:smmic/pages/newlogin.dart';
 import 'package:smmic/subcomponents/login/mybutton.dart';
 import 'package:smmic/subcomponents/login/newlogintextfield.dart';
+import 'package:smmic/utils/api.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../providers/theme_provider.dart';
+import '../utils/logs.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -16,8 +19,13 @@ class RegisterPage extends StatefulWidget {
   State<RegisterPage> createState() => _RegisterPage();
 }
 
-class _RegisterPage extends State<RegisterPage>
-    with SingleTickerProviderStateMixin {
+class _RegisterPage extends State<RegisterPage> with SingleTickerProviderStateMixin {
+
+  final _formKey = GlobalKey<FormState>();
+  final ApiRequest _apiRequest = ApiRequest();
+  final ApiRoutes _apiRoutes = ApiRoutes();
+  final Logs _logs = Logs(tag: 'Register Page');
+
   final firstname = TextEditingController();
   final lastname = TextEditingController();
   final province = TextEditingController();
@@ -65,6 +73,7 @@ class _RegisterPage extends State<RegisterPage>
     lastname.addListener(updateButtonState);
     province.addListener(updateButtonState);
     barangay.addListener(updateButtonState);
+    city.addListener(updateButtonState);
     zone.addListener(updateButtonState);
     zipcode.addListener(updateButtonState);
     emailController.addListener(updateButtonState);
@@ -77,6 +86,48 @@ class _RegisterPage extends State<RegisterPage>
   void dispose() {
     pageController.dispose();
     super.dispose();
+  }
+
+  void register({
+    required String firstname,
+    required String lastname,
+    required String province,
+    required String city,
+    required String barangay,
+    required String zone,
+    required String zipCode,
+    required String email,
+    required String password,
+    required String confirmPassword}) async {
+
+    try{
+      final response =  await _apiRequest.post(
+          route: _apiRoutes.register,
+          body: {
+            'first_name':firstname,
+            'last_name':lastname,
+            'province':province,
+            'city' : city,
+            'barangay':barangay,
+            'zone':zone,
+            'zip_code':zipCode,
+            'email':email,
+            'password':password,
+            're_password':confirmPassword,
+          });
+      if(response.containsKey('error')){
+        if(response['error'] == 400){
+          ///TODO:Error Handle
+          _logs.error(message: "error in registering");
+        }
+      }else if(response.containsKey('status_code')){
+        if(response['status_code'] == 201 && context.mounted){
+          Navigator.pushReplacement((context), MaterialPageRoute(builder: (context) => const LoginPage()));
+        }
+      }
+    }catch(e){
+      _logs.error(message: "register not working: $e");
+    }
   }
 
   @override
@@ -415,7 +466,22 @@ class _RegisterPage extends State<RegisterPage>
                     onTap: disableButton()
                         ? null : () {
                       if (currentPageIndex < 2) {
+                        print("button pressed");
                         pageController.jumpToPage(currentPageIndex + 1,);
+                      }else if(currentPageIndex == 2){
+                        print("button pressed");
+                        register(
+                            firstname: firstname.text,
+                            lastname: lastname.text,
+                            province: province.text,
+                            city: city.text,
+                            barangay: barangay.text,
+                            zone: zone.text,
+                            zipCode: zipcode.text,
+                            email: emailController.text,
+                            password: passController.text,
+                            confirmPassword: confirmPassController.text
+                        );
                       }
                     },
                     textColor: disableButton() ? Colors.grey : textFieldBorder,

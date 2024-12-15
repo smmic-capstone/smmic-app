@@ -47,14 +47,14 @@ class ComponentDrawerState extends State<ComponentDrawer> {
     User? userData = context.watch<UserDataProvider>().user;
     UserAccess? accessData = context.watch<AuthProvider>().accessData;
 
-    if (userData == null) {
+    /*if (userData == null) {
       _logs.warning(
           message: 'userData from UserDataProvider is null: $userData');
 
       _logs.warning(
           message: 'userData from UserDataProvider is null: $accessData');
       throw Exception('error: user data == null!');
-    }
+    }*/
     return Drawer(
       child: ListView(
         children: [
@@ -76,8 +76,8 @@ class ComponentDrawerState extends State<ComponentDrawer> {
                       ),
               )),
               Text(
-                userData.firstName,
-                style: TextStyle(fontWeight: FontWeight.bold),
+                userData!.firstName,
+                style: const TextStyle(fontWeight: FontWeight.bold),
               )
             ],
           )),
@@ -101,7 +101,7 @@ class ComponentDrawerState extends State<ComponentDrawer> {
               },
             ),
           ),
-          GestureDetector(
+         /* GestureDetector(
             onTap: () {
               Navigator.push(
                   context,
@@ -112,8 +112,8 @@ class ComponentDrawerState extends State<ComponentDrawer> {
               leading: Icon(Icons.signal_wifi_connected_no_internet_4),
               title: Text('Connect Locally'),
             ),
-          ),
-          GestureDetector(
+          ),*/
+          /*GestureDetector(
             onTap: () {
               Navigator.push(
                   context,
@@ -127,8 +127,8 @@ class ComponentDrawerState extends State<ComponentDrawer> {
               leading: Icon(Icons.science_outlined),
               title: Text('Lab'),
             ),
-          ),
-          GestureDetector(
+          ),*/
+          /*GestureDetector(
             onTap: () {
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => const QRcode()));
@@ -137,19 +137,7 @@ class ComponentDrawerState extends State<ComponentDrawer> {
               leading: Icon(Icons.qr_code),
               title: Text('QR'),
             ),
-          ),
-          GestureDetector(
-            onTap: () {
-              _apiRequest.sendIntervalCommand(
-                deviceId: '0000',
-                newInterval: const Duration(minutes: 5)
-              );
-            },
-            child: const ListTile(
-              leading: Icon(Icons.water_drop_outlined),
-              title: Text('Send Interval Command'),
-            ),
-          ),
+          ),*/
           GestureDetector(
             onTap: () {
               _authUtils.logoutUser(context);
