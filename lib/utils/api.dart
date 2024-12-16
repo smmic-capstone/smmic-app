@@ -102,12 +102,22 @@ class ApiRequest {
           _logs.success(
               message: 'post() $route, returned with data $statusCode');
           break;
+
+        case (204):
+          _logs.success(
+              message: 'post() $route, return with data $statusCode');
+          break;
+
+        case (201):
+          _logs.success(
+              message: 'post() $route, return with data $statusCode');
+          break;
       }
 
       finalRes.addAll({
         'status_code': statusCode,
         'body': resBody,
-        'data': jsonDecode(resBody)
+        'data': jsonDecode(resBody != '' ? resBody : '{}')
       });
 
     } on http.ClientException catch (e) {
@@ -115,6 +125,7 @@ class ApiRequest {
       finalRes.addAll({'status_code': 0});
 
     } catch (e) {
+      print(e);
       _logs.warning(
           message:
               'post() unhandled unexpected post() error (statusCode: $statusCode, body: $resBody)');
@@ -147,7 +158,7 @@ class ApiRequest {
     Map<String, dynamic> result = await _request(
         route: route, method: left(http.post), headers: headers, body: body);
 
-    _logs.error(message: result.toString());
+    _logs.info(message: result.toString());
 
     return result;
   }

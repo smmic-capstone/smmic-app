@@ -6,6 +6,7 @@ class ApiRoutes {
   final String _logoutURL = '/blacklist/';
   final String _registerURL = '/djoser/users/';
   final String _getUserURL = '/djoser/users/me/';
+  final String _forgotPassword = '/djoser/users/reset_password/';
   final String _verifyTokenURL = '/auth/jwt/verify';
   final String _refreshAccessURL = '/auth/jwt/refresh';
   final String _getDevicesURL = '/getuserSKdevices/';
@@ -41,6 +42,9 @@ class ApiRoutes {
 
   /// Fetch user data, requires access token
   String get getUserData => '$_baseURL$_getUserURL';
+
+  ///Send Email to user for forget password
+  String get forgetPassword => '$_baseURL$_forgotPassword';
 
   ///Verify Token validity. Useful on errors with authentication
   String get verifyToken => '$_baseURL$_verifyTokenURL';
