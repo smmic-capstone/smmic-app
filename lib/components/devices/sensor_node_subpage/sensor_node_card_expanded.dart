@@ -4,12 +4,15 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:numberpicker/numberpicker.dart';
 import 'package:provider/provider.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/models/device_data_models.dart';
+import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/providers/connections_provider.dart';
 import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
+import 'package:smmic/services/devices_services.dart';
 import 'package:smmic/subcomponents/devices/digital_display.dart';
 import 'package:smmic/utils/api.dart';
 import 'package:smmic/utils/datetime_formatting.dart';
@@ -32,9 +35,19 @@ class SensorNodeCardExpanded extends StatefulWidget {
 class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
   final ApiRequest _apiRequest = ApiRequest();
   final ApiRoutes _apiRoutes = ApiRoutes();
+  final DevicesServices _devicesServices = DevicesServices();
 
   final Duration awaitIrrResponseDuration = const Duration(seconds: 30);
   DateTime lastIrrCommandSent = DateTime.fromMillisecondsSinceEpoch(0);
+
+  TextEditingController editController = TextEditingController();
+  int _intervalValue = 5;
+  Color saveButtonColor = Colors.green.withOpacity(0.25);
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   final TextStyle _primaryTextStyle = const TextStyle(
       fontSize: 43,
@@ -68,6 +81,12 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
     );
 
     return result;
+  }
+
+  @override
+  void dispose() {
+    editController.dispose();
+    super.dispose();
   }
 
   @override
@@ -133,6 +152,223 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
     );
   }
 
+  void showEditDialog(BuildContext context, String value, String field) {
+    String initialValue = value;
+
+    setState(() {
+      editController.text = value;
+    });
+
+    Widget fieldInput() {
+      if (field == 'Device Name') {
+        return TextField(
+          decoration: InputDecoration(
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(15)),
+                  borderSide: BorderSide(
+                    color: Colors.white.withOpacity(0.5),
+                    width: 0.5,
+                  )
+              )
+          ),
+          controller: editController,
+          style: TextStyle(
+              color: Colors.white,
+              fontFamily: 'Inter',
+              fontSize: 20
+          ),
+        );
+      } else if (field == 'Interval') {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // GestureDetector(
+            //   onTap: () {
+            //     setState(() {
+            //       _intervalValue = _intervalValue - 1;
+            //     });
+            //   },
+            //   child: Text(
+            //       '-',
+            //       style: TextStyle(
+            //           color: Colors.white,
+            //           fontFamily: 'Inter',
+            //           fontSize: 40
+            //       )
+            //   ),
+            // ),
+            // SizedBox(width: 15),
+            ListenableBuilder(
+                listenable: (editController),
+                builder: (context, child) {
+                  return NumberPicker(
+                    itemWidth: 125,
+                    decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1)
+                    ),
+                    selectedTextStyle: const TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'Inter',
+                        fontSize: 20
+                    ),
+                    textStyle: TextStyle(
+                        color: Colors.white.withOpacity(0.25),
+                        fontFamily: 'Inter',
+                        fontSize: 20
+                    ),
+                    minValue: 5,
+                    maxValue: 25,
+                    value: int.parse(editController.text),
+                    textMapper: (value) {
+                      return '$value Minutes';
+                    },
+                    onChanged: (value) {
+                      setState(() {
+                        editController.text = value.toString();
+                      });
+                    },
+                    infiniteLoop: true,
+                  );
+                }),
+            // SizedBox(width: 15),
+            // GestureDetector(
+            //   onTap: () {
+            //     setState(() {
+            //       _intervalValue = _intervalValue + 1;
+            //     });
+            //   },
+            //   child: Text(
+            //       '+',
+            //       style: TextStyle(
+            //           color: Colors.white,
+            //           fontFamily: 'Inter',
+            //           fontSize: 30
+            //       )
+            //   ),
+            // ),
+          ],
+        );
+      } else {
+        return Container();
+      }
+    }
+
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) {
+          return Flex(
+            mainAxisAlignment: MainAxisAlignment.center,
+            direction: Axis.vertical,
+            children: [
+              Container(
+                padding: EdgeInsets.only(bottom: 25, top: 25),
+                margin: EdgeInsets.symmetric(horizontal: 30),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.all(Radius.circular(25)),
+                  color: Colors.black
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      alignment: Alignment.center,
+                      margin: EdgeInsets.only(bottom: 15),
+                      child: Text(
+                        'Set New $field',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Inter',
+                            fontSize: 20
+                        ),
+                      ),
+                    ),
+                    Card(
+                      margin: EdgeInsets.symmetric(horizontal: 25),
+                      color: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      surfaceTintColor: Colors.transparent,
+                      child: fieldInput(),
+                    ),
+                    const SizedBox(height: 15),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 25),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          TextButton(
+                            style: ButtonStyle(
+                                backgroundColor: WidgetStatePropertyAll(
+                                    Colors.white
+                                )
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              alignment: Alignment.center,
+                              width: 80,
+                              height: 30,
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 20,
+                                    fontFamily: 'Inter'
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 15),
+                          ListenableBuilder(
+                              listenable: editController,
+                              builder: (context, child) {
+                                return TextButton(
+                                  style: ButtonStyle(
+                                      backgroundColor: WidgetStatePropertyAll(
+                                          editController.text != initialValue
+                                              ? Colors.green
+                                              : Colors.green.withOpacity(0.25)
+                                      )
+                                  ),
+                                  onPressed: editController.text == initialValue ? null : () async {
+                                    if (field == 'Device Name') {
+                                      // await _devicesServices.updateSNDeviceName(
+                                      //     token: context.read<AuthProvider>().accessData!.token,
+                                      //     deviceID: widget.deviceID,
+                                      //     sensorName: editController.text,
+                                      //     sinkNodeID: sinkNodeID
+                                      // );
+                                    } else if (field == 'Interval') {
+
+                                    }
+                                  },
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    width: 60,
+                                    height: 30,
+                                    child: Text(
+                                      'Save',
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontFamily: 'Inter'
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
+                )
+              ),
+            ],
+          );
+    });
+  }
+
   Widget _topIcons(
       bool isConnected,
       DateTime lastTimestamp) {
@@ -173,148 +409,301 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
     }
 
     Widget settingsIcon() {
+
+      SensorNode? deviceInfo = context.watch<DevicesProvider>()
+          .sensorNodeMap[widget.deviceID];
+
+      sensorConfigDialog() {
+        Widget topIcons = Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/settings.svg',
+              width: 26,
+              height: 26,
+              colorFilter: const ColorFilter.mode(
+                  Colors.white,
+                  BlendMode.srcIn
+              ),
+            ),
+            const SizedBox(width: 15),
+            const Text(
+              'Device Settings',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 25,
+                  fontFamily: 'Inter'
+              ),
+            ),
+            // GestureDetector(
+            //   onTap: () {
+            //     Navigator.pop(context);
+            //   },
+            //   child: Icon(
+            //     CupertinoIcons.xmark,
+            //     size: 27,
+            //     color: Colors.white,
+            //   ),
+            // ),
+          ],
+        );
+
+        Widget deviceName = Container(
+          child: RichText(
+            text: TextSpan(
+                text: deviceInfo?.deviceName ?? 'Unknown',
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 25,
+                    fontFamily: 'Inter'
+                ),
+                children: [
+                  TextSpan(
+                      text: '\nDevice Name',
+                      style: _tertiaryTextStyle
+                  )
+                ]
+            ),
+          ),
+        );
+
+        Widget readingInterval = Container(
+          constraints: const BoxConstraints(maxWidth: 150),
+          child: RichText(
+            text: TextSpan(
+                text: '5 Minutes',
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 25,
+                    fontFamily: 'Inter'
+                ),
+                children: [
+                  TextSpan(
+                      text: '\nReading Interval',
+                      style: _tertiaryTextStyle
+                  )
+                ]
+            ),
+          ),
+        );
+
+        List<Widget> coordinates = [
+          Divider(
+            height: 0.5,
+            color: Colors.white.withOpacity(0.25),
+          ),
+          GestureDetector(
+            onDoubleTap: () {
+              showDialog(
+                  context: context,
+                  builder: (context) {
+                    return Container();
+                  }
+              );
+            },
+            child: Container(
+              color: Colors.transparent,
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+              child: Row(
+                children: [
+                  Container(
+                    constraints: const BoxConstraints(maxWidth: 150),
+                    child: RichText(
+                      text: TextSpan(
+                          text: deviceInfo?.longitude ?? 'Longitude',
+                          style: TextStyle(
+                              color: deviceInfo?.latitude != null ? Colors.white : Colors.white.withOpacity(0.5),
+                              fontSize: 25,
+                              fontFamily: 'Inter'
+                          ),
+                          children: [
+                            TextSpan(
+                                text: deviceInfo?.latitude != null ? '\nLongitude' : '\nNot Set',
+                                style: _tertiaryTextStyle
+                            )
+                          ]
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+          Divider(
+            height: 0.5,
+            color: Colors.white.withOpacity(0.25),
+          ),
+          GestureDetector(
+            onDoubleTap: () {
+              showDialog(
+                  context: context,
+                  builder: (context) {
+                    return Container();
+                  }
+              );
+            },
+            child: Container(
+              color: Colors.transparent,
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+              child: Row(
+                children: [
+                  Container(
+                    constraints: const BoxConstraints(maxWidth: 150),
+                    child: RichText(
+                      text: TextSpan(
+                          text: deviceInfo?.latitude ?? 'Latitude',
+                          style: TextStyle(
+                              color: deviceInfo?.latitude != null ? Colors.white : Colors.white.withOpacity(0.5),
+                              fontSize: 25,
+                              fontFamily: 'Inter'
+                          ),
+                          children: [
+                            TextSpan(
+                                text: deviceInfo?.latitude != null ? '\nLatitude' : '\nNot Set',
+                                style: _tertiaryTextStyle
+                            )
+                          ]
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+          Divider(
+            height: 0.5,
+            color: Colors.white.withOpacity(0.25),
+          ),
+        ];
+
+        showDialog(
+            barrierDismissible: false,
+            context: context,
+            builder: (context) {
+              return BackdropFilter(
+                filter: ImageFilter.blur(sigmaY: 10, sigmaX: 10),
+                child: Flex(
+                  direction: Axis.vertical,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.all(Radius.circular(15)),
+                        color: Colors.black.withOpacity(0.75),
+                      ),
+                      padding: const EdgeInsets.only(
+                          //horizontal: 40,
+                          top: 40,
+                        bottom: 13
+                      ),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 25,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            margin: EdgeInsets.only(bottom: 30),
+                            child: topIcons,
+                          ),
+                          // Divider(
+                          //     height: 0.5,
+                          //   color: Colors.white.withOpacity(0.25),
+                          // ),
+                          Divider(
+                            height: 0.5,
+                            color: Colors.white.withOpacity(0.25),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              showEditDialog(
+                                  context,
+                                  deviceInfo?.deviceName ?? 'Sensor Node',
+                                  'Device Name'
+                              );
+                            },
+                            child: Container(
+                              color: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+                              child: Row(
+                                children: [
+                                  deviceName
+                                ],
+                              ),
+                            ),
+                          ),
+                          Divider(
+                            height: 0.5,
+                            color: Colors.white.withOpacity(0.25),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              showEditDialog(
+                                  context,
+                                  '5',
+                                  'Interval'
+                              );
+                            },
+                            child: Container(
+                              color: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+                              child: Row(
+                                children: [
+                                  readingInterval
+                                ],
+                              ),
+                            ),
+                          ),
+                          ...coordinates,
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Container(
+                                  width: 110,
+                                  height: 40,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons.arrow_left,
+                                        color: Colors.white,
+                                        size: 27,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        'Back',
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 23,
+                                            fontFamily: 'Inter'
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 25),
+                            ],
+                          )
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              );
+            }
+        );
+      }
+
       return GestureDetector(
         onTap: () {
-          showDialog(
-              barrierDismissible: false,
-              context: context,
-              builder: (context) {
-                return BackdropFilter(
-                  filter: ImageFilter.blur(sigmaY: 10, sigmaX: 10),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.all(Radius.circular(15)),
-                      color: Colors.black.withOpacity(0.75),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 40
-                    ),
-                    margin: const EdgeInsets.symmetric(
-                        horizontal: 50,
-                        vertical: 200
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                //Navigator.pop(context);
-                              },
-                              child: const Icon(
-                                CupertinoIcons.pencil_circle,
-                                color: Colors.white,
-                                size: 32,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.pop(context);
-                              },
-                              child: const Icon(
-                                CupertinoIcons.xmark_circle,
-                                color: Colors.white,
-                                size: 32,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 25),
-                        Container(
-                          constraints: const BoxConstraints(maxWidth: 150),
-                          child: RichText(
-                            text: TextSpan(
-                                text: context.watch<DevicesProvider>()
-                                    .sensorNodeMap[widget.deviceID]?.deviceName
-                                    ?? 'Unknown',
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 25,
-                                    fontFamily: 'Inter'
-                                ),
-                                children: [
-                                  TextSpan(
-                                      text: '\nDevice Name',
-                                      style: _tertiaryTextStyle
-                                  )
-                                ]
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 25),
-                        Container(
-                          constraints: const BoxConstraints(maxWidth: 150),
-                          child: RichText(
-                            text: TextSpan(
-                                text: '5 Minutes',
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 25,
-                                    fontFamily: 'Inter'
-                                ),
-                                children: [
-                                  TextSpan(
-                                      text: '\nReading Interval',
-                                      style: _tertiaryTextStyle
-                                  )
-                                ]
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 25),
-                        Container(
-                          constraints: const BoxConstraints(maxWidth: 150),
-                          child: RichText(
-                            text: TextSpan(
-                                text: context.watch<DevicesProvider>()
-                                    .sensorNodeMap[widget.deviceID]?.longitude
-                                    ?? '---',
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 25,
-                                    fontFamily: 'Inter'
-                                ),
-                                children: [
-                                  TextSpan(
-                                      text: '\nLongitude',
-                                      style: _tertiaryTextStyle
-                                  )
-                                ]
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 25),
-                        Container(
-                          constraints: const BoxConstraints(maxWidth: 150),
-                          child: RichText(
-                            text: TextSpan(
-                                text: context.watch<DevicesProvider>()
-                                    .sensorNodeMap[widget.deviceID]?.latitude
-                                    ?? '---',
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 25,
-                                    fontFamily: 'Inter'
-                                ),
-                                children: [
-                                  TextSpan(
-                                      text: '\nLatitude',
-                                      style: _tertiaryTextStyle
-                                  )
-                                ]
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-          );
+          sensorConfigDialog();
         },
         child: SvgPicture.asset(
           'assets/icons/settings.svg',
