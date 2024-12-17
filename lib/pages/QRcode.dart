@@ -1,9 +1,15 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_scanner_overlay/qr_scanner_overlay.dart';
 import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
+import 'package:smmic/models/device_data_models.dart';
+import 'package:smmic/pages/devices.dart';
+import 'package:smmic/pages/devices_subpages/sensor_node_subpage.dart';
 import 'package:smmic/pages/qrResult.dart';
+import 'package:smmic/providers/devices_provider.dart';
 import 'package:smmic/providers/theme_provider.dart';
 
 class QRcode extends StatefulWidget {
@@ -95,11 +101,148 @@ class _QRcodeState extends State<QRcode> {
                         if (!isScanCompleted) {
                           isScanCompleted = true;
                           String code = barcode.rawValue ?? "---";
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) {
-                            return QRResult(
-                                code: code, closeScreen: closeScreen);
-                          }));
+
+                          void showBarcodeData() {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) {
+                                  return QRResult(code: code, closeScreen: closeScreen);
+                                })
+                            );
+                          }
+
+                          SensorNode? seCheck = context.read<DevicesProvider>()
+                              .sensorNodeMap[code];
+                          if (seCheck != null) {
+                            showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return Flex(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    direction: Axis.vertical,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: const BorderRadius.all(Radius.circular(25)),
+                                        child: BackdropFilter(
+                                          filter: ImageFilter.blur(sigmaY: 10, sigmaX: 10),
+                                          child: Container(
+                                            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
+                                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withOpacity(0.5),
+                                              borderRadius: const BorderRadius.all(Radius.circular(15)),
+                                            ),
+                                            child: Column(
+                                              children: [
+                                                RichText(
+                                                  textAlign: TextAlign.center,
+                                                  text: TextSpan(
+                                                      text: 'Go to ',
+                                                      style: const TextStyle(
+                                                        fontFamily: 'Inter',
+                                                        fontSize: 24,
+                                                      ),
+                                                      children: [
+                                                        TextSpan(
+                                                          text: seCheck.deviceName,
+                                                          style: const TextStyle(
+                                                              fontFamily: 'Inter',
+                                                              fontSize: 24,
+                                                              fontWeight: FontWeight.bold
+                                                          ),
+                                                        ),
+                                                        const TextSpan(
+                                                          text: ' device page?',
+                                                          style: TextStyle(
+                                                              fontFamily: 'Inter',
+                                                              fontSize: 24
+                                                          ),
+                                                        ),
+                                                      ]
+                                                  ),
+                                                ),
+                                                SizedBox(height: 15),
+                                                Row(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    TextButton(
+                                                      style: ButtonStyle(
+                                                          backgroundColor: WidgetStatePropertyAll(
+                                                              Colors.green
+                                                          )
+                                                      ),
+                                                      onPressed: () {
+                                                        Navigator.pushReplacement(
+                                                            context,
+                                                            MaterialPageRoute(builder: (context) {
+                                                              return const BottomNavBar(initialIndexPage: 1);
+                                                            })
+                                                        );
+                                                        Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(builder: (context) {
+                                                              return SensorNodePage(
+                                                                  deviceID: seCheck.deviceID,
+                                                                  deviceName: seCheck.deviceName,
+                                                                  deviceInfo: seCheck
+                                                              );
+                                                            })
+                                                        );
+                                                      },
+                                                      child: Container(
+                                                        alignment: Alignment.center,
+                                                        width: 90,
+                                                        height: 25,
+                                                        child: const Text(
+                                                          'Continue',
+                                                          style: TextStyle(
+                                                              color: Colors.white,
+                                                              fontSize: 18,
+                                                              fontFamily: 'Inter'
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    SizedBox(width: 15),
+                                                    TextButton(
+                                                      style: ButtonStyle(
+                                                          backgroundColor: WidgetStatePropertyAll(
+                                                              Colors.grey
+                                                          )
+                                                      ),
+                                                      onPressed: () {
+                                                        Navigator.pop(context);
+                                                      },
+                                                      child: Container(
+                                                        alignment: Alignment.center,
+                                                        width: 90,
+                                                        height: 25,
+                                                        child: const Text(
+                                                          'Not Now',
+                                                          style: TextStyle(
+                                                              color: Colors.white,
+                                                              fontSize: 18,
+                                                              fontFamily: 'Inter'
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    )
+                                                  ],
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    ],
+                                  );
+                                }
+                            );
+                          } else {
+                            showBarcodeData();
+                          }
                         }
                       },
                     ),

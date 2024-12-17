@@ -76,6 +76,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   @override
   void initState() {
+    _currentIndexPage = widget.initialIndexPage ?? 0;
     super.initState();
   }
 
