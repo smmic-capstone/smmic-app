@@ -71,6 +71,78 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
     super.dispose();
   }
 
+  Future<void> save(BuildContext context, String field, SensorNode deviceInfo) async {
+
+    if (field == 'Device Name') {
+      await _devicesServices.updateSNDeviceName(
+        token: context.read<AuthProvider>().accessData!.token,
+        deviceID: widget.deviceID,
+        sensorName: {'name': editController.text},
+        sinkNodeID: deviceInfo.registeredSinkNode,
+      );
+      if (context.mounted) {
+        context.read<DevicesProvider>().sensorNameChange({
+          SensorNodeKeys.deviceID.key: widget.deviceID,
+          'name': editController.text,
+          'longitude': deviceInfo.longitude ?? '',
+          'latitude': deviceInfo.latitude ?? '',
+          SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
+          SensorNodeKeys.interval.key: deviceInfo.interval
+        });
+      }
+    } else if (field == 'Longitude') {
+      await _devicesServices.updateSNDeviceName(
+          token: context.read<AuthProvider>().accessData!.token,
+          deviceID: widget.deviceID,
+          sensorName: {'longitude': editController.text},
+          sinkNodeID: deviceInfo.registeredSinkNode);
+      if (context.mounted) {
+        context.read<DevicesProvider>().sensorNameChange({
+          SensorNodeKeys.deviceID.key: widget.deviceID,
+          'name': deviceInfo.deviceName,
+          'longitude': editController.text ?? '',
+          'latitude': deviceInfo.latitude ?? '',
+          SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
+          SensorNodeKeys.interval.key: deviceInfo.interval
+        });
+      }
+    } else if (field == 'Latitude') {
+      await _devicesServices.updateSNDeviceName(
+          token: context.read<AuthProvider>().accessData!.token,
+          deviceID: widget.deviceID,
+          sensorName: {'latitude': editController.text},
+          sinkNodeID: deviceInfo.registeredSinkNode);
+      if (context.mounted) {
+        context.read<DevicesProvider>().sensorNameChange({
+          SensorNodeKeys.deviceID.key: widget.deviceID,
+          'name': deviceInfo.deviceName,
+          'longitude': deviceInfo.longitude ?? '',
+          'latitude': editController.text ?? '',
+          SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
+          SensorNodeKeys.interval.key: deviceInfo.interval
+        });
+      }
+    } else if (field == 'Interval') {
+      await _apiRequest.sendIntervalCommand(
+          newInterval: Duration(minutes: int.parse(editController.text)), deviceId: deviceInfo.deviceID);
+      await _devicesServices.updateSNDeviceName(
+          token: context.read<AuthProvider>().accessData!.token,
+          deviceID: widget.deviceID,
+          sensorName: {'interval': (int.parse(editController.text) * 60)},
+          sinkNodeID: deviceInfo.registeredSinkNode);
+      if (context.mounted) {
+        context.read<DevicesProvider>().sensorNameChange({
+          SensorNodeKeys.deviceID.key: widget.deviceID,
+          'name': deviceInfo.deviceName,
+          'longitude': deviceInfo.longitude ?? '',
+          'latitude': deviceInfo.latitude ?? '',
+          SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
+          SensorNodeKeys.interval.key: int.parse(editController.text) * 60
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // device reading data
@@ -260,74 +332,26 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                                     onPressed: editController.text == initialValue
                                         ? null
                                         : () async {
-                                            if (field == 'Device Name') {
-                                              await _devicesServices.updateSNDeviceName(
-                                                token: context.read<AuthProvider>().accessData!.token,
-                                                deviceID: widget.deviceID,
-                                                sensorName: {'name': editController.text},
-                                                sinkNodeID: deviceInfo.registeredSinkNode,
-                                              );
-                                              if (context.mounted) {
-                                                context.read<DevicesProvider>().sensorNameChange({
-                                                  SensorNodeKeys.deviceID.key: widget.deviceID,
-                                                  'name': editController.text,
-                                                  'longitude': deviceInfo.longitude ?? '',
-                                                  'latitude': deviceInfo.latitude ?? '',
-                                                  SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
-                                                  SensorNodeKeys.interval.key: deviceInfo.interval
-                                                });
-                                              }
-                                            } else if (field == 'Longitude') {
-                                              await _devicesServices.updateSNDeviceName(
-                                                  token: context.read<AuthProvider>().accessData!.token,
-                                                  deviceID: widget.deviceID,
-                                                  sensorName: {'longitude': editController.text},
-                                                  sinkNodeID: deviceInfo.registeredSinkNode);
-                                              if (context.mounted) {
-                                                context.read<DevicesProvider>().sensorNameChange({
-                                                  SensorNodeKeys.deviceID.key: widget.deviceID,
-                                                  'name': deviceInfo.deviceName,
-                                                  'longitude': editController.text ?? '',
-                                                  'latitude': deviceInfo.latitude ?? '',
-                                                  SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
-                                                  SensorNodeKeys.interval.key: deviceInfo.interval
-                                                });
-                                              }
-                                            } else if (field == 'Latitude') {
-                                              await _devicesServices.updateSNDeviceName(
-                                                  token: context.read<AuthProvider>().accessData!.token,
-                                                  deviceID: widget.deviceID,
-                                                  sensorName: {'latitude': editController.text},
-                                                  sinkNodeID: deviceInfo.registeredSinkNode);
-                                              if (context.mounted) {
-                                                context.read<DevicesProvider>().sensorNameChange({
-                                                  SensorNodeKeys.deviceID.key: widget.deviceID,
-                                                  'name': deviceInfo.deviceName,
-                                                  'longitude': deviceInfo.longitude ?? '',
-                                                  'latitude': editController.text ?? '',
-                                                  SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
-                                                  SensorNodeKeys.interval.key: deviceInfo.interval
-                                                });
-                                              }
-                                            } else if (field == 'Interval') {
-                                              await _apiRequest.sendIntervalCommand(
-                                                  newInterval: Duration(minutes: int.parse(editController.text)), deviceId: deviceInfo.deviceID);
-                                              await _devicesServices.updateSNDeviceName(
-                                                  token: context.read<AuthProvider>().accessData!.token,
-                                                  deviceID: widget.deviceID,
-                                                  sensorName: {'interval': (int.parse(editController.text) * 60)},
-                                                  sinkNodeID: deviceInfo.registeredSinkNode);
-                                              if (context.mounted) {
-                                                context.read<DevicesProvider>().sensorNameChange({
-                                                  SensorNodeKeys.deviceID.key: widget.deviceID,
-                                                  'name': deviceInfo.deviceName,
-                                                  'longitude': deviceInfo.longitude ?? '',
-                                                  'latitude': deviceInfo.latitude ?? '',
-                                                  SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
-                                                  SensorNodeKeys.interval.key: int.parse(editController.text) * 60
-                                                });
-                                              }
-                                            }
+                                            showDialog(
+                                              barrierDismissible: false,
+                                                context: context,
+                                                builder: (context) {
+                                                  return FutureBuilder(
+                                                      future: save(context, field, deviceInfo),
+                                                      builder: (context, snapshot) {
+                                                        if (snapshot.connectionState == ConnectionState.done) {
+                                                          Navigator.pop(context);
+                                                          Navigator.pop(context);
+                                                        }
+                                                        return const Center(
+                                                          child: CircularProgressIndicator(
+                                                            color: Colors.white,
+                                                          ),
+                                                        );
+                                                      }
+                                                  );
+                                                }
+                                            );
                                           },
                                     child: Container(
                                       alignment: Alignment.center,
@@ -382,8 +406,6 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
     }
 
     Widget settingsIcon() {
-      SensorNode? deviceInfo = context.watch<DevicesProvider>().sensorNodeMap[widget.deviceID];
-
       sensorConfigDialog() {
         Widget topIcons = Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -416,90 +438,98 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
           ],
         );
 
-        Widget deviceName = Container(
-          child: RichText(
-            text: TextSpan(
-                text: deviceInfo?.deviceName ?? 'Unknown',
-                style: const TextStyle(color: Colors.white, fontSize: 25, fontFamily: 'Inter'),
-                children: [TextSpan(text: '\nDevice Name', style: _tertiaryTextStyle)]),
-          ),
-        );
+        Widget deviceName(SensorNode deviceInfo) {
+          return SizedBox(
+            child: RichText(
+              text: TextSpan(
+                  text: deviceInfo.deviceName ?? 'Unknown',
+                  style: const TextStyle(color: Colors.white, fontSize: 25, fontFamily: 'Inter'),
+                  children: [TextSpan(text: '\nDevice Name', style: _tertiaryTextStyle)]),
+            ),
+          );
+        }
 
-        Widget readingInterval = Container(
-          constraints: const BoxConstraints(maxWidth: 150),
-          child: RichText(
-            text: TextSpan(
-                text: '${(deviceInfo!.interval ~/ 60).toString()} Minutes',
-                style: const TextStyle(color: Colors.white, fontSize: 25, fontFamily: 'Inter'),
-                children: [TextSpan(text: '\nReading Interval', style: _tertiaryTextStyle)]),
-          ),
-        );
+        Widget readingInterval(SensorNode deviceInfo) {
+          return Container(
+            constraints: const BoxConstraints(maxWidth: 150),
+            child: RichText(
+              text: TextSpan(
+                  text: '${(deviceInfo!.interval ~/ 60).toString()} Minutes',
+                  style: const TextStyle(color: Colors.white, fontSize: 25, fontFamily: 'Inter'),
+                  children: [TextSpan(text: '\nReading Interval', style: _tertiaryTextStyle)]),
+            ),
+          );
+        }
 
-        List<Widget> coordinates = [
-          Divider(
-            height: 0.5,
-            color: Colors.white.withOpacity(0.25),
-          ),
-          GestureDetector(
-            onTap: () {
-              showEditDialog(context, deviceInfo?.longitude ?? '', 'Longitude', deviceInfo!);
-            },
-            child: Container(
-              color: Colors.transparent,
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
-              child: Row(
-                children: [
-                  Container(
-                    constraints: const BoxConstraints(maxWidth: 150),
-                    child: RichText(
-                      text: TextSpan(
-                          text: deviceInfo?.longitude ?? 'Longitude',
-                          style: TextStyle(
-                              color: deviceInfo?.latitude != null ? Colors.white : Colors.white.withOpacity(0.5), fontSize: 25, fontFamily: 'Inter'),
-                          children: [TextSpan(text: deviceInfo?.latitude != null ? '\nLongitude' : '\nNot Set', style: _tertiaryTextStyle)]),
-                    ),
-                  )
-                ],
+        List<Widget> coordinates(SensorNode deviceInfo) {
+          return [
+            Divider(
+              height: 0.5,
+              color: Colors.white.withOpacity(0.25),
+            ),
+            GestureDetector(
+              onTap: () {
+                showEditDialog(context, deviceInfo.longitude ?? '', 'Longitude', deviceInfo);
+              },
+              child: Container(
+                color: Colors.transparent,
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+                child: Row(
+                  children: [
+                    Container(
+                      constraints: const BoxConstraints(maxWidth: 150),
+                      child: RichText(
+                        text: TextSpan(
+                            text: deviceInfo.longitude ?? 'Longitude',
+                            style: TextStyle(
+                                color: deviceInfo.latitude != null ? Colors.white : Colors.white.withOpacity(0.5), fontSize: 25, fontFamily: 'Inter'),
+                            children: [TextSpan(text: deviceInfo.latitude != null ? '\nLongitude' : '\nNot Set', style: _tertiaryTextStyle)]),
+                      ),
+                    )
+                  ],
+                ),
               ),
             ),
-          ),
-          Divider(
-            height: 0.5,
-            color: Colors.white.withOpacity(0.25),
-          ),
-          GestureDetector(
-            onTap: () {
-              showEditDialog(context, deviceInfo?.latitude ?? '', 'latitude', deviceInfo!);
-            },
-            child: Container(
-              color: Colors.transparent,
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
-              child: Row(
-                children: [
-                  Container(
-                    constraints: const BoxConstraints(maxWidth: 150),
-                    child: RichText(
-                      text: TextSpan(
-                          text: deviceInfo?.latitude ?? 'Latitude',
-                          style: TextStyle(
-                              color: deviceInfo?.latitude != null ? Colors.white : Colors.white.withOpacity(0.5), fontSize: 25, fontFamily: 'Inter'),
-                          children: [TextSpan(text: deviceInfo?.latitude != null ? '\nLatitude' : '\nNot Set', style: _tertiaryTextStyle)]),
-                    ),
-                  )
-                ],
+            Divider(
+              height: 0.5,
+              color: Colors.white.withOpacity(0.25),
+            ),
+            GestureDetector(
+              onTap: () {
+                showEditDialog(context, deviceInfo.latitude ?? '', 'latitude', deviceInfo);
+              },
+              child: Container(
+                color: Colors.transparent,
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+                child: Row(
+                  children: [
+                    Container(
+                      constraints: const BoxConstraints(maxWidth: 150),
+                      child: RichText(
+                        text: TextSpan(
+                            text: deviceInfo.latitude ?? 'Latitude',
+                            style: TextStyle(
+                                color: deviceInfo.latitude != null ? Colors.white : Colors.white.withOpacity(0.5), fontSize: 25, fontFamily: 'Inter'),
+                            children: [TextSpan(text: deviceInfo.latitude != null ? '\nLatitude' : '\nNot Set', style: _tertiaryTextStyle)]),
+                      ),
+                    )
+                  ],
+                ),
               ),
             ),
-          ),
-          Divider(
-            height: 0.5,
-            color: Colors.white.withOpacity(0.25),
-          ),
-        ];
+            Divider(
+              height: 0.5,
+              color: Colors.white.withOpacity(0.25),
+            ),
+          ];
+        }
 
         showDialog(
             barrierDismissible: false,
             context: context,
             builder: (context) {
+              SensorNode deviceInfo = context.watch<DevicesProvider>().sensorNodeMap[widget.deviceID]!;
+
               return BackdropFilter(
                 filter: ImageFilter.blur(sigmaY: 10, sigmaX: 10),
                 child: Flex(
@@ -541,7 +571,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                               color: Colors.transparent,
                               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
                               child: Row(
-                                children: [deviceName],
+                                children: [deviceName(deviceInfo)],
                               ),
                             ),
                           ),
@@ -551,17 +581,17 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                           ),
                           GestureDetector(
                             onTap: () {
-                              showEditDialog(context, (deviceInfo.interval ~/ 60).toString(), 'Interval', deviceInfo!);
+                              showEditDialog(context, (deviceInfo!.interval ~/ 60).toString(), 'Interval', deviceInfo!);
                             },
                             child: Container(
                               color: Colors.transparent,
                               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
                               child: Row(
-                                children: [readingInterval],
+                                children: [readingInterval(deviceInfo)],
                               ),
                             ),
                           ),
-                          ...coordinates,
+                          ...coordinates(deviceInfo),
                           const SizedBox(height: 10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
