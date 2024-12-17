@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
 import 'package:smmic/pages/QRcode.dart';
+import 'package:smmic/providers/theme_provider.dart';
 
 class QRResult extends StatelessWidget {
   final String code;
@@ -24,24 +27,24 @@ class QRResult extends StatelessWidget {
     final double textFontSize = screenWidth * 0.04; // 4% of screen width
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        leading: IconButton(
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return const QRcode();
-              }));
-            },
-            icon: const Icon(
-              Icons.arrow_back,
-              color: Colors.black,
-            )),
+        automaticallyImplyLeading: false,
+        backgroundColor: context.watch<UiProvider>().isDark
+            ? const Color.fromRGBO(45, 59, 89, 1)
+            : Colors.white,
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Scanned Result',
           style: TextStyle(
-              color: Colors.black, fontSize: 35, fontWeight: FontWeight.bold),
+              color: context.watch<UiProvider>().isDark
+                  ? Colors.white
+                  : Colors.black,
+              fontSize: 35,
+              fontWeight: FontWeight.bold),
         ),
       ),
+      backgroundColor: context.watch<UiProvider>().isDark
+          ? const Color.fromRGBO(45, 59, 89, 1)
+          : Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(60),
         child: Column(
@@ -55,10 +58,12 @@ class QRResult extends StatelessWidget {
               version: QrVersions.auto,
             ),
             SizedBox(height: screenHeight * 0.02), // 2% of screen height
-            const Text(
+            Text(
               "Scanned QR",
               style: TextStyle(
-                  color: Colors.black,
+                  color: context.watch<UiProvider>().isDark
+                      ? Colors.white
+                      : Colors.black,
                   fontSize: 25,
                   fontWeight: FontWeight.bold),
             ),
@@ -66,24 +71,13 @@ class QRResult extends StatelessWidget {
             Text(
               code,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.black87, fontSize: 15),
+              style: TextStyle(
+                  color: context.watch<UiProvider>().isDark
+                      ? Colors.white
+                      : Colors.black87,
+                  fontSize: 15),
             ),
             SizedBox(height: screenHeight * 0.03), // 3% of screen height
-            SizedBox(
-              width: buttonWidth,
-              height: screenHeight * 0.05, // 5% of screen height
-
-              child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 59, 57, 56)),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: code));
-                  },
-                  child: const Text(
-                    "Copy",
-                    style: TextStyle(color: Colors.white, fontSize: 25),
-                  )),
-            )
           ],
         ),
       ),

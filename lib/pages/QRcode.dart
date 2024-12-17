@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:provider/provider.dart';
 import 'package:qr_scanner_overlay/qr_scanner_overlay.dart';
+import 'package:smmic/components/bottomnavbar/bottom_nav_bar.dart';
 import 'package:smmic/pages/qrResult.dart';
+import 'package:smmic/providers/theme_provider.dart';
 
 class QRcode extends StatefulWidget {
   const QRcode({super.key});
@@ -11,7 +14,6 @@ class QRcode extends StatefulWidget {
 }
 
 class _QRcodeState extends State<QRcode> {
-  bool isFlashOn = false;
   bool isFrontCameraOn = false;
   bool isScanCompleted = false;
   MobileScannerController cameraController = MobileScannerController();
@@ -24,64 +26,57 @@ class _QRcodeState extends State<QRcode> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.watch<UiProvider>().isDark
+            ? const Color.fromRGBO(45, 59, 89, 1)
+            : const Color.fromRGBO(255, 255, 255, 1),
         leading: IconButton(
-          style: const ButtonStyle(
-            iconSize: WidgetStatePropertyAll(30),
-            iconColor: WidgetStatePropertyAll(Colors.black),
+          style: ButtonStyle(
+            iconSize: const WidgetStatePropertyAll(30),
+            iconColor: WidgetStatePropertyAll(context.watch<UiProvider>().isDark
+                ? Colors.white
+                : Colors.black),
           ),
           onPressed: () {},
           icon: const Icon(Icons.qr_code_scanner),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'QR CODE',
           style: TextStyle(
-              color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
+              color: context.watch<UiProvider>().isDark
+                  ? Colors.white
+                  : Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.bold),
         ),
-        actions: [
-          IconButton(
-              onPressed: () {
-                setState(() {
-                  isFlashOn = !isFlashOn;
-                });
-              },
-              icon: Icon(
-                Icons.flash_on,
-                color: isFlashOn ? Colors.white : Colors.black,
-              )),
-          IconButton(
-              onPressed: () {
-                setState(() {
-                  isFrontCameraOn = !isFrontCameraOn;
-                });
-              },
-              icon: Icon(
-                Icons.flip_camera_android,
-                color: isFrontCameraOn ? Colors.white : Colors.black,
-              ))
-        ],
       ),
+      backgroundColor: context.watch<UiProvider>().isDark
+          ? const Color.fromRGBO(45, 59, 89, 1)
+          : Colors.white,
       body: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            const Expanded(
+            Expanded(
                 child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Place theQR code in designated area',
+                  'Place the QR code in designated area',
                   style: TextStyle(
-                      color: Colors.black,
+                      color: context.watch<UiProvider>().isDark
+                          ? Colors.white
+                          : Colors.black,
                       fontSize: 20,
                       fontWeight: FontWeight.bold),
                 ),
                 Text(
                   'let the scan do the magic - It starts on it own!',
                   style: TextStyle(
-                      color: Colors.black54,
+                      color: context.watch<UiProvider>().isDark
+                          ? Colors.white
+                          : Colors.black54,
                       fontSize: 16,
                       fontWeight: FontWeight.w100),
                 )
@@ -124,7 +119,10 @@ class _QRcodeState extends State<QRcode> {
               children: [
                 Text(
                   '|Scan properly to see result|',
-                  style: TextStyle(color: Colors.black),
+                  style: TextStyle(
+                      color: context.watch<UiProvider>().isDark
+                          ? Colors.white
+                          : Colors.black),
                 )
               ],
             ))
