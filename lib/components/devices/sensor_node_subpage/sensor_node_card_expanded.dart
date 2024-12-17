@@ -727,26 +727,32 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
   }
 
   Widget _radialGauge(double soilMoisture) {
-    return SizedBox(
-      width: 160,
-      height: 170,
-      child: RadialGauge(
-        valueType: ValueType.soilMoisture,
-        value: soilMoisture,
-        limit: 100,
-        scaleMultiplier: 1.5,
-        opacity: 1,
-        valueTextStyle: _primaryTextStyle,
-        labelTextStyle: _tertiaryTextStyle,
-        symbolTextStyle: _secondaryTextStyle,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 155,
+          height: 165,
+          child: RadialGauge(
+            valueType: ValueType.soilMoisture,
+            value: soilMoisture,
+            limit: 100,
+            scaleMultiplier: 1.5,
+            opacity: 1,
+            valueTextStyle: _primaryTextStyle,
+            labelTextStyle: _tertiaryTextStyle,
+            symbolTextStyle: _secondaryTextStyle,
+          ),
+        )
+      ],
     );
   }
   
   Widget _digitalDisplays(double temperature, double humidity) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
-      mainAxisAlignment: MainAxisAlignment.end,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         SensorDigitalDisplay(
           expanded: true,
@@ -916,7 +922,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
       if (diff < awaitIrrResponseDuration) {
         text = 'Sending command...';
       } else if (diff > awaitIrrResponseDuration) {
-        text = 'Send an irrigation command...';
+        text = 'Send irrigation command...';
       }
 
       return text;

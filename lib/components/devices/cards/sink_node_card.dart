@@ -71,7 +71,7 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
                       sensorNodes: widget.deviceInfo.registeredSensorNodes,
                       total: widget.deviceInfo.registeredSensorNodes.length
                     ),
-                    const SizedBox(width: 30),
+                    const SizedBox(width: 20),
                     _lastTransmission(
                         latestTimestamp: sinkState.lastTransmission
                     )
@@ -104,8 +104,10 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        SizedBox(
-          width: 225,
+        Container(
+          constraints: const BoxConstraints(
+            maxWidth: 200
+          ),
           child: Text(
             softWrap: true,
             widget.deviceInfo.deviceName,
@@ -116,7 +118,6 @@ class _SinkNodeCardState extends State<SinkNodeCard> {
             ),
           ),
         ),
-        const SizedBox(height: 15),
         Column(
           children: [
             const SizedBox(height: 15),

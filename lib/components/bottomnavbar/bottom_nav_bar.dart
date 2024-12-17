@@ -59,9 +59,15 @@ class _BottomNavBarState extends State<BottomNavBar> {
       )),
       (
       const QRcode(),
-      Icon(
-        CupertinoIcons.qrcode_viewfinder,
-        size: 36
+      SvgPicture.asset(
+        'assets/icons/qr_scanner.svg',
+        clipBehavior: Clip.antiAlias,
+        width: 29,
+        height: 29,
+        colorFilter: ColorFilter.mode(
+            isDark ? Colors.white : Colors.black,
+            BlendMode.srcATop
+        ),
       )),
     ];
 
