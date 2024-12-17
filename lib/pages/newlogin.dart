@@ -2,6 +2,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smmic/pages/forgetpassword.dart';
 import 'package:smmic/pages/newregister.dart';
 import 'package:smmic/subcomponents/login/newlogintextfield.dart';
 import '../main.dart';
@@ -192,13 +193,18 @@ class _LoginPage extends State<LoginPage> {
                 onTap: () {
                   ///TODO: Create logic for forget password
                 },
-                child: Text(
+                child: GestureDetector(
+                  onTap: (){
+                    Navigator.push((context), MaterialPageRoute(builder: (context) => const ForgetPassword()));
+                  },
+                    child: Text(
                   'Forgot Password',
                   style: TextStyle(
                       color: iconColor,
                       decoration: TextDecoration.underline,
                       fontSize: 11),
-                ),
+                ),)
+
               ),
             ),
           ),

@@ -21,6 +21,7 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPage extends State<RegisterPage> with SingleTickerProviderStateMixin {
 
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   final _formKey = GlobalKey<FormState>();
   final ApiRequest _apiRequest = ApiRequest();
   final ApiRoutes _apiRoutes = ApiRoutes();
@@ -122,7 +123,9 @@ class _RegisterPage extends State<RegisterPage> with SingleTickerProviderStateMi
         }
       }else if(response.containsKey('status_code')){
         if(response['status_code'] == 201 && context.mounted){
-          Navigator.pushReplacement((context), MaterialPageRoute(builder: (context) => const LoginPage()));
+          WidgetsBinding.instance.addPostFrameCallback((_){
+            Navigator.pushReplacement((context), MaterialPageRoute(builder: (context) => const LoginPage()));
+          });
         }
       }
     }catch(e){
@@ -404,7 +407,7 @@ class _RegisterPage extends State<RegisterPage> with SingleTickerProviderStateMi
       child: Scaffold(
         backgroundColor: backgroundColor,
         body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: width * .05),
+          padding: EdgeInsets.symmetric(horizontal: height * .05),
           child: SingleChildScrollView(
             child: Column(
               children: [
@@ -447,7 +450,7 @@ class _RegisterPage extends State<RegisterPage> with SingleTickerProviderStateMi
                 SizedBox(
                   height: height * 0.4,
                   child: PageView(
-                    physics: _RestrictedScrollPhysics(canScrollForward: !disableButton()),
+                    physics: const NeverScrollableScrollPhysics(),
                     controller: pageController,
                     onPageChanged: (index) {
                       setState(() {
