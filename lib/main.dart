@@ -186,7 +186,23 @@ class _AuthGateState extends State<AuthGate> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     // TODO add loading screen
-                    return const Center(child: CircularProgressIndicator());
+                    double width = MediaQuery.of(context).size.width;
+                    double height = MediaQuery.of(context).size.height;
+                    return Scaffold(
+                      backgroundColor: Colors.white,
+                      body: Align(
+                        alignment: Alignment.center,
+                        child: AnimatedOpacity(
+                          opacity: snapshot.connectionState == ConnectionState.waiting ? 1 : 0,
+                          duration: const Duration(milliseconds: 300),
+                          child: Image(
+                            image: const AssetImage('assets/icons/smmicGold.png'),
+                            width: width * .8,
+                            height: height * .3,
+                          ),
+                        ),
+                      ),
+                    );
                   }
 
                   context.read<MqttProvider>().registerContext(context: context);
