@@ -14,7 +14,9 @@ import 'package:smmic/utils/device_utils.dart';
 import 'package:smmic/utils/logs.dart';
 
 class Devices extends StatefulWidget {
-  const Devices({super.key});
+  const Devices({super.key, this.parentScaffoldKey});
+
+  final GlobalKey<ScaffoldState>? parentScaffoldKey;
 
   @override
   State<Devices> createState() => _Devices();
@@ -152,7 +154,7 @@ class _Devices extends State<Devices> with TickerProviderStateMixin {
                 builder: (context) {
                   return GestureDetector(
                     onTap: () {
-                      Scaffold.of(context).openDrawer();
+                      widget.parentScaffoldKey?.currentState?.openDrawer();
                     },
                     child: SvgPicture.asset('assets/icons/menu.svg',
                       width: 27,
