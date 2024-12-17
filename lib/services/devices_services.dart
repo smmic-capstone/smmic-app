@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/utils/api.dart';
@@ -15,18 +17,13 @@ class DevicesServices {
   final Logs _logs = Logs(tag: 'DevicesServices()');
 
   /// Retrieves all devices registered to the user, requires the user id
-  Future<List<Map<String, dynamic>>?> getDevices(
-      {required String userID, required String token}) async {
+  Future<List<Map<String, dynamic>>?> getDevices({required String userID, required String token}) async {
     List<Map<String, dynamic>> sinkNodesParsed = [];
 
-    final Map<String, dynamic> data = await _apiRequest.get(
-        route: _apiRoutes.getDevices,
-        headers: {'Authorization': 'Bearer $token', 'UID': userID});
+    final Map<String, dynamic> data = await _apiRequest.get(route: _apiRoutes.getDevices, headers: {'Authorization': 'Bearer $token', 'UID': userID});
 
     if (data.containsKey('error') || data.isEmpty || data['data'] == null) {
-      _logs.error(
-          message:
-              'data received from ApiRequest().get() contains error or invalid value: ${data.values}');
+      _logs.error(message: 'data received from ApiRequest().get() contains error or invalid value: ${data.values}');
     } else {
       List<dynamic> sinkNodesUnparsed = data['data'];
 
@@ -40,6 +37,7 @@ class DevicesServices {
             'name': sensorUnparsed['name'],
             'latitude': sensorUnparsed['latitude'],
             'longitude': sensorUnparsed['longitude'],
+            'interval': sensorUnparsed['interval']
           });
         }
         sinkNodesParsed.add({
@@ -56,12 +54,10 @@ class DevicesServices {
     return sinkNodesParsed.isNotEmpty ? sinkNodesParsed : null;
   }
 
-  Future<Map<String, List<Map<String, dynamic>>>> getSinkBatchSnapshots(
-      List<String> sinkIds) async {
+  Future<Map<String, List<Map<String, dynamic>>>> getSinkBatchSnapshots(List<String> sinkIds) async {
     Map<String, List<Map<String, dynamic>>> finalMap = {};
     for (String sinkId in sinkIds) {
-      Map<String, dynamic> res = await _apiRequest
-          .get(route: _apiRoutes.getSinkReadings, headers: {'Sink': sinkId});
+      Map<String, dynamic> res = await _apiRequest.get(route: _apiRoutes.getSinkReadings, headers: {'Sink': sinkId});
       if (res.containsKey('error')) {
         _logs.warning(
             message: 'request for $sinkId returned with error ->'
@@ -77,12 +73,10 @@ class DevicesServices {
     return finalMap;
   }
 
-  Future<Map<String, List<Map<String, dynamic>>>> getSensorBatchSnapshots(
-      List<String> sensorIds) async {
+  Future<Map<String, List<Map<String, dynamic>>>> getSensorBatchSnapshots(List<String> sensorIds) async {
     Map<String, List<Map<String, dynamic>>> finalMap = {};
     for (String sensorId in sensorIds) {
-      Map<String, dynamic> res = await _apiRequest.get(
-          route: _apiRoutes.getSensorReadings, headers: {'Sensor': sensorId});
+      Map<String, dynamic> res = await _apiRequest.get(route: _apiRoutes.getSensorReadings, headers: {'Sensor': sensorId});
       if (res.containsKey('error')) {
         _logs.warning(
             message: 'request for $sensorId returned with error ->'
@@ -98,25 +92,18 @@ class DevicesServices {
     return finalMap;
   }
 
-  Future<Map<String, dynamic>?> updateSKDeviceName(
-      {required String token,
-      required String deviceID,
-      required Map<String, dynamic> sinkName}) async {
+  Future<Map<String, dynamic>?> updateSKDeviceName({required String token, required String deviceID, required Map<String, dynamic> sinkName}) async {
     String? accessToken;
     TokenStatus accessStatus = await _authUtils.verifyToken(token: token);
 
     if (accessStatus != TokenStatus.valid) {
-      Map<String, dynamic> refresh =
-          await _sharedPrefsUtils.getTokens(refresh: true);
-      accessToken =
-          await _authUtils.refreshAccessToken(refresh: refresh['refresh']);
+      Map<String, dynamic> refresh = await _sharedPrefsUtils.getTokens(refresh: true);
+      accessToken = await _authUtils.refreshAccessToken(refresh: refresh['refresh']);
       await _authProvider.setAccess(access: accessToken!);
     }
 
-    final Map<String, dynamic> data = await _apiRequest.patch(
-        route: _apiRoutes.updateSKName,
-        headers: {'Authorization': 'Bearer $token', 'Sink': deviceID},
-        body: sinkName);
+    final Map<String, dynamic> data =
+        await _apiRequest.patch(route: _apiRoutes.updateSKName, headers: {'Authorization': 'Bearer $token', 'Sink': deviceID}, body: sinkName);
 
     // TODO: HANDLE ERROR SCENARIO
     if (data.containsKey('error')) {
@@ -127,25 +114,18 @@ class DevicesServices {
   }
 
   Future<Map<String, dynamic>?> updateSNDeviceName(
-      {required String token,
-      required String deviceID,
-      required Map<String, dynamic> sensorName,
-      required String sinkNodeID}) async {
+      {required String token, required String deviceID, required Map<String, dynamic> sensorName, required String sinkNodeID}) async {
     String? accessToken;
     TokenStatus accessStatus = await _authUtils.verifyToken(token: token);
 
     if (accessStatus != TokenStatus.valid) {
-      Map<String, dynamic> refresh =
-          await _sharedPrefsUtils.getTokens(refresh: true);
-      accessToken =
-          await _authUtils.refreshAccessToken(refresh: refresh['refresh']);
+      Map<String, dynamic> refresh = await _sharedPrefsUtils.getTokens(refresh: true);
+      accessToken = await _authUtils.refreshAccessToken(refresh: refresh['refresh']);
       await _authProvider.setAccess(access: accessToken!);
     }
 
     final Map<String, dynamic> data = await _apiRequest.patch(
-        route: _apiRoutes.updateSNName,
-        headers: {'Authorization': 'Bearer $token', 'Sensor': deviceID},
-        body: sensorName);
+        route: _apiRoutes.updateSNName, headers: {'Authorization': 'Bearer $token', 'Sensor': deviceID}, body: jsonEncode(sensorName));
 
     // TODO: HANDLE ERROR SCENARIO
     if (data.containsKey('error')) {

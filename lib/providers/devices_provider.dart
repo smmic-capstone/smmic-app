@@ -28,24 +28,18 @@ class DevicesProvider extends ChangeNotifier {
   Map<String, SensorNode> get sensorNodeMap => _sensorNodeMap;
 
   // sink node state map
-  Map<String, SinkNodeState> _sinkNodeStateMap =
-      {}; // ignore: prefer_final_fields
+  Map<String, SinkNodeState> _sinkNodeStateMap = {}; // ignore: prefer_final_fields
   Map<String, SinkNodeState> get sinkNodeStateMap => _sinkNodeStateMap;
 
   // sensor node readings map
-  Map<String, SensorNodeSnapshot> _sensorNodeSnapshotMap =
-      {}; // ignore: prefer_final_fields
-  Map<String, SensorNodeSnapshot> get sensorNodeSnapshotMap =>
-      _sensorNodeSnapshotMap;
+  Map<String, SensorNodeSnapshot> _sensorNodeSnapshotMap = {}; // ignore: prefer_final_fields
+  Map<String, SensorNodeSnapshot> get sensorNodeSnapshotMap => _sensorNodeSnapshotMap;
 
   // sensor node chart data map
-  Map<String, List<SensorNodeSnapshot>> _sensorNodeChartDataMap =
-      {}; // ignore: prefer_final_fields
-  Map<String, List<SensorNodeSnapshot>> get sensorNodeChartDataMap =>
-      _sensorNodeChartDataMap;
+  Map<String, List<SensorNodeSnapshot>> _sensorNodeChartDataMap = {}; // ignore: prefer_final_fields
+  Map<String, List<SensorNodeSnapshot>> get sensorNodeChartDataMap => _sensorNodeChartDataMap;
 
-  Future<void> init(
-      {required bool isConnected, required BuildContext context}) async {
+  Future<void> init({required bool isConnected, required BuildContext context}) async {
     // register context
     try {
       _internalContext = context;
@@ -61,8 +55,7 @@ class DevicesProvider extends ChangeNotifier {
 
     // acquire user data and tokens from shared prefs
     Map<String, dynamic>? userData = await _sharedPrefsUtils.getUserData();
-    Map<String, dynamic> tokens =
-        await _sharedPrefsUtils.getTokens(access: true);
+    Map<String, dynamic> tokens = await _sharedPrefsUtils.getTokens(access: true);
 
     if (userData == null) {
       _logs.warning(message: '.init() -> user data from shared prefs is null!');
@@ -92,8 +85,7 @@ class DevicesProvider extends ChangeNotifier {
   }
 
   Future<void> _loadSinkReadingsFromApi() async {
-    Map<String, List<Map<String, dynamic>>> readings = await _devicesServices
-        .getSinkBatchSnapshots(_sinkNodeMap.keys.toList());
+    Map<String, List<Map<String, dynamic>>> readings = await _devicesServices.getSinkBatchSnapshots(_sinkNodeMap.keys.toList());
     for (String sinkId in readings.keys) {
       if (readings[sinkId]!.isEmpty) {
         continue;
@@ -102,11 +94,9 @@ class DevicesProvider extends ChangeNotifier {
         _logs.warning(
             message: 'sink node state data received for sink node'
                 '$sinkId but no SinkNodeState object was present in _sinkNodeStateMap');
-        _sinkNodeStateMap[sinkId] =
-            SinkNodeState.fromJSON(readings[sinkId]!.first, sinkId);
+        _sinkNodeStateMap[sinkId] = SinkNodeState.fromJSON(readings[sinkId]!.first, sinkId);
       } else {
-        int comparison = DateTime.parse(readings[sinkId]!.first['timestamp'])
-            .compareTo(_sinkNodeStateMap[sinkId]!.lastTransmission);
+        int comparison = DateTime.parse(readings[sinkId]!.first['timestamp']).compareTo(_sinkNodeStateMap[sinkId]!.lastTransmission);
         _sinkNodeStateMap[sinkId]!.updateState(readings[sinkId]!.first);
         if (comparison == 1) {
           _sinkNodeStateMap[sinkId]!.updateState(readings[sinkId]!.first);
@@ -117,8 +107,7 @@ class DevicesProvider extends ChangeNotifier {
   }
 
   Future<void> _loadSensorReadingsFromApi() async {
-    Map<String, List<Map<String, dynamic>>> readings = await _devicesServices
-        .getSensorBatchSnapshots(_sensorNodeMap.keys.toList());
+    Map<String, List<Map<String, dynamic>>> readings = await _devicesServices.getSensorBatchSnapshots(_sensorNodeMap.keys.toList());
     for (String sensorId in readings.keys) {
       List<SensorNodeSnapshot> seSnapshotObjList = [];
       if (readings[sensorId]!.isEmpty) {
@@ -136,8 +125,7 @@ class DevicesProvider extends ChangeNotifier {
         if (_sensorNodeSnapshotMap[sensorId] == null) {
           _sensorNodeSnapshotMap[sensorId] = seSnapshotObj;
         } else {
-          int comparison = seSnapshotObj.timestamp
-              .compareTo(_sensorNodeSnapshotMap[sensorId]!.timestamp);
+          int comparison = seSnapshotObj.timestamp.compareTo(_sensorNodeSnapshotMap[sensorId]!.timestamp);
           if (comparison == 1) {
             _sensorNodeSnapshotMap[sensorId] = seSnapshotObj;
           }
@@ -149,15 +137,13 @@ class DevicesProvider extends ChangeNotifier {
   }
 
   void updateSinkState(Map<String, dynamic> data) {
-    SinkNodeState? objExistence =
-        _sinkNodeStateMap[data[SinkNodeSnapshotKeys.deviceID.key]];
+    SinkNodeState? objExistence = _sinkNodeStateMap[data[SinkNodeSnapshotKeys.deviceID.key]];
     if (objExistence == null) {
       _logs.warning(
           message: 'received sink node state for ${data['device_id']}'
               'but no sink node state object present in DevicesProvider._sinkNodeStateMap');
     } else {
-      _sinkNodeStateMap[data[SinkNodeSnapshotKeys.deviceID.key]]!
-          .updateState(data);
+      _sinkNodeStateMap[data[SinkNodeSnapshotKeys.deviceID.key]]!.updateState(data);
     }
     notifyListeners();
   }
@@ -189,7 +175,8 @@ class DevicesProvider extends ChangeNotifier {
         SensorNodeKeys.deviceName.key: seObj.deviceName,
         SensorNodeKeys.latitude.key: seObj.latitude,
         SensorNodeKeys.longitude.key: seObj.longitude,
-        SensorNodeKeys.sinkNode.key: seObj.registeredSinkNode
+        SensorNodeKeys.sinkNode.key: seObj.registeredSinkNode,
+        SensorNodeKeys.interval.key: seObj.interval
       };
       sensorNodeMapList.add(seMap);
     }
@@ -202,14 +189,11 @@ class DevicesProvider extends ChangeNotifier {
   // TODO: chart is fucked when loading from sqlite
   Future<bool> _loadReadingsFromSqlite() async {
     for (String seId in _sensorNodeMap.keys) {
-      SensorNodeSnapshot? fromSQFLiteSnapshot =
-          await DatabaseHelper.getSeReading(_sensorNodeMap[seId]!.deviceID);
+      SensorNodeSnapshot? fromSQFLiteSnapshot = await DatabaseHelper.getSeReading(_sensorNodeMap[seId]!.deviceID);
       if (fromSQFLiteSnapshot != null) {
-        _sensorNodeSnapshotMap[_sensorNodeMap[seId]!.deviceID] =
-            fromSQFLiteSnapshot;
+        _sensorNodeSnapshotMap[_sensorNodeMap[seId]!.deviceID] = fromSQFLiteSnapshot;
       }
-      List<SensorNodeSnapshot>? fromSQFLiteChartData =
-          await DatabaseHelper.chartReadings(_sensorNodeMap[seId]!.deviceID);
+      List<SensorNodeSnapshot>? fromSQFLiteChartData = await DatabaseHelper.chartReadings(_sensorNodeMap[seId]!.deviceID);
       if (fromSQFLiteChartData != null) {
         for (SensorNodeSnapshot snapshot in fromSQFLiteChartData) {
           _updateSensorChartDataMap(snapshot);
@@ -220,11 +204,8 @@ class DevicesProvider extends ChangeNotifier {
   }
 
   /// Set device list from the API
-  Future<bool> _setDeviceListFromApi(
-      {required Map<String, dynamic> userData,
-      required Map<String, dynamic> tokens}) async {
-    List<Map<String, dynamic>>? devices = await _devicesServices.getDevices(
-        userID: userData['UID'], token: tokens['access']);
+  Future<bool> _setDeviceListFromApi({required Map<String, dynamic> userData, required Map<String, dynamic> tokens}) async {
+    List<Map<String, dynamic>>? devices = await _devicesServices.getDevices(userID: userData['UID'], token: tokens['access']);
 
     if (devices == null) {
       return false;
@@ -234,8 +215,7 @@ class DevicesProvider extends ChangeNotifier {
     for (Map<String, dynamic> sinkMap in devices) {
       SinkNode incomingSk = _deviceUtils.sinkNodeMapToObject(sinkMap);
       if (_sinkNodeMap[incomingSk.deviceID] != null) {
-        if (!(_sinkNodeMap[incomingSk.deviceID]!.toHash() ==
-            incomingSk.toHash())) {
+        if (!(_sinkNodeMap[incomingSk.deviceID]!.toHash() == incomingSk.toHash())) {
           // TODO: version checking here, in the future
           _sinkNodeMap[incomingSk.deviceID]!.update(incomingSk);
         }
@@ -248,14 +228,14 @@ class DevicesProvider extends ChangeNotifier {
     for (Map<String, dynamic> sinkMap in devices) {
       List<Map<String, dynamic>> sensorMapList = sinkMap['sensor_nodes'];
       for (Map<String, dynamic> sensorMap in sensorMapList) {
-        SensorNode incomingSe = _deviceUtils.sensorNodeMapToObject(
-            sensorMap: sensorMap, sinkNodeID: sinkMap['device_id']);
+        _logs.error(message: "sensor Map: $sensorMap");
+        SensorNode incomingSe = _deviceUtils.sensorNodeMapToObject(sensorMap: sensorMap, sinkNodeID: sinkMap['device_id']);
         if (_sensorNodeMap[incomingSe.deviceID] != null) {
-          if (!(_sensorNodeMap[incomingSe.deviceID]!.toHash() ==
-              incomingSe.toHash())) {
+          if (!(_sensorNodeMap[incomingSe.deviceID]!.toHash() == incomingSe.toHash())) {
             _sensorNodeMap[incomingSe.deviceID]!.update(incomingSe);
           }
         } else {
+          _logs.error(message: "oh diba: ${incomingSe.toString()}");
           _sensorNodeMap[incomingSe.deviceID] = incomingSe;
         }
       }
@@ -269,8 +249,7 @@ class DevicesProvider extends ChangeNotifier {
   // TODO: add cross-checking with the API to verify integrity
   Future<bool> _setDeviceListFromSharedPrefs() async {
     List<Map<String, dynamic>> sinkList = await _sharedPrefsUtils.getSinkList();
-    List<Map<String, dynamic>> sensorList =
-        await _sharedPrefsUtils.getSensorList();
+    List<Map<String, dynamic>> sensorList = await _sharedPrefsUtils.getSensorList();
 
     // map sink nodes to objects and set to sink node map
     for (Map<String, dynamic> sinkMap in sinkList) {
@@ -279,8 +258,7 @@ class DevicesProvider extends ChangeNotifier {
     }
 
     for (Map<String, dynamic> sensorMap in sensorList) {
-      SinkNode? correspondingSk =
-          _sinkNodeMap[sensorMap[SensorNodeKeys.sinkNode.key]];
+      SinkNode? correspondingSk = _sinkNodeMap[sensorMap[SensorNodeKeys.sinkNode.key]];
       // check existence of corresponding sink node
       if (correspondingSk == null) {
         _logs.warning(
@@ -290,9 +268,7 @@ class DevicesProvider extends ChangeNotifier {
         continue;
       }
       // map to object and set to sensor node map
-      SensorNode sensorObj = _deviceUtils.sensorNodeMapToObject(
-          sensorMap: sensorMap,
-          sinkNodeID: sensorMap[SensorNodeKeys.sinkNode.key]);
+      SensorNode sensorObj = _deviceUtils.sensorNodeMapToObject(sensorMap: sensorMap, sinkNodeID: sensorMap[SensorNodeKeys.sinkNode.key]);
       _sensorNodeMap[sensorObj.deviceID] = sensorObj;
     }
 
@@ -314,8 +290,7 @@ class DevicesProvider extends ChangeNotifier {
     // check if new snapshot is newer than current snapshot
     // if there is already one
     if (_sensorNodeSnapshotMap[finalSnapshot.deviceID] != null) {
-      int comparisonResult = finalSnapshot.timestamp
-          .compareTo(_sensorNodeSnapshotMap[finalSnapshot.deviceID]!.timestamp);
+      int comparisonResult = finalSnapshot.timestamp.compareTo(_sensorNodeSnapshotMap[finalSnapshot.deviceID]!.timestamp);
       switch (comparisonResult) {
         case 0:
           _logs.warning(
@@ -330,8 +305,7 @@ class DevicesProvider extends ChangeNotifier {
       }
     } else {
       _sensorNodeSnapshotMap[finalSnapshot.deviceID] = finalSnapshot;
-      _sensorStatesMap[finalSnapshot.deviceID]!
-          .updateConnectionState(finalSnapshot.timestamp);
+      _sensorStatesMap[finalSnapshot.deviceID]!.updateConnectionState(finalSnapshot.timestamp);
     }
 
     // update connection state
@@ -353,8 +327,7 @@ class DevicesProvider extends ChangeNotifier {
 
   // update the sensor chart data map with new data
   void _updateSensorChartDataMap(SensorNodeSnapshot newData) {
-    List<SensorNodeSnapshot>? chartData =
-        _sensorNodeChartDataMap[newData.deviceID];
+    List<SensorNodeSnapshot>? chartData = _sensorNodeChartDataMap[newData.deviceID];
     // chart data modified flag
     bool modified = false;
     if (chartData == null || chartData.isEmpty) {
@@ -362,8 +335,7 @@ class DevicesProvider extends ChangeNotifier {
       modified = true;
     } else {
       // uniqueness check
-      bool isDup =
-          chartData.any((x) => x.timestamp.compareTo(newData.timestamp) == 0);
+      bool isDup = chartData.any((x) => x.timestamp.compareTo(newData.timestamp) == 0);
       if (!isDup) {
         int index = -1;
         // reverse traversal to start from end of list (latest reading)
@@ -378,9 +350,7 @@ class DevicesProvider extends ChangeNotifier {
           modified = true;
         } else if (index > -1) {
           chartData.insert(index + 1, newData);
-          chartData.length > DatabaseHelper.maxChartLength
-              ? chartData.removeAt(0)
-              : ();
+          chartData.length > DatabaseHelper.maxChartLength ? chartData.removeAt(0) : ();
           modified = true;
         }
       }
@@ -392,8 +362,7 @@ class DevicesProvider extends ChangeNotifier {
   }
 
   // soil moisture sensor states as map
-  Map<String, SMSensorState> _sensorStatesMap =
-      {}; // ignore: prefer_final_fields
+  Map<String, SMSensorState> _sensorStatesMap = {}; // ignore: prefer_final_fields
   Map<String, SMSensorState> get sensorStatesMap => _sensorStatesMap;
 
   void _initDevicesStates() {
@@ -408,16 +377,14 @@ class DevicesProvider extends ChangeNotifier {
   }
 
   void updateSMSensorState(Map<String, dynamic> alertMap) {
-    SMSensorState? smSensorStateObj =
-        _sensorStatesMap[alertMap[SensorAlertKeys.deviceID.key]];
+    SMSensorState? smSensorStateObj = _sensorStatesMap[alertMap[SensorAlertKeys.deviceID.key]];
     if (smSensorStateObj == null) {
       _logs.warning(
           message: 'setSMSensorState() -> received sensor alert for'
               '${alertMap[SensorAlertKeys.deviceID.key]} but not corresponding sensor state object'
               'in _sensorAlertsMap!');
     } else {
-      _sensorStatesMap[alertMap[SensorAlertKeys.deviceID.key]]!
-          .updateState(alertMap);
+      _sensorStatesMap[alertMap[SensorAlertKeys.deviceID.key]]!.updateState(alertMap);
     }
   }
 
@@ -430,10 +397,8 @@ class DevicesProvider extends ChangeNotifier {
     }
 
     _logs.info(message: "getSKList running ....");
-    List<Map<String, dynamic>>? _getSKList =
-        await _sharedPrefsUtils.getSinkList();
-    _logs.info(
-        message: "sharedPrefsUtils : ${_sharedPrefsUtils.getSinkList()}");
+    List<Map<String, dynamic>>? _getSKList = await _sharedPrefsUtils.getSinkList();
+    _logs.info(message: "sharedPrefsUtils : ${_sharedPrefsUtils.getSinkList()}");
     _logs.info(message: "_getSKList provider : $_getSKList");
     if (_getSKList == [] || _getSKList == null) {
       _logs.error(message: "Way sulod si _getSKList");
@@ -442,12 +407,9 @@ class DevicesProvider extends ChangeNotifier {
       _logs.info(message: "updated sink data : $updatedSinkData");
 
       for (int i = 0; i < _getSKList.length; i++) {
-        _logs.info(
-            message:
-                "for loop getSKList: ${_getSKList[i][SensorNodeKeys.deviceID.key].toString()}");
+        _logs.info(message: "for loop getSKList: ${_getSKList[i][SensorNodeKeys.deviceID.key].toString()}");
 
-        if (_getSKList[i][SensorNodeKeys.deviceID.key] ==
-            updatedSinkData[SensorNodeKeys.deviceID.key]) {
+        if (_getSKList[i][SensorNodeKeys.deviceID.key] == updatedSinkData[SensorNodeKeys.deviceID.key]) {
           _logs.info(message: "Hello you have entered for loop");
           _getSKList.removeAt(i);
           _getSKList.insert(i, updatedSinkData);
@@ -474,8 +436,7 @@ class DevicesProvider extends ChangeNotifier {
       return;
     }
 
-    List<Map<String, dynamic>>? getSNList =
-        await _sharedPrefsUtils.getSensorList();
+    List<Map<String, dynamic>>? getSNList = await _sharedPrefsUtils.getSensorList();
 
     if (getSNList == null || getSNList.isEmpty) {
       _logs.error(message: "getSNList is empty");
@@ -483,8 +444,7 @@ class DevicesProvider extends ChangeNotifier {
     } else {
       _logs.info(message: "sensorNameChange else statement running");
       for (int i = 0; i < getSNList.length; i++) {
-        if (getSNList[i][SensorNodeKeys.deviceID.key] ==
-            updatedData[SensorNodeKeys.deviceID.key]) {
+        if (getSNList[i][SensorNodeKeys.deviceID.key] == updatedData[SensorNodeKeys.deviceID.key]) {
           getSNList.removeAt(i);
           getSNList.insert(i, updatedData);
         }

@@ -310,10 +310,12 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                                                 });
                                               }
                                             } else if (field == 'Interval') {
+                                              await _apiRequest.sendIntervalCommand(
+                                                  newInterval: Duration(minutes: int.parse(editController.text)), deviceId: deviceInfo.deviceID);
                                               await _devicesServices.updateSNDeviceName(
                                                   token: context.read<AuthProvider>().accessData!.token,
                                                   deviceID: widget.deviceID,
-                                                  sensorName: {'interval': int.parse(editController.text)},
+                                                  sensorName: {'interval': (int.parse(editController.text) * 60)},
                                                   sinkNodeID: deviceInfo.registeredSinkNode);
                                               if (context.mounted) {
                                                 context.read<DevicesProvider>().sensorNameChange({
@@ -322,7 +324,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                                                   'longitude': deviceInfo.longitude ?? '',
                                                   'latitude': deviceInfo.latitude ?? '',
                                                   SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
-                                                  SensorNodeKeys.interval.key: int.parse(editController.text)
+                                                  SensorNodeKeys.interval.key: int.parse(editController.text) * 60
                                                 });
                                               }
                                             }
@@ -427,7 +429,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
           constraints: const BoxConstraints(maxWidth: 150),
           child: RichText(
             text: TextSpan(
-                text: '5 Minutes',
+                text: '${(deviceInfo!.interval ~/ 60).toString()} Minutes',
                 style: const TextStyle(color: Colors.white, fontSize: 25, fontFamily: 'Inter'),
                 children: [TextSpan(text: '\nReading Interval', style: _tertiaryTextStyle)]),
           ),
@@ -549,7 +551,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                           ),
                           GestureDetector(
                             onTap: () {
-                              showEditDialog(context, '5', 'Interval', deviceInfo!);
+                              showEditDialog(context, (deviceInfo.interval ~/ 60).toString(), 'Interval', deviceInfo!);
                             },
                             child: Container(
                               color: Colors.transparent,

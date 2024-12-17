@@ -62,11 +62,7 @@ class Device {
   String? longitude;
   String? latitude;
 
-  Device(
-      {required this.deviceID,
-      required this.deviceName,
-      this.longitude,
-      this.latitude});
+  Device({required this.deviceID, required this.deviceName, this.longitude, this.latitude});
 
   //Updates the device information (deviceName and deviceID) of the object instance
   // void updateInfo(Map<String, dynamic> newInfo) {
@@ -82,12 +78,7 @@ class Device {
 class SinkNode extends Device {
   List<String> registeredSensorNodes;
 
-  SinkNode._internal(
-      {required super.deviceID,
-      required super.deviceName,
-      super.latitude,
-      super.longitude,
-      required this.registeredSensorNodes})
+  SinkNode._internal({required super.deviceID, required super.deviceName, super.latitude, super.longitude, required this.registeredSensorNodes})
       : super();
 
   //TODO: add logic to check if a device already exists (caching or from shared prefs)
@@ -97,15 +88,11 @@ class SinkNode extends Device {
         deviceName: deviceInfo[SinkNodeKeys.deviceName.key],
         longitude: deviceInfo[SinkNodeKeys.longitude.key],
         latitude: deviceInfo[SinkNodeKeys.latitude.key],
-        registeredSensorNodes:
-            deviceInfo[SinkNodeKeys.registeredSensorNodes.key]);
+        registeredSensorNodes: deviceInfo[SinkNodeKeys.registeredSensorNodes.key]);
   }
 
   String toHash() {
-    return sha256
-        .convert(
-            utf8.encode('$deviceName$latitude$longitude$registeredSensorNodes'))
-        .toString();
+    return sha256.convert(utf8.encode('$deviceName$latitude$longitude$registeredSensorNodes')).toString();
   }
 
   void update(SinkNode newData) {
@@ -170,8 +157,7 @@ class SinkNodeState {
   factory SinkNodeState.fromJSON(Map<String, dynamic> data, String sinkId) {
     return SinkNodeState._internal(
         deviceID: sinkId,
-        lastTransmission:
-            DateTime.parse(data[SinkNodeSnapshotKeys.timestamp.key]),
+        lastTransmission: DateTime.parse(data[SinkNodeSnapshotKeys.timestamp.key]),
         batteryLevel: data[SinkNodeSnapshotKeys.batteryLevel.key],
         connectedClients: data[SinkNodeSnapshotKeys.connectedClients.key],
         totalClients: data[SinkNodeSnapshotKeys.totalClients.key],
@@ -197,8 +183,7 @@ class SinkNodeState {
 
   void setSensorConnectionState(String sensorId, ConnectionState state) {
     sensorsConnectionStateMap[sensorId] = state;
-    Logs(tag: 'devices data models')
-        .info2(message: 'new sensor connection state: $sensorId');
+    Logs(tag: 'devices data models').info2(message: 'new sensor connection state: $sensorId');
   }
 }
 
@@ -206,16 +191,19 @@ class SensorNode extends Device {
   String registeredSinkNode;
   int interval;
   SensorNode._internal(
-      {required super.deviceID,
-      required super.deviceName,
-      super.longitude,
-      super.latitude,
-      required this.registeredSinkNode,
-      required this.interval})
+      {required super.deviceID, required super.deviceName, super.longitude, super.latitude, required this.registeredSinkNode, required this.interval})
       : super();
 
   //TODO: add logic to check if a device already exists (caching or from shared prefs)
   factory SensorNode.fromJSON(Map<String, dynamic> deviceInfo) {
+    int interval = 300;
+
+    try {
+      interval = int.parse(deviceInfo[SensorNodeKeys.interval.key]);
+    } catch (e) {
+      debugPrint("Error Hello World: $e and $deviceInfo");
+      interval = deviceInfo[SensorNodeKeys.interval.key];
+    }
     return SensorNode._internal(
         deviceID: deviceInfo[SensorNodeKeys.deviceID.key],
         deviceName: deviceInfo[SensorNodeKeys.deviceName.key],
@@ -226,10 +214,7 @@ class SensorNode extends Device {
   }
 
   String toHash() {
-    return sha256
-        .convert(
-            utf8.encode('$deviceName$longitude$latitude$registeredSinkNode'))
-        .toString();
+    return sha256.convert(utf8.encode('$deviceName$longitude$latitude$registeredSinkNode')).toString();
   }
 
   void update(SensorNode newData) {
@@ -237,6 +222,7 @@ class SensorNode extends Device {
     longitude = newData.longitude;
     latitude = newData.latitude;
     registeredSinkNode = newData.registeredSinkNode;
+    interval = newData.interval;
   }
 }
 
@@ -272,28 +258,17 @@ class SensorNodeSnapshot {
     final dataValues = data.containsKey('data') ? data['data'] : data;
     return SensorNodeSnapshot._internal(
       deviceID: data[SMSensorSnapshotKeys.deviceID.key],
-      timestamp:
-          DateTime.parse(data[SMSensorSnapshotKeys.timestamp.key]).toLocal(),
-      soilMoisture: double.parse(
-          dataValues[SMSensorSnapshotKeys.soilMoisture.key].toString()),
-      temperature: double.parse(
-          dataValues[SMSensorSnapshotKeys.temperature.key].toString()),
-      humidity: double.parse(
-          dataValues[SMSensorSnapshotKeys.humidity.key].toString()),
-      batteryLevel: double.parse(
-          dataValues[SMSensorSnapshotKeys.batteryLevel.key].toString()),
+      timestamp: DateTime.parse(data[SMSensorSnapshotKeys.timestamp.key]).toLocal(),
+      soilMoisture: double.parse(dataValues[SMSensorSnapshotKeys.soilMoisture.key].toString()),
+      temperature: double.parse(dataValues[SMSensorSnapshotKeys.temperature.key].toString()),
+      humidity: double.parse(dataValues[SMSensorSnapshotKeys.humidity.key].toString()),
+      batteryLevel: double.parse(dataValues[SMSensorSnapshotKeys.batteryLevel.key].toString()),
     );
   }
 
-  factory SensorNodeSnapshot.placeHolder(
-      {required String deviceId, DateTime? timestamp}) {
+  factory SensorNodeSnapshot.placeHolder({required String deviceId, DateTime? timestamp}) {
     return SensorNodeSnapshot._internal(
-        deviceID: deviceId,
-        timestamp: timestamp ?? DateTime.now(),
-        soilMoisture: 0,
-        temperature: 0,
-        humidity: 0,
-        batteryLevel: 0);
+        deviceID: deviceId, timestamp: timestamp ?? DateTime.now(), soilMoisture: 0, temperature: 0, humidity: 0, batteryLevel: 0);
   }
 
   static SensorNodeSnapshot? dynamicSerializer({required var data}) {
@@ -444,65 +419,35 @@ class SMSensorState {
     return SMSensorState._internal(
       deviceID: sensorId,
       lastUpdate: DateTime.now(),
-      connectionState: (
-        SMSensorAlertCodes.unverifiedState.code,
-        DateTime.now(),
-        DateTime.now().add(keepStateTime)
-      ),
-      soilMoistureState: (
-        SMSensorAlertCodes.soilMoistureNormal.code,
-        DateTime.now(),
-        DateTime.now().add(keepStateTime)
-      ),
-      humidityState: (
-        SMSensorAlertCodes.humidityNormal.code,
-        DateTime.now(),
-        DateTime.now().add(keepStateTime)
-      ),
-      temperatureState: (
-        SMSensorAlertCodes.temperatureNormal.code,
-        DateTime.now(),
-        DateTime.now().add(keepStateTime)
-      ),
-      batteryState: (
-        SMSensorAlertCodes.normalBattery.code,
-        DateTime.now(),
-        DateTime.now().add(keepStateTime)
-      ),
-      irrigationState: (
-        SMSensorAlertCodes.irrOff.code,
-        DateTime.now(),
-        DateTime.now().add(keepStateTime)
-      ),
+      connectionState: (SMSensorAlertCodes.unverifiedState.code, DateTime.now(), DateTime.now().add(keepStateTime)),
+      soilMoistureState: (SMSensorAlertCodes.soilMoistureNormal.code, DateTime.now(), DateTime.now().add(keepStateTime)),
+      humidityState: (SMSensorAlertCodes.humidityNormal.code, DateTime.now(), DateTime.now().add(keepStateTime)),
+      temperatureState: (SMSensorAlertCodes.temperatureNormal.code, DateTime.now(), DateTime.now().add(keepStateTime)),
+      batteryState: (SMSensorAlertCodes.normalBattery.code, DateTime.now(), DateTime.now().add(keepStateTime)),
+      irrigationState: (SMSensorAlertCodes.irrOff.code, DateTime.now(), DateTime.now().add(keepStateTime)),
     );
   }
 
   void updateState(Map<String, dynamic> alertMap) {
     lastUpdate = DateTime.parse(alertMap[SensorAlertKeys.timestamp.key]);
 
-    DateTime alertTimeStamp =
-        DateTime.parse(alertMap[SensorAlertKeys.timestamp.key]);
+    DateTime alertTimeStamp = DateTime.parse(alertMap[SensorAlertKeys.timestamp.key]);
     int alertCode = int.parse(alertMap[SensorAlertKeys.alertCode.key]);
     int alertType = alertCode ~/ 10;
 
     if (alertCode == 1 || alertCode == 0) {
-      connectionState =
-          (alertCode, alertTimeStamp, alertTimeStamp.add(keepStateTime));
+      connectionState = (alertCode, alertTimeStamp, alertTimeStamp.add(keepStateTime));
       return;
     }
 
     if (alertType == SMSensorAlertCodes.soilMoistureAlert.code) {
-      soilMoistureState =
-          (alertCode, alertTimeStamp, alertTimeStamp.add(keepStateTime));
+      soilMoistureState = (alertCode, alertTimeStamp, alertTimeStamp.add(keepStateTime));
     } else if (alertType == SMSensorAlertCodes.temperatureAlert.code) {
-      temperatureState =
-          (alertCode, alertTimeStamp, alertTimeStamp.add(keepStateTime));
+      temperatureState = (alertCode, alertTimeStamp, alertTimeStamp.add(keepStateTime));
     } else if (alertType == SMSensorAlertCodes.humidityAlert.code) {
-      humidityState =
-          (alertCode, alertTimeStamp, alertTimeStamp.add(keepStateTime));
+      humidityState = (alertCode, alertTimeStamp, alertTimeStamp.add(keepStateTime));
     } else if (alertType == SMSensorAlertCodes.irrAlert.code) {
-      irrigationState =
-          (alertCode, alertTimeStamp, alertTimeStamp.add(keepStateTime));
+      irrigationState = (alertCode, alertTimeStamp, alertTimeStamp.add(keepStateTime));
     }
 
     // update connection state to 1 if received alert is
