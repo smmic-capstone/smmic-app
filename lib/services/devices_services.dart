@@ -15,19 +15,18 @@ class DevicesServices {
   final Logs _logs = Logs(tag: 'DevicesServices()');
 
   /// Retrieves all devices registered to the user, requires the user id
-  Future<List<Map<String, dynamic>>?> getDevices({
-    required String userID,
-    required String token}) async {
-
+  Future<List<Map<String, dynamic>>?> getDevices(
+      {required String userID, required String token}) async {
     List<Map<String, dynamic>> sinkNodesParsed = [];
 
     final Map<String, dynamic> data = await _apiRequest.get(
         route: _apiRoutes.getDevices,
-        headers: {'Authorization': 'Bearer $token', 'UID': userID}
-    );
+        headers: {'Authorization': 'Bearer $token', 'UID': userID});
 
     if (data.containsKey('error') || data.isEmpty || data['data'] == null) {
-      _logs.error(message:'data received from ApiRequest().get() contains error or invalid value: ${data.values}');
+      _logs.error(
+          message:
+              'data received from ApiRequest().get() contains error or invalid value: ${data.values}');
     } else {
       List<dynamic> sinkNodesUnparsed = data['data'];
 
@@ -39,15 +38,15 @@ class DevicesServices {
           sensorNodesParsed.add({
             'device_id': sensorUnparsed['device_id'],
             'name': sensorUnparsed['name'],
-            'latitude' : sensorUnparsed['latitude'],
-            'longitude' : sensorUnparsed['longitude'],
+            'latitude': sensorUnparsed['latitude'],
+            'longitude': sensorUnparsed['longitude'],
           });
         }
         sinkNodesParsed.add({
           'device_id': sinkUnparsed['device_id'],
           'name': sinkUnparsed['name'],
-          'latitude' : sinkUnparsed['latitude'],
-          'longitude' : sinkUnparsed['longitude'],
+          'latitude': sinkUnparsed['latitude'],
+          'longitude': sinkUnparsed['longitude'],
           'sensor_nodes': sensorNodesParsed
         });
       }
@@ -57,16 +56,16 @@ class DevicesServices {
     return sinkNodesParsed.isNotEmpty ? sinkNodesParsed : null;
   }
 
-  Future<Map<String, List<Map<String, dynamic>>>> getSinkBatchSnapshots(List<String> sinkIds) async {
+  Future<Map<String, List<Map<String, dynamic>>>> getSinkBatchSnapshots(
+      List<String> sinkIds) async {
     Map<String, List<Map<String, dynamic>>> finalMap = {};
     for (String sinkId in sinkIds) {
-      Map<String, dynamic> res = await _apiRequest.get(
-          route: _apiRoutes.getSinkReadings,
-          headers: {'Sink': sinkId}
-      );
+      Map<String, dynamic> res = await _apiRequest
+          .get(route: _apiRoutes.getSinkReadings, headers: {'Sink': sinkId});
       if (res.containsKey('error')) {
-        _logs.warning(message: 'request for $sinkId returned with error ->'
-            'code: ${res['status_code']}, body: ${res['body']}');
+        _logs.warning(
+            message: 'request for $sinkId returned with error ->'
+                'code: ${res['status_code']}, body: ${res['body']}');
       } else {
         List<Map<String, dynamic>> castedList = [];
         for (dynamic item in res['data']) {
@@ -78,16 +77,16 @@ class DevicesServices {
     return finalMap;
   }
 
-  Future<Map<String, List<Map<String, dynamic>>>> getSensorBatchSnapshots(List<String> sensorIds) async {
+  Future<Map<String, List<Map<String, dynamic>>>> getSensorBatchSnapshots(
+      List<String> sensorIds) async {
     Map<String, List<Map<String, dynamic>>> finalMap = {};
     for (String sensorId in sensorIds) {
       Map<String, dynamic> res = await _apiRequest.get(
-        route: _apiRoutes.getSensorReadings,
-        headers: {'Sensor': sensorId}
-      );
+          route: _apiRoutes.getSensorReadings, headers: {'Sensor': sensorId});
       if (res.containsKey('error')) {
-        _logs.warning(message: 'request for $sensorId returned with error ->'
-            'code: ${res['status_code']}, body: ${res['body']}');
+        _logs.warning(
+            message: 'request for $sensorId returned with error ->'
+                'code: ${res['status_code']}, body: ${res['body']}');
       } else {
         List<Map<String, dynamic>> castedList = [];
         for (dynamic item in res['data']) {
@@ -127,10 +126,10 @@ class DevicesServices {
     return data;
   }
 
-  Future<Map<String, dynamic>?> updateSNDeviceName({
-      required String token,
+  Future<Map<String, dynamic>?> updateSNDeviceName(
+      {required String token,
       required String deviceID,
-      required Map<String,dynamic> sensorName,
+      required Map<String, dynamic> sensorName,
       required String sinkNodeID}) async {
     String? accessToken;
     TokenStatus accessStatus = await _authUtils.verifyToken(token: token);
