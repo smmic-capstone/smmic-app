@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:smmic/utils/logs.dart';
 
 enum SinkNodeKeys {
   deviceID('device_id'),
@@ -133,7 +134,7 @@ class SinkNodeState {
     required this.bytesReceived,
     required this.messagesSent,
     required this.messagesReceived,
-    this.sensorsConnectionStateMap = const {}
+    required this.sensorsConnectionStateMap
   });
 
   factory SinkNodeState.initObj(String deviceId) {
@@ -148,7 +149,8 @@ class SinkNodeState {
         bytesSent: 0,
         bytesReceived: 0,
         messagesSent: 0,
-        messagesReceived: 0
+        messagesReceived: 0,
+        sensorsConnectionStateMap: {}
     );
   }
 
@@ -172,7 +174,8 @@ class SinkNodeState {
         bytesSent: data[SinkNodeSnapshotKeys.bytesSent.key],
         bytesReceived: data[SinkNodeSnapshotKeys.bytesReceived.key],
         messagesSent: data[SinkNodeSnapshotKeys.messagesSent.key],
-        messagesReceived: data[SinkNodeSnapshotKeys.messagesReceived.key]
+        messagesReceived: data[SinkNodeSnapshotKeys.messagesReceived.key],
+        sensorsConnectionStateMap: {}
     );
   }
 
@@ -190,6 +193,7 @@ class SinkNodeState {
 
   void setSensorConnectionState(String sensorId, ConnectionState state) {
     sensorsConnectionStateMap[sensorId] = state;
+    Logs(tag: 'devices data models').info2(message: 'new sensor connection state: $sensorId');
   }
 
 }
@@ -523,5 +527,9 @@ class SMSensorState {
         alertTimeStamp,
         alertTimeStamp.add(keepStateTime)
     );
+  }
+
+  void updateConnectionState(DateTime timestamp) {
+    connectionState = (1, timestamp, timestamp.add(keepStateTime));
   }
 }
