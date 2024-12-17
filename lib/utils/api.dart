@@ -47,19 +47,15 @@ class ApiRequest {
   PusherChannelsFlutter get pusher => _pusher;
 
   // connections that are used to connect to the api / mqtt network
-  final List<ConnectivityResult> _sourceConnections = [
-    ConnectivityResult.mobile,
-    ConnectivityResult.wifi
-  ];
+  final List<ConnectivityResult> _sourceConnections = [ConnectivityResult.mobile, ConnectivityResult.wifi];
 
-  Future<Map<String, dynamic>> _request({
-    required String route,
-    required Either<
-      Future<http.Response>Function(Uri, {Object? body, Encoding? encoding, Map<String, String>? headers}),
-      Future<http.Response>Function(Uri, {Map<String, String>? headers})> method,
-    Map<String, String>? headers,
-    Object? body}) async {
-
+  Future<Map<String, dynamic>> _request(
+      {required String route,
+      required Either<Future<http.Response> Function(Uri, {Object? body, Encoding? encoding, Map<String, String>? headers}),
+              Future<http.Response> Function(Uri, {Map<String, String>? headers})>
+          method,
+      Map<String, String>? headers,
+      Object? body}) async {
     http.Response? res;
     int? statusCode;
     String? resBody;
@@ -81,62 +77,47 @@ class ApiRequest {
 
       switch (statusCode) {
         case (500):
-          _logs.error(
-              message: 'post() $route, returned with error $statusCode');
+          _logs.error(message: 'post() $route, returned with error $statusCode');
           finalRes.addAll({'error': statusCode});
           break;
 
         case (400):
-          _logs.warning(
-              message: 'post() $route, returned with error $statusCode');
+          _logs.warning(message: 'post() $route, returned with error $statusCode');
           finalRes.addAll({'error': statusCode});
           break;
 
         case (401):
-          _logs.warning(
-              message: 'post() $route, returned with error $statusCode');
+          _logs.warning(message: 'post() $route, returned with error $statusCode');
           finalRes.addAll({'error': statusCode});
           break;
 
         case (200):
-          _logs.success(
-              message: 'post() $route, returned with data $statusCode');
+          _logs.success(message: 'post() $route, returned with data $statusCode');
           break;
 
         case (204):
-          _logs.success(
-              message: 'post() $route, return with data $statusCode');
+          _logs.success(message: 'post() $route, return with data $statusCode');
           break;
 
         case (201):
-          _logs.success(
-              message: 'post() $route, return with data $statusCode');
+          _logs.success(message: 'post() $route, return with data $statusCode');
           break;
       }
 
-      finalRes.addAll({
-        'status_code': statusCode,
-        'body': resBody,
-        'data': jsonDecode(resBody != '' ? resBody : '{}')
-      });
-
+      finalRes.addAll({'status_code': statusCode, 'body': resBody, 'data': jsonDecode(resBody != '' ? resBody : '{}')});
     } on http.ClientException catch (e) {
       _logs.warning(message: 'request() raised ClientException -> $e');
       finalRes.addAll({'status_code': 0});
-
     } catch (e) {
       print(e);
-      _logs.warning(
-          message:
-              'post() unhandled unexpected post() error (statusCode: $statusCode, body: $resBody)');
+      _logs.warning(message: 'patch() unhandled unexpected post() error (statusCode: $statusCode, body: $resBody)');
     }
 
     return finalRes;
   }
 
   /// Get request for api, returns a the response status code and the body if available
-  Future<dynamic> get(
-      {required String route, Map<String, String>? headers}) async {
+  Future<dynamic> get({required String route, Map<String, String>? headers}) async {
     _logs.info(message: 'get() $route, headers: ${headers ?? 'none'}');
 
     Map<String, dynamic> result = await _request(
@@ -148,51 +129,33 @@ class ApiRequest {
     return result;
   }
 
-  Future<Map<String, dynamic>> post(
-      {required String route,
-      Map<String, String>? headers,
-      Object? body}) async {
-    _logs.info(
-        message: 'post() -> route: $route, headers: $headers, body: $body');
+  Future<Map<String, dynamic>> post({required String route, Map<String, String>? headers, Object? body}) async {
+    _logs.info(message: 'post() -> route: $route, headers: $headers, body: $body');
 
-    Map<String, dynamic> result = await _request(
-        route: route, method: left(http.post), headers: headers, body: body);
+    Map<String, dynamic> result = await _request(route: route, method: left(http.post), headers: headers, body: body);
 
     _logs.info(message: result.toString());
 
     return result;
   }
 
-  Future<Map<String, dynamic>> put(
-      {required String route,
-      Map<String, String>? headers,
-      Object? body}) async {
-    _logs.info(
-        message:
-            'put() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
+  Future<Map<String, dynamic>> put({required String route, Map<String, String>? headers, Object? body}) async {
+    _logs.info(message: 'put() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
 
-    Map<String, dynamic> result = await _request(
-        route: route, method: left(http.put), headers: headers, body: body);
+    Map<String, dynamic> result = await _request(route: route, method: left(http.put), headers: headers, body: body);
 
     return result;
   }
 
-  Future<Map<String, dynamic>> patch({
-    required String route,
-    Map<String, String>? headers,
-    Object? body}) async {
+  Future<Map<String, dynamic>> patch({required String route, Map<String, String>? headers, Object? body}) async {
+    _logs.info(message: 'patch() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
 
-    _logs.info(
-        message:
-            'patch() $route, headers: ${headers ?? 'none'}, body: ${body ?? 'none'}');
-
-    Map<String, dynamic> result = await _request(
-        route: route, method: left(http.patch), headers: headers, body: body);
+    Map<String, dynamic> result = await _request(route: route, method: left(http.patch), headers: headers, body: body);
 
     return result;
   }
 
-///Pusher Connection and Events below here
+  ///Pusher Connection and Events below here
 
   //Open connection to Channels
   Future<void> openConnection(BuildContext context) async {
@@ -209,11 +172,7 @@ class ApiRequest {
     }
 
     try {
-      await _pusher.init(
-          apiKey: 'd0f649dd91498f8916b8',
-          cluster: 'ap3',
-          onAuthorizer: onAuthorizer
-      );
+      await _pusher.init(apiKey: 'd0f649dd91498f8916b8', cluster: 'ap3', onAuthorizer: onAuthorizer);
 
       await _pusher.connect();
 
@@ -224,8 +183,7 @@ class ApiRequest {
             _userCommandsFeedbackListener(data as PusherEvent);
           },
           onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.userCommands)),
-          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.userCommands))
-      );
+          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.userCommands)));
 
       ///Pusher readings channels
       await _pusher.subscribe(
@@ -234,8 +192,7 @@ class ApiRequest {
             _seReadingsWsListener(data as PusherEvent);
           },
           onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.seReadingsWs)),
-          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.seReadingsWs))
-      );
+          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.seReadingsWs)));
 
       ///Pusher alerts channels
       await _pusher.subscribe(
@@ -244,8 +201,7 @@ class ApiRequest {
             _seAlertsWsListener(data as PusherEvent);
           },
           onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.seAlertsWs)),
-          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.seAlertsWs))
-      );
+          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.seAlertsWs)));
 
       await _pusher.subscribe(
           channelName: _apiRoutes.sinkReadingsWs,
@@ -253,105 +209,80 @@ class ApiRequest {
             _sinkSnapshotListener(data as PusherEvent);
           },
           onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.sinkReadingsWs)),
-          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.sinkReadingsWs))
-      );
+          onSubscriptionError: ((dynamic) => onSubError(_apiRoutes.sinkReadingsWs)));
 
       await pusher.subscribe(
-          channelName: _apiRoutes.userCommands,
-          onEvent: (dynamic data){
-            final event = data as PusherEvent;
-            if(event.eventName == 'commands-success'){
-              _commandsSuccessListener(event);
-            }
+        channelName: _apiRoutes.userCommands,
+        onEvent: (dynamic data) {
+          final event = data as PusherEvent;
+          if (event.eventName == 'commands-success') {
+            _commandsSuccessListener(event);
+          }
         },
         onSubscriptionSucceeded: ((dynamic) => onSubSucceeded(_apiRoutes.userCommands)),
         onSubscriptionError: ((dynamic) => onSubSucceeded(_apiRoutes.userCommands)),
       );
 
       await _pusher.connect();
-
     } catch (e) {
       _logs.warning(message: "WebSocketException: $e");
     }
-    _logs.warning(message:"pusher connection state ${_pusher.connectionState}");
+    _logs.warning(message: "pusher connection state ${_pusher.connectionState}");
   }
 
   dynamic onAuthorizer(String channelName, String socketId, dynamic options) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    String? accessToken =  sharedPreferences.getString('access');
+    String? accessToken = sharedPreferences.getString('access');
     String authURL = _apiRoutes.pusherAuth;
-    final response = await post(route: authURL,
-        headers: {
-      'Authorization' : 'Bearer $accessToken'
+    final response = await post(route: authURL, headers: {
+      'Authorization': 'Bearer $accessToken'
     }, body: {
-      'socket_id' : socketId,
-      'channel_name' : channelName,
+      'socket_id': socketId,
+      'channel_name': channelName,
     });
     final jsonResponse = jsonDecode(response['body']);
     _logs.warning(message: "$jsonResponse");
     return jsonResponse;
   }
 
-  Future<void> sendIntervalCommand({
-    String eventName = 'client-interval',
-    required Duration newInterval,
-    required String deviceId}) async {
+  Future<void> sendIntervalCommand({String eventName = 'client-interval', required Duration newInterval, required String deviceId}) async {
+    Map<String, dynamic> commandData = {SensorNodeKeys.deviceID.key: deviceId, 'interval': newInterval.inSeconds};
 
-    Map<String, dynamic> commandData = {
-      SensorNodeKeys.deviceID.key : deviceId,
-      'interval': newInterval.inSeconds
-    };
-
-    await _pusher.trigger(
-        PusherEvent(
-            channelName: _apiRoutes.userCommands,
-            eventName: eventName,
-            data: jsonEncode(commandData)
-        )
-    );
+    await _pusher.trigger(PusherEvent(channelName: _apiRoutes.userCommands, eventName: eventName, data: jsonEncode(commandData)));
   }
 
-  Future<void> sendIrrigationCommand({
-    String eventName = 'client-irrigation',
-    required String deviceId,
-    required int command}) async {
-
+  Future<void> sendIrrigationCommand({String eventName = 'client-irrigation', required String deviceId, required int command}) async {
     Map<String, dynamic> commandData = {
-      SensorNodeKeys.deviceID.key : deviceId,
+      SensorNodeKeys.deviceID.key: deviceId,
       'command': command,
     };
 
     try {
-      await _pusher.trigger(
-          PusherEvent(
-              channelName: _apiRoutes.userCommands,
-              eventName: eventName,
-              //data: '$deviceId;$command;${DateTime.now()}'
-              data: jsonEncode(commandData)
-          )
-      );
+      await _pusher.trigger(PusherEvent(
+          channelName: _apiRoutes.userCommands,
+          eventName: eventName,
+          //data: '$deviceId;$command;${DateTime.now()}'
+          data: jsonEncode(commandData)));
     } catch (e) {
       _logs.error(message: e.toString());
     }
   }
 
-  void _commandsSuccessListener(PusherEvent data){
+  void _commandsSuccessListener(PusherEvent data) {
     final Map<String, dynamic> decodedData = jsonDecode(data.data);
-    _logs.info(message:"commandsData : $decodedData");
-}
+    _logs.info(message: "commandsData : $decodedData");
+  }
+
   // the internal websocket listener wrapper function for
   // the sensor readings websocket
   void _seReadingsWsListener(PusherEvent data) {
     final Map<String, dynamic> decodedData = jsonDecode(data.data);
 
-    final SensorNodeSnapshot snapshotObj =
-        SensorNodeSnapshot.fromJSON(decodedData['message']);
+    final SensorNodeSnapshot snapshotObj = SensorNodeSnapshot.fromJSON(decodedData['message']);
 
     // pass to stream controller
     // streamController.add(snapshotObj);
-    _internalBuildContext
-        .read<DevicesProvider>()
-        .setNewSensorSnapshot(snapshotObj);
+    _internalBuildContext.read<DevicesProvider>().setNewSensorSnapshot(snapshotObj);
   }
 
   // listener wrapper function for the sensor node alerts websocket
@@ -359,23 +290,18 @@ class ApiRequest {
     final Map<String, dynamic> decodedData = jsonDecode(data.data);
 
     if ((decodedData['message'] as Map<String, dynamic>)['data'] != {}) {
-      final SensorNodeSnapshot snapshotObj =
-      SensorNodeSnapshot.fromJSON(decodedData['message']);
+      final SensorNodeSnapshot snapshotObj = SensorNodeSnapshot.fromJSON(decodedData['message']);
 
       // store data to sqlite
       DatabaseHelper.readingsLimit(snapshotObj.deviceID);
       DatabaseHelper.addReadings([snapshotObj]);
 
       // updated sensor snapshot
-      _internalBuildContext
-          .read<DevicesProvider>()
-          .setNewSensorSnapshot(snapshotObj);
+      _internalBuildContext.read<DevicesProvider>().setNewSensorSnapshot(snapshotObj);
     }
 
     // update sensor state
-    _internalBuildContext
-        .read<DevicesProvider>()
-        .updateSMSensorState(decodedData['message']);
+    _internalBuildContext.read<DevicesProvider>().updateSMSensorState(decodedData['message']);
   }
 
   void _sinkSnapshotListener(PusherEvent data) {
@@ -390,14 +316,12 @@ class ApiRequest {
       final Map<String, dynamic> decodedData = jsonDecode(data.data);
       _logs.warning(message: decodedData.toString());
       Map<String, dynamic> asMap = {
-        SensorAlertKeys.deviceID.key : decodedData[SensorAlertKeys.deviceID.key],
-        SensorAlertKeys.alertCode.key : '1${decodedData['command']}',
-        SensorAlertKeys.timestamp.key : decodedData['timestamp'],
-        SensorAlertKeys.data.key : {}
+        SensorAlertKeys.deviceID.key: decodedData[SensorAlertKeys.deviceID.key],
+        SensorAlertKeys.alertCode.key: '1${decodedData['command']}',
+        SensorAlertKeys.timestamp.key: decodedData['timestamp'],
+        SensorAlertKeys.data.key: {}
       };
-      _internalBuildContext
-          .read<DevicesProvider>()
-          .updateSMSensorState(asMap);
+      _internalBuildContext.read<DevicesProvider>().updateSMSensorState(asMap);
     }
   }
 }
