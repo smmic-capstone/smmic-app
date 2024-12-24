@@ -129,7 +129,7 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
                       children: [
                         _topRightIcons(
                             isConnected,
-                            sensorState.connectionState
+                            seSnapshotData.timestamp
                         ),
                         Align(
                           alignment: Alignment.bottomRight,
@@ -192,17 +192,22 @@ class _SensorNodeCardState extends State<SensorNodeCard> {
 
   Widget _topRightIcons(
       bool isConnected,
-      (int, DateTime, DateTime) seConnectionState) {
+      DateTime lastTimeStamp) {
 
     Widget signalIcon() {
       Color finalColor = const Color.fromRGBO(23, 255, 50, 1);
 
-      if (!isConnected) {
+      // if (!isConnected) {
+      //   finalColor = Colors.white.withOpacity(0.35);
+      // } else if (seConnectionState.$1 != SMSensorAlertCodes.connectedState.code) {
+      //   finalColor = Colors.white.withOpacity(0.35);
+      // } else if (seConnectionState.$2.isBefore(widget.currentDateTime)) {
+      //   finalColor = const Color.fromRGBO(23, 255, 50, 0.25);
+      // }
+
+      if (widget.currentDateTime.difference(lastTimeStamp) > const Duration(minutes: 5)) {
         finalColor = Colors.white.withOpacity(0.35);
-      } else if (seConnectionState.$1 != SMSensorAlertCodes.connectedState.code) {
-        finalColor = Colors.white.withOpacity(0.35);
-      } else if (seConnectionState.$2.isBefore(widget.currentDateTime)) {
-        finalColor = const Color.fromRGBO(23, 255, 50, 0.25);
+        //finalColor = const Color.fromRGBO(23, 255, 50, 0.25);
       }
 
       return SvgPicture.asset(

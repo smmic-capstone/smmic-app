@@ -164,8 +164,8 @@ class _SensorNodePageState extends State<SensorNodePage> with TickerProviderStat
           height: appBarHeight,
           width: appBarWidth,
           decoration: const BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.all(Radius.circular(100))
+            color: Colors.transparent,
+            borderRadius: BorderRadius.all(Radius.circular(100)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

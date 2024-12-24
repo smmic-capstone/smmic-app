@@ -1,7 +1,9 @@
 import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:smmic/components/drawer.dart';
 import 'package:smmic/pages/QRcode.dart';
 import 'package:smmic/pages/dashboard.dart';
 import 'package:smmic/pages/devices.dart';
@@ -17,6 +19,7 @@ class BottomNavBar extends StatefulWidget {
 }
 
 class _BottomNavBarState extends State<BottomNavBar> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _currentIndexPage = 0;
 
   void setCurrentIndex(int index) {
@@ -33,7 +36,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
   List<(Widget, Widget)> _pagesGenerator(bool isDark) {
     List<(Widget, Widget)> pages = [
       (
-      const DashBoard(),
+      DashBoard(parentScaffoldKey: _scaffoldKey),
       SvgPicture.asset(
         'assets/icons/home.svg',
         clipBehavior: Clip.antiAlias,
@@ -45,7 +48,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
         ),
       )),
       (
-      const Devices(),
+      Devices(parentScaffoldKey: _scaffoldKey),
       SvgPicture.asset(
         'assets/icons/signal.svg',
         clipBehavior: Clip.antiAlias,
@@ -59,23 +62,15 @@ class _BottomNavBarState extends State<BottomNavBar> {
       (
       const QRcode(),
       SvgPicture.asset(
-          'assets/icons/qr_scanner.svg',
-          clipBehavior: Clip.antiAlias,
-          width: 30,
-          height: 30,
-          colorFilter: ColorFilter.mode(
-              isDark ? Colors.white : Colors.black, BlendMode.srcATop)
-      )),
-      /*SvgPicture.asset(
-        'assets/icons/settings.svg',
+        'assets/icons/qr_scanner.svg',
         clipBehavior: Clip.antiAlias,
-        width: 32,
-        height: 32,
+        width: 29,
+        height: 29,
         colorFilter: ColorFilter.mode(
             isDark ? Colors.white : Colors.black,
             BlendMode.srcATop
         ),
-      )),*/
+      )),
     ];
 
     return pages;
@@ -83,12 +78,15 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   @override
   void initState() {
+    _currentIndexPage = widget.initialIndexPage ?? 0;
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: const ComponentDrawer(),
       backgroundColor: context.watch<UiProvider>().isDark
           ? const Color.fromRGBO(14, 14, 14, 1)
           : const Color.fromRGBO(230, 230, 230, 1),
@@ -154,7 +152,6 @@ class _BottomNavBarState extends State<BottomNavBar> {
             positionIdentifier: (left, right)
         ),
       );
-
     }).toList();
   }
 

@@ -15,7 +15,9 @@ import 'package:smmic/providers/theme_provider.dart';
 import 'package:smmic/utils/device_utils.dart';
 
 class DashBoard extends StatefulWidget {
-  const DashBoard({super.key});
+  const DashBoard({super.key, required this.parentScaffoldKey});
+
+  final GlobalKey<ScaffoldState> parentScaffoldKey;
 
   @override
   State<DashBoard> createState() => _DashBoardState();
@@ -119,7 +121,7 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
       backgroundColor: context.watch<UiProvider>().isDark
           ? const Color.fromRGBO(14, 14, 14, 1)
           : const Color.fromRGBO(230, 230, 230, 1),
-      drawer: const ComponentDrawer(),
+      //drawer: const ComponentDrawer(),
       body: Stack(
         children: [
           _drawCircle(),
@@ -258,6 +260,7 @@ class _DashBoardState extends State<DashBoard> with TickerProviderStateMixin {
                 builder: (context) {
                   return GestureDetector(
                     onTap: () {
+                      widget.parentScaffoldKey.currentState?.openDrawer();
                       Scaffold.of(context).openDrawer();
                     },
                     child: SvgPicture.asset('assets/icons/menu.svg',
