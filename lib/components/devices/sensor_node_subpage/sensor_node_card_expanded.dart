@@ -169,14 +169,19 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         signalIcon(),
-        SvgPicture.asset(
-          'assets/icons/settings.svg',
-          width: 28,
-          height: 28,
-          colorFilter: const ColorFilter.mode(
-              Colors.white,
-              BlendMode.srcIn
+        GestureDetector(
+          child: SvgPicture.asset(
+            'assets/icons/settings.svg',
+            width: 28,
+            height: 28,
+            colorFilter: const ColorFilter.mode(
+                Colors.white,
+                BlendMode.srcIn
+            ),
           ),
+          onTap: (){
+
+          },
         ),
       ],
     );
