@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -552,7 +551,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            margin: EdgeInsets.only(bottom: 30),
+                            margin: const EdgeInsets.only(bottom: 30),
                             child: topIcons,
                           ),
                           // Divider(
@@ -600,7 +599,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                                 onPressed: () {
                                   Navigator.pop(context);
                                 },
-                                child: Container(
+                                child: const SizedBox(
                                   width: 110,
                                   height: 40,
                                   child: Row(
@@ -620,7 +619,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                                   ),
                                 ),
                               ),
-                              SizedBox(width: 25),
+                              const SizedBox(width: 25),
                             ],
                           )
                         ],
