@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
 import 'package:smmic/constants/api.dart';
 import 'package:smmic/providers/auth_provider.dart';
 import 'package:smmic/utils/api.dart';
@@ -37,7 +38,10 @@ class DevicesServices {
             'name': sensorUnparsed['name'],
             'latitude': sensorUnparsed['latitude'],
             'longitude': sensorUnparsed['longitude'],
-            'interval': sensorUnparsed['interval']
+            'interval': sensorUnparsed['interval'],
+            'soil_threshold': sensorUnparsed['soil_threshold'],
+            'humidity_threshold': sensorUnparsed['humidity_threshold'],
+            'temperature_threshold': sensorUnparsed['temperature_threshold']
           });
         }
         sinkNodesParsed.add({
@@ -124,9 +128,13 @@ class DevicesServices {
       await _authProvider.setAccess(access: accessToken!);
     }
 
-    final Map<String, dynamic> data = await _apiRequest.patch(
-        route: _apiRoutes.updateSNName, headers: {'Authorization': 'Bearer $token', 'Sensor': deviceID}, body: jsonEncode(sensorName));
+    debugPrint("snDeviceNameBody: ${jsonEncode(sensorName).toString()}");
 
+
+    final Map<String, dynamic> data = await _apiRequest.patch(
+        route: _apiRoutes.updateSNName, headers: {
+          'Authorization': 'Bearer $token', 'Sensor': deviceID, 'Content-Type': 'application/json'}, body: jsonEncode(sensorName));
+    debugPrint("updateSNDeviceName:  ${data.toString()}");
     // TODO: HANDLE ERROR SCENARIO
     if (data.containsKey('error')) {
       return data;

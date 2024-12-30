@@ -86,7 +86,10 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
           'longitude': deviceInfo.longitude ?? '',
           'latitude': deviceInfo.latitude ?? '',
           SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
-          SensorNodeKeys.interval.key: deviceInfo.interval
+          SensorNodeKeys.interval.key: deviceInfo.interval,
+          SensorNodeKeys.soilThreshold.key:deviceInfo.soilThreshold,
+          SensorNodeKeys.temperatureThreshold.key:deviceInfo.temperatureThreshold,
+          SensorNodeKeys.humidityThreshold.key:deviceInfo.humidityThreshold
         });
       }
     } else if (field == 'Longitude') {
@@ -102,7 +105,10 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
           'longitude': editController.text ?? '',
           'latitude': deviceInfo.latitude ?? '',
           SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
-          SensorNodeKeys.interval.key: deviceInfo.interval
+          SensorNodeKeys.interval.key: deviceInfo.interval,
+          SensorNodeKeys.soilThreshold.key:deviceInfo.soilThreshold,
+          SensorNodeKeys.temperatureThreshold.key:deviceInfo.temperatureThreshold,
+          SensorNodeKeys.humidityThreshold.key:deviceInfo.humidityThreshold
         });
       }
     } else if (field == 'Latitude') {
@@ -118,7 +124,10 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
           'longitude': deviceInfo.longitude ?? '',
           'latitude': editController.text ?? '',
           SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
-          SensorNodeKeys.interval.key: deviceInfo.interval
+          SensorNodeKeys.interval.key: deviceInfo.interval,
+          SensorNodeKeys.soilThreshold.key:deviceInfo.soilThreshold,
+          SensorNodeKeys.temperatureThreshold.key:deviceInfo.temperatureThreshold,
+          SensorNodeKeys.humidityThreshold.key:deviceInfo.humidityThreshold
         });
       }
     } else if (field == 'Interval') {
@@ -136,7 +145,70 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
           'longitude': deviceInfo.longitude ?? '',
           'latitude': deviceInfo.latitude ?? '',
           SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
-          SensorNodeKeys.interval.key: int.parse(editController.text) * 60
+          SensorNodeKeys.interval.key: int.parse(editController.text) * 60,
+          SensorNodeKeys.soilThreshold.key:deviceInfo.soilThreshold,
+          SensorNodeKeys.temperatureThreshold.key:deviceInfo.temperatureThreshold,
+          SensorNodeKeys.humidityThreshold.key:deviceInfo.humidityThreshold
+        });
+      }
+    }else if(field == 'Soil Moisture Threshold'){
+      ///TODO: PUSHER REQUEST
+      await _devicesServices.updateSNDeviceName(
+          token: context.read<AuthProvider>().accessData!.token,
+          deviceID: widget.deviceID,
+          sensorName: {'soil_threshold' : int.parse(editController.text)},
+          sinkNodeID: deviceInfo.registeredSinkNode);
+      if(context.mounted){
+        context.read<DevicesProvider>().sensorNameChange({
+          SensorNodeKeys.deviceID.key: widget.deviceID,
+          'name': deviceInfo.deviceName,
+          'longitude': deviceInfo.longitude ?? '',
+          'latitude': deviceInfo.latitude ?? '',
+          SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
+          SensorNodeKeys.soilThreshold.key: int.parse(editController.text),
+          SensorNodeKeys.interval.key: deviceInfo.interval,
+          SensorNodeKeys.temperatureThreshold.key:deviceInfo.temperatureThreshold,
+          SensorNodeKeys.humidityThreshold.key:deviceInfo.humidityThreshold
+        });
+      }
+    }else if(field == 'Temperature Threshold'){
+      ///TODO: PUSHER REQUEST
+      await _devicesServices.updateSNDeviceName(
+          token: context.read<AuthProvider>().accessData!.token,
+          deviceID: widget.deviceID,
+          sensorName: {'temperature_threshold' : int.parse(editController.text)},
+          sinkNodeID: deviceInfo.registeredSinkNode);
+      if(context.mounted){
+        context.read<DevicesProvider>().sensorNameChange({
+          SensorNodeKeys.deviceID.key: widget.deviceID,
+          'name': deviceInfo.deviceName,
+          'longitude': deviceInfo.longitude ?? '',
+          'latitude': deviceInfo.latitude ?? '',
+          SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
+          SensorNodeKeys.temperatureThreshold.key: int.parse(editController.text),
+          SensorNodeKeys.interval.key: deviceInfo.interval,
+          SensorNodeKeys.soilThreshold.key:deviceInfo.soilThreshold,
+          SensorNodeKeys.humidityThreshold.key:deviceInfo.humidityThreshold
+        });
+      }
+    }else if(field == 'Humidity Threshold'){
+      ///TODO: PUSHER REQUEST
+      await _devicesServices.updateSNDeviceName(
+          token: context.read<AuthProvider>().accessData!.token,
+          deviceID: widget.deviceID,
+          sensorName: {'humidity_threshold' : int.parse(editController.text)},
+          sinkNodeID: deviceInfo.registeredSinkNode);
+      if(context.mounted){
+        context.read<DevicesProvider>().sensorNameChange({
+          SensorNodeKeys.deviceID.key: widget.deviceID,
+          'name': deviceInfo.deviceName,
+          'longitude': deviceInfo.longitude ?? '',
+          'latitude': deviceInfo.latitude ?? '',
+          SensorNodeKeys.sinkNode.key: deviceInfo.registeredSinkNode,
+          SensorNodeKeys.humidityThreshold.key: int.parse(editController.text),
+          SensorNodeKeys.interval.key: deviceInfo.interval,
+          SensorNodeKeys.soilThreshold.key:deviceInfo.soilThreshold,
+          SensorNodeKeys.temperatureThreshold.key:deviceInfo.temperatureThreshold,
         });
       }
     }
@@ -186,6 +258,7 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
   }
 
   void showEditDialog(BuildContext context, String value, String field, SensorNode deviceInfo) {
+
     String initialValue = value;
 
     setState(() {
@@ -197,13 +270,13 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
         return TextField(
           decoration: InputDecoration(
               border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(15)),
+                  borderRadius: const BorderRadius.all(Radius.circular(15)),
                   borderSide: BorderSide(
                     color: Colors.white.withOpacity(0.5),
                     width: 0.5,
                   ))),
           controller: editController,
-          style: TextStyle(color: Colors.white, fontFamily: 'Inter', fontSize: 20),
+          style: const TextStyle(color: Colors.white, fontFamily: 'Inter', fontSize: 20),
         );
       } else if (field == 'Interval') {
         return Row(
@@ -265,7 +338,44 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
             // ),
           ],
         );
-      } else {
+      } else if(field == 'Soil Moisture Threshold'){
+        return TextField(
+          decoration: InputDecoration(
+              border: OutlineInputBorder(
+                  borderRadius: const BorderRadius.all(Radius.circular(15)),
+                  borderSide: BorderSide(
+                    color: Colors.white.withOpacity(0.5),
+                    width: 0.5,
+                  ))),
+          controller: editController,
+          style: const TextStyle(color: Colors.white, fontFamily: 'Inter', fontSize: 20),
+        );
+      } else if(field == 'Temperature Threshold'){
+        return TextField(
+          decoration: InputDecoration(
+              border: OutlineInputBorder(
+                  borderRadius: const BorderRadius.all(Radius.circular(15)),
+                  borderSide: BorderSide(
+                    color: Colors.white.withOpacity(0.5),
+                    width: 0.5,
+                  ))),
+          controller: editController,
+          style: const TextStyle(color: Colors.white, fontFamily: 'Inter', fontSize: 20),
+        );
+      } else if(field == 'Humidity Threshold'){
+        return TextField(
+          decoration: InputDecoration(
+              border: OutlineInputBorder(
+                  borderRadius: const BorderRadius.all(Radius.circular(15)),
+                  borderSide: BorderSide(
+                    color: Colors.white.withOpacity(0.5),
+                    width: 0.5,
+                  ))),
+          controller: editController,
+          style: const TextStyle(color: Colors.white, fontFamily: 'Inter', fontSize: 20),
+        );
+      }
+      else {
         return Container();
       }
     }
@@ -279,21 +389,21 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
             direction: Axis.vertical,
             children: [
               Container(
-                  padding: EdgeInsets.only(bottom: 25, top: 25),
-                  margin: EdgeInsets.symmetric(horizontal: 30),
-                  decoration: BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(25)), color: Colors.black),
+                  padding: const EdgeInsets.only(bottom: 25, top: 25),
+                  margin: const EdgeInsets.symmetric(horizontal: 30),
+                  decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(25)), color: Colors.black),
                   child: Column(
                     children: [
                       Container(
                         alignment: Alignment.center,
-                        margin: EdgeInsets.only(bottom: 15),
+                        margin: const EdgeInsets.only(bottom: 15),
                         child: Text(
                           'Set New $field',
-                          style: TextStyle(color: Colors.white, fontFamily: 'Inter', fontSize: 20),
+                          style: const TextStyle(color: Colors.white, fontFamily: 'Inter', fontSize: 20),
                         ),
                       ),
                       Card(
-                        margin: EdgeInsets.symmetric(horizontal: 25),
+                        margin: const EdgeInsets.symmetric(horizontal: 25),
                         color: Colors.transparent,
                         shadowColor: Colors.transparent,
                         surfaceTintColor: Colors.transparent,
@@ -301,12 +411,12 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                       ),
                       const SizedBox(height: 15),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 25),
+                        padding: const EdgeInsets.symmetric(horizontal: 25),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             TextButton(
-                              style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.white)),
+                              style: const ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.white)),
                               onPressed: () {
                                 Navigator.pop(context);
                               },
@@ -460,6 +570,160 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
           );
         }
 
+        Widget editParameters(SensorNode deviceInfo) {
+          return Container(
+            constraints: const BoxConstraints(maxWidth: 160),
+            child: RichText(
+              text: TextSpan(
+                  text: 'Edit Device Threshold',
+
+                  /*'Soil Moisture:${deviceInfo?.soilThreshold ?? 00}'
+                      '\nTemperature:${deviceInfo?.temperatureThreshold ?? 00 }'
+                      '\nHumidity:${deviceInfo?.humidityThreshold ?? 00}',*/
+                  style: const TextStyle(color: Colors.white, fontSize: 19, fontFamily: 'Inter'),
+                  children: [TextSpan(text: '\nDevice Threshold', style: _tertiaryTextStyle)]),
+            ),
+          );
+        }
+
+        Widget editThresholdParameters(SensorNode deviceInfo, String field){
+          if(field == 'Soil Moisture'){
+            return Container(
+              constraints: const BoxConstraints(maxWidth: 160),
+              child: RichText(
+                text: TextSpan(
+                    text: '$field: ${deviceInfo.soilThreshold}',
+
+                    /*'Soil Moisture:${deviceInfo?.soilThreshold ?? 00}'
+                      '\nTemperature:${deviceInfo?.temperatureThreshold ?? 00 }'
+                      '\nHumidity:${deviceInfo?.humidityThreshold ?? 00}',*/
+                    style: const TextStyle(color: Colors.white, fontSize: 19, fontFamily: 'Inter'),
+                    children: [TextSpan(text: '\nEdit $field Threshold', style: _tertiaryTextStyle)]),
+              ),
+            );
+          }else if(field == 'Temperature'){
+            return Container(
+              constraints: const BoxConstraints(maxWidth: 160),
+              child: RichText(
+                text: TextSpan(
+                    text: '$field: ${deviceInfo.temperatureThreshold}',
+
+                    /*'Soil Moisture:${deviceInfo?.soilThreshold ?? 00}'
+                      '\nTemperature:${deviceInfo?.temperatureThreshold ?? 00 }'
+                      '\nHumidity:${deviceInfo?.humidityThreshold ?? 00}',*/
+                    style: const TextStyle(color: Colors.white, fontSize: 19, fontFamily: 'Inter'),
+                    children: [TextSpan(text: '\nEdit $field Threshold', style: _tertiaryTextStyle)]),
+              ),
+            );
+          }else if(field == 'Humidity'){
+            return Container(
+              constraints: const BoxConstraints(maxWidth: 160),
+              child: RichText(
+                text: TextSpan(
+                    text: '$field: ${deviceInfo.humidityThreshold}',
+
+                    /*'Soil Moisture:${deviceInfo?.soilThreshold ?? 00}'
+                      '\nTemperature:${deviceInfo?.temperatureThreshold ?? 00 }'
+                      '\nHumidity:${deviceInfo?.humidityThreshold ?? 00}',*/
+                    style: const TextStyle(color: Colors.white, fontSize: 19, fontFamily: 'Inter'),
+                    children: [TextSpan(text: '\nEdit $field Threshold', style: _tertiaryTextStyle)]),
+              ),
+            );
+          }else{
+            return Container(
+              constraints: const BoxConstraints(maxWidth: 160),
+              child: RichText(
+                text: TextSpan(
+                    text: '$field: $deviceInfo',
+
+                    /*'Soil Moisture:${deviceInfo?.soilThreshold ?? 00}'
+                      '\nTemperature:${deviceInfo?.temperatureThreshold ?? 00 }'
+                      '\nHumidity:${deviceInfo?.humidityThreshold ?? 00}',*/
+                    style: const TextStyle(color: Colors.white, fontSize: 19, fontFamily: 'Inter'),
+                    children: [TextSpan(text: '\nEdit $field Threshold', style: _tertiaryTextStyle)]),
+              ),
+            );
+          }
+        }
+
+        Widget thresholdDialog(SensorNode deviceInfo){
+          return BackdropFilter(
+            filter: ImageFilter.blur(sigmaY: 10, sigmaX: 10),
+            child: Flex(
+              direction: Axis.vertical,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.all(Radius.circular(15)),
+                    color: Colors.black.withOpacity(0.75),
+                  ),
+                  padding: const EdgeInsets.only(
+                    //horizontal: 40,
+                      top: 40,
+                      bottom: 13),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 25,
+                  ),
+                  child:Column(
+                    children: [
+                      Divider(
+                        height: 0.5,
+                        color: Colors.white.withOpacity(0.25),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          showEditDialog(context, (deviceInfo?.soilThreshold ?? 00).toString(), 'Soil Moisture Threshold', deviceInfo!);
+                        },
+                        child: Container(
+                          color: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+                          child: Row(
+                            children: [editThresholdParameters(deviceInfo,'Soil Moisture')],
+                          ),
+                        ),
+                      ),
+                      Divider(
+                        height: 0.5,
+                        color: Colors.white.withOpacity(0.25),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          showEditDialog(context, (deviceInfo?.temperatureThreshold ?? 00).toString(), 'Temperature Threshold', deviceInfo!);
+                        },
+                        child: Container(
+                          color: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+                          child: Row(
+                            children: [editThresholdParameters(deviceInfo,'Temperature')],
+                          ),
+                        ),
+                      ),
+                      Divider(
+                        height: 0.5,
+                        color: Colors.white.withOpacity(0.25),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          showEditDialog(context, (deviceInfo?.humidityThreshold ?? 00).toString(), 'Humidity Threshold', deviceInfo!);
+                        },
+                        child: Container(
+                          color: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+                          child: Row(
+                            children: [editThresholdParameters(deviceInfo,'Humidity')],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+          );
+        }
+
         List<Widget> coordinates(SensorNode deviceInfo) {
           return [
             Divider(
@@ -521,6 +785,8 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
               color: Colors.white.withOpacity(0.25),
             ),
           ];
+
+
         }
 
         showDialog(
@@ -587,6 +853,25 @@ class _SensorNodeCardExpandedState extends State<SensorNodeCardExpanded> {
                               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
                               child: Row(
                                 children: [readingInterval(deviceInfo)],
+                              ),
+                            ),
+                          ),
+                          Divider(
+                            height: 0.5,
+                            color: Colors.white.withOpacity(0.25),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              showDialog(context: context,
+                                  builder: (context){
+                                    return thresholdDialog(deviceInfo);
+                                  });
+                            },
+                            child: Container(
+                              color: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+                              child: Row(
+                                children: [editParameters(deviceInfo)],
                               ),
                             ),
                           ),

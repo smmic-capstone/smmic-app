@@ -39,6 +39,9 @@ class DeviceUtils {
       SensorNodeKeys.longitude.key: sensorMap[SensorNodeKeys.sinkNode.key],
       SensorNodeKeys.sinkNode.key: sinkNodeID,
       SensorNodeKeys.interval.key: sensorMap[SensorNodeKeys.interval.key],
+      SensorNodeKeys.soilThreshold.key:sensorMap[SensorNodeKeys.soilThreshold.key],
+      SensorNodeKeys.humidityThreshold.key:sensorMap[SensorNodeKeys.humidityThreshold.key],
+      SensorNodeKeys.temperatureThreshold.key:sensorMap[SensorNodeKeys.temperatureThreshold.key]
     };
     return SensorNode.fromJSON(sensorNodeMap);
   }
