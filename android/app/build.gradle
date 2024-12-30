@@ -28,7 +28,8 @@ if (flutterVersionName == null) {
 
 android {
     namespace = "com.example.smmic"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 34
+    ///flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

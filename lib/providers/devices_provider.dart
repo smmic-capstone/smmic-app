@@ -176,7 +176,10 @@ class DevicesProvider extends ChangeNotifier {
         SensorNodeKeys.latitude.key: seObj.latitude,
         SensorNodeKeys.longitude.key: seObj.longitude,
         SensorNodeKeys.sinkNode.key: seObj.registeredSinkNode,
-        SensorNodeKeys.interval.key: seObj.interval
+        SensorNodeKeys.interval.key: seObj.interval,
+        SensorNodeKeys.soilThreshold.key: seObj.soilThreshold,
+        SensorNodeKeys.temperatureThreshold.key: seObj.temperatureThreshold,
+        SensorNodeKeys.humidityThreshold.key: seObj.humidityThreshold,
       };
       sensorNodeMapList.add(seMap);
     }
@@ -452,6 +455,7 @@ class DevicesProvider extends ChangeNotifier {
     }
     bool success = await _sharedPrefsUtils.setSensorList(sensorList: getSNList);
     if (success) {
+      debugPrint(updatedData.toString());
       SensorNode updatedSensor = SensorNode.fromJSON(updatedData);
       _sensorNodeMap[updatedSensor.deviceID] = updatedSensor;
       notifyListeners();

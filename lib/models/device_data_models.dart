@@ -38,7 +38,10 @@ enum SensorNodeKeys {
   latitude('latitude'),
   longitude('longitude'),
   sinkNode('sink_node'),
-  interval('interval');
+  interval('interval'),
+  soilThreshold('soil_threshold'),
+  humidityThreshold('humidity_threshold'),
+  temperatureThreshold('temperature_threshold');
 
   final String key;
   const SensorNodeKeys(this.key);
@@ -190,8 +193,20 @@ class SinkNodeState {
 class SensorNode extends Device {
   String registeredSinkNode;
   int interval;
+  int soilThreshold;
+  int temperatureThreshold;
+  int humidityThreshold;
+
   SensorNode._internal(
-      {required super.deviceID, required super.deviceName, super.longitude, super.latitude, required this.registeredSinkNode, required this.interval})
+      {required super.deviceID,
+        required super.deviceName,
+        super.longitude,
+        super.latitude,
+        required this.registeredSinkNode,
+        required this.interval,
+        required this.soilThreshold,
+        required this.temperatureThreshold,
+        required this.humidityThreshold})
       : super();
 
   //TODO: add logic to check if a device already exists (caching or from shared prefs)
@@ -210,7 +225,10 @@ class SensorNode extends Device {
         latitude: deviceInfo[SensorNodeKeys.latitude.key],
         longitude: deviceInfo[SensorNodeKeys.longitude.key],
         registeredSinkNode: deviceInfo[SensorNodeKeys.sinkNode.key],
-        interval: deviceInfo[SensorNodeKeys.interval.key]);
+        interval: deviceInfo[SensorNodeKeys.interval.key],
+        soilThreshold: deviceInfo[SensorNodeKeys.soilThreshold.key],
+        humidityThreshold: deviceInfo[SensorNodeKeys.humidityThreshold.key],
+        temperatureThreshold: deviceInfo[SensorNodeKeys.temperatureThreshold.key]);
   }
 
   String toHash() {
@@ -223,6 +241,9 @@ class SensorNode extends Device {
     latitude = newData.latitude;
     registeredSinkNode = newData.registeredSinkNode;
     interval = newData.interval;
+    soilThreshold = newData.soilThreshold;
+    humidityThreshold = newData.humidityThreshold;
+    temperatureThreshold = newData.temperatureThreshold;
   }
 }
 
